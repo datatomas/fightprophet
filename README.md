@@ -56,3 +56,4 @@ Key points:
 - Business LinkedIn: https://www.linkedin.com/company/fight-prophet  
 - Founder LinkedIn: https://www.linkedin.com/in/datatomas/  
 - Business GitHub: https://github.com/datatomas/fight_prophet
+- Business Email: datatomas@uppercutanalytics.com
