@@ -25,24 +25,29 @@ See [LICENSE.md](LICENSE.md) for terms — personal, non-commercial, and evaluat
 
 ## Open-Source Scope (Current)
 
-This repo currently includes and maintains:
+This repo currently includes and maintains the following files, automatically synced via GitHub Actions on every push to `main`:
 
-| File | Purpose |
-|---|---|
-| `src/ml_kuda_sports_lab/etl/gold/mma_gold_ranking.py` | Fighter/fight ranking generation |
-| `src/ml_kuda_sports_lab/etl/gold/mma_gold_catboost.py` | CatBoost training pipeline |
-| `src/ml_kuda_sports_lab/etl/gold/mma_gold_train_models.py` | Logistic regression + XGBoost training pipeline |
-| `src/ml_kuda_sports_lab/etl/gold/mma_gold_features_theory.md` | Feature engineering methodology |
-| `src/ml_kuda_sports_lab/etl/gold/ml_model.md` | Modeling approach and diagnostics |
-
-These are automatically synced to the public repo via GitHub Actions.
+| Layer | File | Purpose |
+|---|---|---|
+| Silver | `etl/silver/mma_silver_etl.py` | Silver layer ETL transformations |
+| Silver | `etl/silver/mma_silver_schema.py` | Silver schema definitions |
+| Gold | `etl/gold/mma_gold_ranking.py` | Fighter/fight ranking generation |
+| Gold | `etl/gold/mma_gold_features.py` | Gold feature engineering |
+| Gold | `etl/gold/mma_gold_catboost.py` | CatBoost training pipeline |
+| Gold | `etl/gold/mma_gold_catboost_tune.py` | CatBoost hyperparameter tuning |
 
 ---
 
 ## What This Module Covers
 
+### `mma_silver_etl.py` + `mma_silver_schema.py`
+Silver layer transformations and schema definitions — cleans and structures raw bronze data into a consistent format for downstream feature engineering.
+
+### `mma_gold_features.py`
+Builds the gold prefight feature table used as input to all models. This is where the core feature engineering lives — fighter stats, matchup deltas, streaks, and inactivity signals.
+
 ### `mma_gold_ranking.py`
-Generates fighter and fight rankings used as input features downstream.
+Generates fighter and fight rankings used as additional input features downstream.
 
 ### `mma_gold_catboost.py`
 Trains and scores UFC win/loss models using CatBoost (and optionally logistic regression).
@@ -55,32 +60,22 @@ Trains and scores UFC win/loss models using CatBoost (and optionally logistic re
 python -m ml_kuda_sports_lab.etl.gold.mma_gold_catboost --help
 ```
 
-### `mma_gold_train_models.py`
-Trains and scores UFC win/loss models using logistic regression and XGBoost, based on the gold prefight features table.
-- Time-based data split to prevent data leakage
-- Numeric-only features for robust modeling
-- Supports blending model predictions with betting market odds
-- Outputs model artifacts and writes scored predictions back to DuckDB
-- CLI options for retraining, incremental scoring, and odds source selection
+### `mma_gold_catboost_tune.py`
+Hyperparameter tuning for the CatBoost model using Optuna. Run this before retraining to find optimal parameters, which are written back to DuckDB for the training pipeline to pick up.
 
 ```bash
-python -m ml_kuda_sports_lab.etl.gold.mma_gold_train_models --help
+python -m ml_kuda_sports_lab.etl.gold.mma_gold_catboost_tune --help
 ```
-
-### `mma_gold_features_theory.md`
-Explains the theory and methodology behind the gold feature engineering — including Bayesian shrinkage for finish rates and streak/inactivity features. Read this before modifying or extending the feature set.
-
-### `ml_model.md`
-Documents the modeling approach, diagnostics, and best practices for UFC win/loss prediction. Reference this for model configuration, evaluation metrics, and improvement guidance.
 
 ---
 
 ## How to Use
 
 1. **Set up your environment** — follow the setup instructions in `copilot-instructions.md` (activate the correct Python environment and set DuckDB paths)
-2. **Run model training** — use `mma_gold_train_models.py` or `mma_gold_catboost.py`, adjusting CLI arguments for your workflow
-3. **Review the docs** — read the markdown files for a deep dive into feature engineering and modeling choices
-4. **Outputs** — model artifacts are saved to the specified output directory; scored predictions are written back to DuckDB tables/views for downstream use
+2. **Run feature engineering** — run `mma_gold_features.py` first to build the gold feature table
+3. **Tune hyperparameters** — run `mma_gold_catboost_tune.py` to find optimal parameters (written back to DuckDB)
+4. **Run model training** — use `mma_gold_catboost.py` with your preferred CLI arguments
+5. **Outputs** — model artifacts saved to the specified output directory; scored predictions written back to DuckDB for downstream use
 
 ---
 
