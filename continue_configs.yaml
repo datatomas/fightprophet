@@ -1,0 +1,36 @@
+name: Local Config
+version: 1.0.0
+schema: v1
+
+models:
+  - name: Qwen 3 Coder Chat
+    provider: ollama
+    model: qwen3-coder:30b-a3b-q4_K_M
+    apiBase: http://127.0.0.1:11434
+    roles:
+      - chat
+      - edit
+      - apply
+
+  - name: Qwen 2.5 Coder Fast
+    provider: ollama
+    model: qwen2.5-coder:7b
+    apiBase: http://127.0.0.1:11434
+    roles:
+      - autocomplete
+
+  - name: Llama 3.1 8B
+    provider: ollama
+    model: llama3.1:8b
+    apiBase: http://127.0.0.1:11434
+    roles:
+      - chat
+      - edit
+      - apply
+
+  - name: Nomic Embed
+    provider: ollama
+    model: nomic-embed-text:latest
+    apiBase: http://127.0.0.1:11434
+    roles:
+      - embed
