@@ -36,7 +36,8 @@ Odds usage
 """
 
 from __future__ import annotations
-
+import time as _time
+from html.parser import HTMLParser as _HTMLParser
 import argparse
 import difflib
 import hashlib
@@ -191,7 +192,7 @@ def parse_args() -> argparse.Namespace:
     # Odds / betting
     p.add_argument(
         "--odds-source",
-        choices=["duckdb", "fightodds"],
+        choices=["duckdb", "fightodds", "bestfightodds"],
         default="duckdb",
         help=(
             "Where to get odds used for implied probability / betting_edge. "
@@ -305,6 +306,11 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument("--exclude-col", action="append", default=["y_win"], help="Explicitly exclude a column (repeatable)")
 
+    p.add_argument(
+        "--bfo-promotion-filter",
+        default="ufc",
+        help="BestFightOdds promotion name filter (default: ufc). Matches event names case-insensitively.",
+        )
     return p.parse_args()
 
 
@@ -1229,6 +1235,248 @@ def _oddsapi_two_sided_odds(
     return fighter_odds, opponent_odds
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# BFO scraper — rewritten to match actual HTML structure
+# ─────────────────────────────────────────────────────────────────────────────
+_BFO_BASE = "https://www.bestfightodds.com"
+
+_RE_EVENT_URL   = re.compile(r'href="(/events/[^"]+)"', re.I)
+_RE_FIGHTER_ROW = re.compile(
+    r'<tr\s*>\s*<th[^>]*>\s*<a href="(/fighters/[^"]+)"[^>]*>\s*<span class="t-b-fcc">([^<]+)</span>',
+    re.S,
+)
+_RE_FIGHTER_ODDS = re.compile(r'<td class="but-sg"[^>]*><span[^>]*>([\+\-]?\d+)</span>', re.S)
+_RE_PROP_ROW     = re.compile(r'<tr class="pr"', re.I)
+
+
+def _bfo_fetch_html(url: str, *, timeout: int = 30) -> str:
+    """Fetch HTML from a BFO URL with a browser-like User-Agent."""
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": (
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+            ),
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+        },
+        method="GET",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return resp.read().decode("utf-8", errors="replace")
+    except Exception as e:
+        raise RuntimeError(f"BFO fetch failed for {url}: {e}")
+
+
+def _bfo_extract_h2h_fights(html: str) -> list[dict]:
+    """
+    Extract moneyline (h2h) fights from a BFO event or homepage HTML.
+
+    Fighter rows are <tr > (no class) with <span class="t-b-fcc">.
+    Prop rows have class="pr" and are skipped.
+    Odds come from <td class="but-sg"> (not but-sgp).
+    """
+    # Split on <tr> boundaries, keep prop rows separate
+    # We need to process the HTML row by row.
+    # Strategy: split the HTML at each <tr...> tag, classify each chunk.
+    
+    tr_split = re.split(r'(?=<tr[\s>])', html, flags=re.I)
+    
+    fights: list[dict] = []
+    pending: dict | None = None   # first fighter in current bout
+
+    for chunk in tr_split:
+        # Skip prop rows
+        if re.match(r'<tr\s+class="pr"', chunk, re.I):
+            # A prop row between two fighter rows resets the pairing
+            # (don't reset pending - props appear AFTER the fight rows pair)
+            continue
+
+        # Is this a fighter row?
+        m = _RE_FIGHTER_ROW.search(chunk)
+        if not m:
+            continue
+
+        fighter_url  = m.group(1)          # /fighters/Dustin-Poirier-2034
+        fighter_name = m.group(2).strip()  # "Dustin Poirier"
+
+        # Collect best-line American odds from but-sg cells in this row
+        raw_odds = [int(v) for v in _RE_FIGHTER_ODDS.findall(chunk)]
+
+        def _impl(o: int) -> float:
+            return 100.0 / (o + 100.0) if o >= 0 else (-o) / (-o + 100.0)
+
+        best_odds: int | None = min(raw_odds, key=_impl) if raw_odds else None
+
+        if pending is None:
+            pending = {
+                "f1_display": fighter_name,
+                "f1_url":     fighter_url,
+                "odds1":      best_odds,
+            }
+        else:
+            fights.append({
+                "f1_display": pending["f1_display"],
+                "f2_display": fighter_name,
+                "odds1":      pending["odds1"],
+                "odds2":      best_odds,
+            })
+            pending = None
+
+    return fights
+
+
+def _bfo_fetch_upcoming_events(*, promotion_filter: str = "ufc") -> list[dict]:
+    """
+    Fetch the BFO homepage. Returns list of {name, url, fights} dicts
+    whose names contain `promotion_filter`.
+
+    BFO homepage lists upcoming events directly — we parse h2h fights
+    straight from the homepage HTML, and also collect event page URLs
+    for callers who want per-event detail fetches.
+    """
+    html = _bfo_fetch_html(_BFO_BASE + "/")
+    promo_lc = promotion_filter.lower()
+
+    # Extract event URLs + names from odds-table-responsive-header tables
+    # Pattern: <table class="odds-table odds-table-responsive-header">...<a href="/events/...">NAME</a>
+    header_re = re.compile(
+        r'<table class="odds-table odds-table-responsive-header"[^>]*>(.*?)</table>',
+        re.S | re.I,
+    )
+    event_link_re = re.compile(
+        r'href="(/events/([^"]+))"[^>]*>([^<]+)<',
+        re.I,
+    )
+
+    events: list[dict] = []
+    seen_urls: set[str] = set()
+
+    for hdr_match in header_re.finditer(html):
+        hdr_html = hdr_match.group(1)
+        for lm in event_link_re.finditer(hdr_html):
+            path  = lm.group(1)
+            name  = lm.group(3).strip()
+            url   = _BFO_BASE + path
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            events.append({"name": name, "url": url, "fights": []})
+
+    # Filter by promotion
+    filtered = [ev for ev in events if promo_lc in ev["name"].lower()]
+    if not filtered:
+        filtered = events   # fallback: return all
+
+    # Extract all h2h fights from the homepage in one pass
+    all_fights = _bfo_extract_h2h_fights(html)
+    logger.info(
+        f"BFO homepage: {len(events)} events found, "
+        f"{len(filtered)} match '{promotion_filter}', "
+        f"{len(all_fights)} h2h fights parsed"
+    )
+
+    # Attach fights to events by URL (events don't have fights embedded on homepage,
+    # so we store the homepage fights globally and let _bfo_two_sided_odds use them directly)
+    for ev in filtered:
+        ev["fights"] = all_fights  # same pool for all — deduped by fighter name match
+
+    return filtered, all_fights   # return both
+
+
+def _bfo_two_sided_odds(
+    df: pd.DataFrame,
+    *,
+    promotion_filter: str = "ufc",
+    odds_format: str = "american",
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Scrape BestFightOdds.com and return (fighter_odds, opponent_odds) aligned to df rows.
+    """
+    required = ["event_date", "fighter_name", "opponent_name"]
+    for c in required:
+        if c not in df.columns:
+            raise RuntimeError(f"BFO odds source requires column {c!r} in the dataset")
+
+    fighter_col = "fighter_name_plain" if "fighter_name_plain" in df.columns else "fighter_name"
+    opponent_col = "opponent_name_plain" if "opponent_name_plain" in df.columns else "opponent_name"
+
+    logger.info(f"BFO: fetching upcoming events for promotion='{promotion_filter}'...")
+    events_meta, all_fights = _bfo_fetch_upcoming_events(promotion_filter=promotion_filter)
+
+    if not all_fights:
+        raise RuntimeError(
+            "BestFightOdds returned no h2h fights. "
+            "Check --bfo-promotion-filter or verify the site is reachable."
+        )
+
+    # Build lookup: norm_pair → (odds1, odds2)
+    pair_lookup: dict[tuple[str, str], tuple[int | None, int | None]] = {}
+    for fight in all_fights:
+        n1 = _norm_name(fight.get("f1_display") or "")
+        n2 = _norm_name(fight.get("f2_display") or "")
+        if not n1 or not n2:
+            continue
+        o1, o2 = fight.get("odds1"), fight.get("odds2")
+        pair_lookup[(n1, n2)] = (o1, o2)
+        pair_lookup[(n2, n1)] = (o2, o1)
+
+    # Optionally also fetch individual event pages for events with no odds yet
+    if not pair_lookup and events_meta:
+        for ev_meta in events_meta[:5]:   # cap at 5 to avoid hammering the site
+            _time.sleep(1.5)
+            try:
+                ev_html = _bfo_fetch_html(ev_meta["url"])
+                ev_fights = _bfo_extract_h2h_fights(ev_html)
+                for fight in ev_fights:
+                    n1 = _norm_name(fight.get("f1_display") or "")
+                    n2 = _norm_name(fight.get("f2_display") or "")
+                    if not n1 or not n2:
+                        continue
+                    pair_lookup[(n1, n2)] = (fight.get("odds1"), fight.get("odds2"))
+                    pair_lookup[(n2, n1)] = (fight.get("odds2"), fight.get("odds1"))
+            except Exception as e:
+                logger.warning(f"BFO: failed to fetch event page {ev_meta['url']}: {e}")
+
+    if not pair_lookup:
+        raise RuntimeError("BFO scraped homepage but found no fight odds. Check logs.")
+
+    logger.info(f"BFO: loaded odds for {len(pair_lookup) // 2} unique bouts")
+
+    fighter_odds  = np.full(len(df), np.nan, dtype=float)
+    opponent_odds = np.full(len(df), np.nan, dtype=float)
+
+    for i in range(len(df)):
+        fn = _norm_name(df[fighter_col].iat[i])
+        on = _norm_name(df[opponent_col].iat[i])
+        if not fn or not on:
+            continue
+
+        pair = pair_lookup.get((fn, on))
+        if pair is None:
+            all_names = {k[0] for k in pair_lookup}
+            close = difflib.get_close_matches(fn, all_names, n=1, cutoff=0.80)
+            if close:
+                matched = close[0]
+                opp_names = {k[1] for k in pair_lookup if k[0] == matched}
+                close2 = difflib.get_close_matches(on, opp_names, n=1, cutoff=0.80)
+                if close2:
+                    pair = pair_lookup.get((matched, close2[0]))
+
+        if pair is None:
+            continue
+
+        o_f, o_o = pair
+        if o_f is not None:
+            fighter_odds[i]  = float(o_f)
+        if o_o is not None:
+            opponent_odds[i] = float(o_o)
+
+    matched = int(np.sum(np.isfinite(fighter_odds)))
+    logger.info(f"BFO: matched odds for {matched}/{len(df)} rows")
+    return fighter_odds, opponent_odds
 # -----------------------------
 # Signals / recommendation
 # -----------------------------
@@ -2156,73 +2404,72 @@ def main() -> None:
     conf = _confidence_from_two_models(p_cat, p_logreg)
 
     # === Odds + implied probability ===
-    if args.odds_source == "fightodds":
-        event_dt = pd.to_datetime(all_df["event_date"], errors="coerce", utc=True).dt.tz_convert(None)
-        today = pd.Timestamp.now("UTC").tz_localize(None).normalize()
-        unlabeled = all_df[args.label_col].isna() if args.label_col in all_df.columns else pd.Series(False, index=all_df.index)
-        upcoming_mask = unlabeled | (event_dt >= today)
+    if args.odds_source in ("fightodds", "bestfightodds"):
+            event_dt = pd.to_datetime(all_df["event_date"], errors="coerce", utc=True).dt.tz_convert(None)
+            today = pd.Timestamp.now("UTC").tz_localize(None).normalize()
+            unlabeled = all_df[args.label_col].isna() if args.label_col in all_df.columns else pd.Series(False, index=all_df.index)
+            upcoming_mask = unlabeled | (event_dt >= today)
 
-        odds_df = all_df.loc[upcoming_mask].copy()
-        if args.fightodds_start_date:
-            start_date = args.fightodds_start_date
-        else:
-            dmin = pd.to_datetime(odds_df["event_date"], errors="coerce").min() if not odds_df.empty else pd.NaT
-            if pd.isna(dmin):
-                start_date = (today.date() - timedelta(days=7)).strftime("%Y-%m-%d")
+            odds_df = all_df.loc[upcoming_mask].copy()
+
+            fighter_odds = np.full(shape=len(all_df), fill_value=np.nan, dtype=float)
+            opponent_odds = np.full(shape=len(all_df), fill_value=np.nan, dtype=float)
+            odds_single_book_cols: list[tuple[str, np.ndarray]] = []
+            odds_source = args.odds_source
+
+            if odds_df.empty:
+                logger.info("No upcoming/unlabeled fights found; skipping odds fetch")
             else:
-                start_date = (pd.to_datetime(dmin).date() - timedelta(days=7)).strftime("%Y-%m-%d")
+                used_source = args.odds_source
+                try:
+                    if args.odds_source == "bestfightodds":
+                        f_sub, o_sub = _bfo_two_sided_odds(
+                            df=odds_df,
+                            promotion_filter=args.bfo_promotion_filter,
+                            odds_format=args.odds_format,
+                        )
+                    else:
+                        # legacy fightodds path (may fail if they went fully premium)
+                        if args.fightodds_start_date:
+                            start_date = args.fightodds_start_date
+                        else:
+                            dmin = pd.to_datetime(odds_df["event_date"], errors="coerce").min() if not odds_df.empty else pd.NaT
+                            if pd.isna(dmin):
+                                start_date = (today.date() - timedelta(days=7)).strftime("%Y-%m-%d")
+                            else:
+                                start_date = (pd.to_datetime(dmin).date() - timedelta(days=7)).strftime("%Y-%m-%d")
+                        f_sub, o_sub = _fightodds_two_sided_odds(
+                            df=odds_df,
+                            promotion_slug=args.fightodds_promotion_slug,
+                            sportsbooks=args.sportsbook,
+                            odds_format=args.odds_format,
+                            start_date=start_date,
+                        )
+                except Exception as e:
+                    logger.warning(f"Primary odds fetch ({args.odds_source}) failed: {e}")
+                    if args.odds_fallback == "oddsapi":
+                        logger.info("Trying The Odds API fallback...")
+                        f_sub, o_sub = _oddsapi_two_sided_odds(
+                            df=odds_df,
+                            api_key=str(args.the_odds_api_key or "").strip(),
+                            sport_key=args.the_odds_api_sport_key,
+                            regions=args.the_odds_api_regions,
+                            odds_format=args.odds_format,
+                        )
+                        used_source = "oddsapi"
+                    else:
+                        raise
 
-        fighter_odds = np.full(shape=len(all_df), fill_value=np.nan, dtype=float)
-        opponent_odds = np.full(shape=len(all_df), fill_value=np.nan, dtype=float)
-        odds_single_book_cols: list[tuple[str, np.ndarray]] = []
+                pos = np.where(upcoming_mask.to_numpy(dtype=bool, copy=False))[0]
+                fighter_odds[pos] = np.asarray(f_sub, dtype=float)
+                opponent_odds[pos] = np.asarray(o_sub, dtype=float)
+                odds_source = used_source
 
-        if odds_df.empty:
-            logger.info("No upcoming/unlabeled fights found; skipping FightOdds fetch")
-        else:
-            used_source = "fightodds"
-            try:
-                f_sub, o_sub = _fightodds_two_sided_odds(
-                    df=odds_df,
-                    promotion_slug=args.fightodds_promotion_slug,
-                    sportsbooks=args.sportsbook,
-                    odds_format=args.odds_format,
-                    start_date=start_date,
-                )
-            except Exception as e:
-                logger.warning(f"FightOdds fetch failed: {e}")
-                if args.odds_fallback == "oddsapi":
-                    logger.info("Trying The Odds API fallback...")
-                    f_sub, o_sub = _oddsapi_two_sided_odds(
-                        df=odds_df,
-                        api_key=str(args.the_odds_api_key or "").strip(),
-                        sport_key=args.the_odds_api_sport_key,
-                        regions=args.the_odds_api_regions,
-                        odds_format=args.odds_format,
-                    )
-                    used_source = "oddsapi"
-                else:
-                    raise
-
-            pos = np.where(upcoming_mask.to_numpy(dtype=bool, copy=False))[0]
-            fighter_odds[pos] = np.asarray(f_sub, dtype=float)
-            opponent_odds[pos] = np.asarray(o_sub, dtype=float)
-
-            if args.sportsbook and len(args.sportsbook) == 1:
-                suffix = _sportsbook_to_col_suffix(args.sportsbook[0])
-                c1 = np.full(shape=len(all_df), fill_value=np.nan, dtype=float)
-                c2 = np.full(shape=len(all_df), fill_value=np.nan, dtype=float)
-                c1[pos] = np.asarray(f_sub, dtype=float)
-                c2[pos] = np.asarray(o_sub, dtype=float)
-                odds_single_book_cols = [(f"odds_{suffix}_fighter", c1), (f"odds_{suffix}_opponent", c2)]
-            odds_source = used_source
-
-        implied_f_vals = [_implied_prob_from_odds_value(v, odds_format=args.odds_format) for v in fighter_odds.tolist()]
-        implied_o_vals = [_implied_prob_from_odds_value(v, odds_format=args.odds_format) for v in opponent_odds.tolist()]
-        implied_fighter = np.array([np.nan if v is None else float(v) for v in implied_f_vals], dtype=float)
-        implied_opponent = np.array([np.nan if v is None else float(v) for v in implied_o_vals], dtype=float)
-
-        odds_source = odds_source if "odds_source" in locals() else "fightodds"
-        odds_sportsbook = ",".join(args.sportsbook) if args.sportsbook else None
+            implied_f_vals = [_implied_prob_from_odds_value(v, odds_format=args.odds_format) for v in fighter_odds.tolist()]
+            implied_o_vals = [_implied_prob_from_odds_value(v, odds_format=args.odds_format) for v in opponent_odds.tolist()]
+            implied_fighter = np.array([np.nan if v is None else float(v) for v in implied_f_vals], dtype=float)
+            implied_opponent = np.array([np.nan if v is None else float(v) for v in implied_o_vals], dtype=float)
+            odds_sportsbook = ",".join(args.sportsbook) if args.sportsbook else "bestfightodds"
 
     else:
         odds_col = args.odds_col or _detect_odds_col(all_df)
