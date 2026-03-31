@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import multiprocessing
 import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -410,6 +411,40 @@ def _train_eval_catboost(
 
 
 
+def _trial_worker(kwargs: dict, result_queue: multiprocessing.Queue) -> None:
+    """Run a single CatBoost trial in an isolated subprocess.
+
+    Each subprocess gets its own CUDA context, preventing C++ GPU state
+    corruption between sequential trials (CatBoost 1.2.x on Blackwell GPUs).
+    """
+    try:
+        r = _train_eval_catboost(**kwargs)
+        result_queue.put(("ok", r))
+    except Exception as e:
+        result_queue.put(("err", str(e)))
+
+
+def _run_trial_in_subprocess(kwargs: dict, timeout: int = 600) -> TuneResult:
+    """Spawn a fresh process for a single trial and collect the result."""
+    ctx = multiprocessing.get_context("spawn")
+    q: multiprocessing.Queue = ctx.Queue()
+    p = ctx.Process(target=_trial_worker, args=(kwargs, q))
+    p.start()
+    p.join(timeout=timeout)
+
+    if p.exitcode is None:
+        p.kill()
+        p.join()
+        raise RuntimeError("Trial subprocess timed out")
+    if p.exitcode != 0:
+        raise RuntimeError(f"Trial subprocess crashed (exit {p.exitcode})")
+
+    tag, payload = q.get_nowait()
+    if tag == "err":
+        raise RuntimeError(payload)
+    return payload
+
+
 def _ensure_best_params_table(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
     conn.execute("CREATE SCHEMA IF NOT EXISTS gold")
     conn.execute(
@@ -540,23 +575,33 @@ def main() -> None:
     rng = np.random.default_rng(int(args.seed))
     best: TuneResult | None = None
 
+    # GPU trials run in isolated subprocesses to prevent CUDA context corruption
+    use_subprocess = device == "cuda"
+    if use_subprocess:
+        logger.info("GPU mode: each trial will run in an isolated subprocess")
+
     for i in range(int(args.n_trials)):
         params = _random_params(rng, device=device)
 
+        trial_kwargs = dict(
+            params=params,
+            X_train=X_train,
+            y_train=y_train,
+            X_valid=X_valid,
+            y_valid=y_valid,
+            X_test=X_test,
+            y_test=y_test,
+            metric=metric,
+            device=device,
+            seed=int(args.seed),
+            cat_feature_indices=[feature_cols.index(c) for c in cat_cols] if cat_cols else None,
+        )
+
         try:
-            r = _train_eval_catboost(
-                params=params,
-                X_train=X_train,
-                y_train=y_train,
-                X_valid=X_valid,
-                y_valid=y_valid,
-                X_test=X_test,
-                y_test=y_test,
-                metric=metric,
-                device=device,
-                seed=int(args.seed),
-                cat_feature_indices=[feature_cols.index(c) for c in cat_cols] if cat_cols else None,
-            )
+            if use_subprocess:
+                r = _run_trial_in_subprocess(trial_kwargs)
+            else:
+                r = _train_eval_catboost(**trial_kwargs)
         except Exception as e:
             logger.warning(f"Trial {i+1}/{args.n_trials} failed: {e}")
             continue
