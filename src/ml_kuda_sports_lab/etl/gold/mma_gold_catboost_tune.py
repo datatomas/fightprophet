@@ -283,8 +283,12 @@ def _random_params(rng, device: str) -> dict:
         "od_wait": int(rng.choice([30, 50, 80, 100, 150])),
     }
 
-    # Grow policy (SymmetricTree is default, Lossguide needs max_leaves)
-    grow_policy = str(rng.choice(["SymmetricTree", "SymmetricTree", "Depthwise", "Lossguide"]))
+    # Grow policy — Depthwise/Lossguide crash on Blackwell GPUs (CatBoost 1.2.x),
+    # so restrict to SymmetricTree when running on CUDA.
+    if device == "cuda":
+        grow_policy = "SymmetricTree"
+    else:
+        grow_policy = str(rng.choice(["SymmetricTree", "SymmetricTree", "Depthwise", "Lossguide"]))
     params["grow_policy"] = grow_policy
     if grow_policy == "Lossguide":
         params["max_leaves"] = int(rng.choice([16, 31, 48, 64, 96, 128]))
