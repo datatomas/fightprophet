@@ -1,9 +1,24 @@
+  GNU nano 8.4                                                                                     /home/ares/.continue/config.yaml                                                                                              
 name: Local Config
 version: 1.0.0
 schema: v1
 
 models:
-  - name: Qwen 3 Coder Chat
+  - name: Qwen 2.5 Coder 32B
+    provider: ollama
+    model: qwen2.5-coder:32b
+    apiBase: http://127.0.0.1:11434
+    roles:
+      - chat
+      - edit
+      - apply
+    capabilities:
+      - tool_use
+    defaultCompletionOptions:
+      contextLength: 131072
+      maxTokens: 4096
+
+  - name: Qwen 3 Coder 30B
     provider: ollama
     model: qwen3-coder:30b-a3b-q4_K_M
     apiBase: http://127.0.0.1:11434
@@ -11,6 +26,11 @@ models:
       - chat
       - edit
       - apply
+    capabilities:
+      - tool_use
+    defaultCompletionOptions:
+      contextLength: 131072
+      maxTokens: 4096
 
   - name: Qwen 2.5 Coder Fast
     provider: ollama
@@ -18,15 +38,8 @@ models:
     apiBase: http://127.0.0.1:11434
     roles:
       - autocomplete
-
-  - name: Llama 3.1 8B
-    provider: ollama
-    model: llama3.1:8b
-    apiBase: http://127.0.0.1:11434
-    roles:
-      - chat
-      - edit
-      - apply
+    autocompleteOptions:
+      maxPromptTokens: 8192
 
   - name: Nomic Embed
     provider: ollama
@@ -34,3 +47,9 @@ models:
     apiBase: http://127.0.0.1:11434
     roles:
       - embed
+
+
+
+
+
+
