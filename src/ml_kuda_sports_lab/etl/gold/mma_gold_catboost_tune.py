@@ -305,17 +305,22 @@ def _optuna_params(trial: "optuna.Trial", device: str) -> dict:
     else:
         grow_policy = trial.suggest_categorical("grow_policy", ["SymmetricTree", "Depthwise", "Lossguide"])
     params["grow_policy"] = grow_policy
+    # Always suggest max_leaves so the search space is static (required for multivariate TPE)
+    max_leaves = trial.suggest_categorical("max_leaves", [16, 31, 48, 64, 96, 128])
     if grow_policy == "Lossguide":
-        params["max_leaves"] = trial.suggest_categorical("max_leaves", [16, 31, 48, 64, 96, 128])
+        params["max_leaves"] = max_leaves
 
     # GPU-safe: only sample rsm on CPU
     if device != "cuda":
         params["rsm"] = trial.suggest_float("rsm", 0.5, 1.0)
 
+    # Always suggest both so the search space is static (required for multivariate TPE)
+    bagging_temperature = trial.suggest_float("bagging_temperature", 0.05, 3.0, log=True)
+    subsample = trial.suggest_float("subsample", 0.5, 1.0)
     if bootstrap_type == "Bayesian":
-        params["bagging_temperature"] = trial.suggest_float("bagging_temperature", 0.05, 3.0, log=True)
+        params["bagging_temperature"] = bagging_temperature
     else:
-        params["subsample"] = trial.suggest_float("subsample", 0.5, 1.0)
+        params["subsample"] = subsample
 
     # Class imbalance handling
     class_weight_strategy = trial.suggest_categorical(
