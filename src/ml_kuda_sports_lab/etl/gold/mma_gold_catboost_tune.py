@@ -269,7 +269,10 @@ def _random_params(rng, device: str) -> dict:
     l2_leaf_reg = float(rng.choice([0.5, 1.0, 3.0, 5.0, 7.0, 9.0, 12.0, 15.0, 20.0]))
     random_strength = float(rng.choice([0.5, 1.0, 3.0, 5.0, 8.0, 10.0, 15.0]))
 
-    bootstrap_type = str(rng.choice(["Bayesian", "Bernoulli", "MVS"]))
+    # Bayesian gets 50% weight: soft-weighting handles MMA noise (weight cuts,
+    # early-career fights, era differences) better than hard row-dropping.
+    # MVS (gradient-magnitude sampling) keeps 30% as a strong CatBoost default.
+    bootstrap_type = str(rng.choice(["Bayesian", "Bayesian", "Bayesian", "MVS", "MVS", "Bernoulli"]))
 
     params = {
         "depth": depth,
@@ -298,7 +301,8 @@ def _random_params(rng, device: str) -> dict:
         params["rsm"] = float(rng.choice([0.5, 0.6, 0.7, 0.8, 0.9, 1.0]))
 
     if bootstrap_type == "Bayesian":
-        params["bagging_temperature"] = float(rng.choice([0.0, 0.3, 0.5, 1.0, 1.5, 2.0, 3.0]))
+        # Finer grid: low temps (0.1–0.5) = mild regularisation, suits noisy fight data
+        params["bagging_temperature"] = float(rng.choice([0.1, 0.2, 0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0]))
     else:
         params["subsample"] = float(rng.choice([0.5, 0.6, 0.7, 0.8, 0.9, 1.0]))
 
