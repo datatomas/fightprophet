@@ -11,11 +11,12 @@ Design goals
 
 Typical usage
   source bootstrap_scripts/envloader.sh && \
-    python3 -m ml_kuda_sports_lab.etl.gold.mma_catboost_tune --target dev --n-trials 40 --seed 42
+    python3 -m ml_kuda_sports_lab.etl.gold.mma_gold_catboost_tune --target dev --n-trials 40 --seed 42
 
 Notes
 - Uses a time-based split on `--time-col`.
-- Uses a simple random search (no Optuna/Hyperopt).
+- Uses Optuna TPE (Tree-structured Parzen Estimator) for smart search.
+- Falls back to random search if optuna is not installed.
 - Uses CatBoost early stopping via od_type/od_wait.
 """
 
@@ -37,6 +38,14 @@ import pandas as pd
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
+try:
+    import optuna
+    # Suppress Optuna's per-trial info logs (we log our own progress)
+    optuna.logging.set_verbosity(optuna.logging.WARNING)
+    HAS_OPTUNA = True
+except ImportError:
+    HAS_OPTUNA = False
 
 
 def resolve_duckdb_path(args: argparse.Namespace) -> str:
@@ -260,6 +269,67 @@ def _detect_gpu_available() -> bool:
     except Exception:
         return False
 
+
+# ---------------------------------------------------------------------------
+# Optuna search space (TPE sampler)
+# ---------------------------------------------------------------------------
+
+def _optuna_params(trial: "optuna.Trial", device: str) -> dict:
+    """Define the CatBoost search space using Optuna's suggest API."""
+    depth = trial.suggest_int("depth", 4, 10)
+    learning_rate = trial.suggest_float("learning_rate", 0.005, 0.12, log=True)
+    iterations = trial.suggest_categorical("iterations", [600, 800, 1200, 1600, 2000, 2500, 3000])
+
+    l2_leaf_reg = trial.suggest_float("l2_leaf_reg", 0.5, 20.0, log=True)
+    random_strength = trial.suggest_float("random_strength", 0.5, 15.0, log=True)
+
+    # Bayesian gets 50% weight via weighted categorical
+    bootstrap_type = trial.suggest_categorical("bootstrap_type", ["Bayesian", "Bernoulli", "MVS"])
+
+    params: dict = {
+        "depth": depth,
+        "learning_rate": learning_rate,
+        "iterations": iterations,
+        "l2_leaf_reg": l2_leaf_reg,
+        "random_strength": random_strength,
+        "bootstrap_type": bootstrap_type,
+        "min_data_in_leaf": trial.suggest_int("min_data_in_leaf", 1, 80),
+        "border_count": trial.suggest_categorical("border_count", [64, 128, 200, 254]),
+        "od_wait": trial.suggest_categorical("od_wait", [30, 50, 80, 100, 150]),
+    }
+
+    # Grow policy — Depthwise/Lossguide crash on Blackwell GPUs (CatBoost 1.2.x),
+    # so restrict to SymmetricTree when running on CUDA.
+    if device == "cuda":
+        grow_policy = "SymmetricTree"
+    else:
+        grow_policy = trial.suggest_categorical("grow_policy", ["SymmetricTree", "Depthwise", "Lossguide"])
+    params["grow_policy"] = grow_policy
+    if grow_policy == "Lossguide":
+        params["max_leaves"] = trial.suggest_categorical("max_leaves", [16, 31, 48, 64, 96, 128])
+
+    # GPU-safe: only sample rsm on CPU
+    if device != "cuda":
+        params["rsm"] = trial.suggest_float("rsm", 0.5, 1.0)
+
+    if bootstrap_type == "Bayesian":
+        params["bagging_temperature"] = trial.suggest_float("bagging_temperature", 0.05, 3.0, log=True)
+    else:
+        params["subsample"] = trial.suggest_float("subsample", 0.5, 1.0)
+
+    # Class imbalance handling
+    class_weight_strategy = trial.suggest_categorical(
+        "class_weight_strategy", ["none", "Balanced", "SqrtBalanced"]
+    )
+    if class_weight_strategy != "none":
+        params["auto_class_weights"] = class_weight_strategy
+
+    return params
+
+
+# ---------------------------------------------------------------------------
+# Legacy random search (fallback when optuna is not installed)
+# ---------------------------------------------------------------------------
 
 def _random_params(rng, device: str) -> dict:
     depth = int(rng.integers(4, 11))
@@ -580,16 +650,21 @@ def main() -> None:
     if device == "auto":
         device = "cuda" if _detect_gpu_available() else "cpu"
 
-    rng = np.random.default_rng(int(args.seed))
-    best: TuneResult | None = None
-
     # GPU trials run in isolated subprocesses to prevent CUDA context corruption
     use_subprocess = device == "cuda"
     if use_subprocess:
         logger.info("GPU mode: each trial will run in an isolated subprocess")
 
-    for i in range(int(args.n_trials)):
-        params = _random_params(rng, device=device)
+    cat_feature_indices = [feature_cols.index(c) for c in cat_cols] if cat_cols else None
+
+    # Shared state for tracking best across trials
+    best: TuneResult | None = None
+    n_trials = int(args.n_trials)
+    seed = int(args.seed)
+
+    def _evaluate_params(params: dict, trial_num: int) -> TuneResult | None:
+        """Run one trial and return the result (or None on failure)."""
+        nonlocal best
 
         trial_kwargs = dict(
             params=params,
@@ -601,8 +676,8 @@ def main() -> None:
             y_test=y_test,
             metric=metric,
             device=device,
-            seed=int(args.seed),
-            cat_feature_indices=[feature_cols.index(c) for c in cat_cols] if cat_cols else None,
+            seed=seed,
+            cat_feature_indices=cat_feature_indices,
         )
 
         try:
@@ -611,14 +686,53 @@ def main() -> None:
             else:
                 r = _train_eval_catboost(**trial_kwargs)
         except Exception as e:
-            logger.warning(f"Trial {i+1}/{args.n_trials} failed: {e}")
-            continue
+            logger.warning(f"Trial {trial_num}/{n_trials} failed: {e}")
+            return None
 
         if best is None or _better(metric, r.score_valid, best.score_valid):
             best = r
             logger.info(
-                f"Best so far @ trial {i+1}/{args.n_trials}: valid_{metric}={best.score_valid:.6f} test_{metric}={best.score_test:.6f}"
+                f"Best so far @ trial {trial_num}/{n_trials}: "
+                f"valid_{metric}={best.score_valid:.6f} test_{metric}={best.score_test:.6f}"
             )
+
+        return r
+
+    # ----- Optuna TPE path -----
+    if HAS_OPTUNA:
+        logger.info(f"Using Optuna TPE sampler ({n_trials} trials)")
+        sampler = optuna.samplers.TPESampler(
+            seed=seed,
+            n_startup_trials=max(15, n_trials // 10),  # random warmup before TPE kicks in
+            multivariate=True,  # model parameter correlations
+        )
+        # For AUC/accuracy we maximize; for logloss we minimize
+        direction = "minimize" if metric == "logloss" else "maximize"
+        study = optuna.create_study(direction=direction, sampler=sampler)
+
+        def _optuna_objective(trial: optuna.Trial) -> float:
+            params = _optuna_params(trial, device=device)
+            r = _evaluate_params(params, trial.number + 1)
+            if r is None:
+                raise optuna.TrialPruned()
+            return r.score_valid
+
+        study.optimize(_optuna_objective, n_trials=n_trials)
+
+        # Log Optuna summary
+        logger.info(
+            f"Optuna finished: best valid_{metric}={study.best_value:.6f} "
+            f"at trial {study.best_trial.number + 1}/{n_trials}"
+        )
+
+    # ----- Legacy random search fallback -----
+    else:
+        logger.info(f"Optuna not installed; falling back to random search ({n_trials} trials)")
+        rng = np.random.default_rng(seed)
+
+        for i in range(n_trials):
+            params = _random_params(rng, device=device)
+            _evaluate_params(params, i + 1)
 
     if best is None:
         raise RuntimeError("All tuning trials failed")
