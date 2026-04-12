@@ -717,6 +717,13 @@ def train_catboost(
         if "auto_class_weights" in applied:
             base_params.pop("scale_pos_weight", None)
             logger.info("Using auto_class_weights=%s; removed scale_pos_weight", applied["auto_class_weights"])
+        # bagging_temperature is only valid for bootstrap_type='Bayesian';
+        # if tuner picked Bernoulli/MVS/No, drop it so CatBoost doesn't error.
+        bt = base_params.get("bootstrap_type", "Bayesian")
+        if bt != "Bayesian":
+            removed_bt = base_params.pop("bagging_temperature", None)
+            if removed_bt is not None:
+                logger.info("Removed bagging_temperature (not valid for bootstrap_type=%s)", bt)
         if applied:
             logger.info(f"Loaded tuned CatBoost params (applied): {applied}")
         else:
