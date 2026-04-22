@@ -46,6 +46,7 @@ import json
 import logging
 import os
 import re
+import unicodedata
 import urllib.request
 from urllib.parse import urlencode
 from dataclasses import asdict, dataclass
@@ -850,10 +851,136 @@ def _norm_name(s: object) -> str:
     if s is None:
         return ""
     txt = str(s).strip().lower()
+    txt = unicodedata.normalize("NFKD", txt)
+    txt = "".join(ch for ch in txt if not unicodedata.combining(ch))
     txt = re.sub(r"\(.*?\)", " ", txt)
     txt = re.sub(r"[^a-z\s]", " ", txt)
     txt = re.sub(r"\s+", " ", txt).strip()
     return txt
+
+
+def _name_aliases(*values: object) -> list[str]:
+    aliases: set[str] = set()
+    for value in values:
+        base = _norm_name(value)
+        if not base:
+            continue
+        aliases.add(base)
+        parts = base.split()
+        if len(parts) >= 3:
+            aliases.add(f"{parts[0]} {parts[-1]}")
+    return sorted(aliases, key=lambda x: (-len(x), x))
+
+
+def _pair_score(pair: Optional[tuple[Optional[float], Optional[float]]]) -> int:
+    if pair is None:
+        return -1
+    return int(pair[0] is not None) + int(pair[1] is not None)
+
+
+def _store_two_sided_pair(
+    pair_lookup: dict[tuple[str, str], tuple[Optional[float], Optional[float]]],
+    fighter_values: Iterable[object],
+    opponent_values: Iterable[object],
+    fighter_odds: Optional[float],
+    opponent_odds: Optional[float],
+) -> None:
+    candidate = (fighter_odds, opponent_odds)
+    fighter_aliases = _name_aliases(*fighter_values)
+    opponent_aliases = _name_aliases(*opponent_values)
+    if not fighter_aliases or not opponent_aliases:
+        return
+
+    for f_alias in fighter_aliases:
+        for o_alias in opponent_aliases:
+            if f_alias == o_alias:
+                continue
+            if _pair_score(candidate) >= _pair_score(pair_lookup.get((f_alias, o_alias))):
+                pair_lookup[(f_alias, o_alias)] = candidate
+            rev = (opponent_odds, fighter_odds)
+            if _pair_score(rev) >= _pair_score(pair_lookup.get((o_alias, f_alias))):
+                pair_lookup[(o_alias, f_alias)] = rev
+
+
+def _row_name_values(df: pd.DataFrame, prefix: str, idx: int) -> list[object]:
+    values: list[object] = []
+    for col in (f"{prefix}_name_display", f"{prefix}_name_plain", f"{prefix}_name"):
+        if col in df.columns:
+            values.append(df[col].iat[idx])
+    return values
+
+
+def _lookup_two_sided_pair(
+    pair_lookup: dict[tuple[str, str], tuple[Optional[float], Optional[float]]],
+    fighter_values: Iterable[object],
+    opponent_values: Iterable[object],
+) -> Optional[tuple[Optional[float], Optional[float]]]:
+    fighter_aliases = _name_aliases(*fighter_values)
+    opponent_aliases = _name_aliases(*opponent_values)
+    if not fighter_aliases or not opponent_aliases:
+        return None
+
+    for f_alias in fighter_aliases:
+        for o_alias in opponent_aliases:
+            pair = pair_lookup.get((f_alias, o_alias))
+            if pair is not None:
+                return pair
+
+    all_first_names = sorted({k[0] for k in pair_lookup}, key=len, reverse=True)
+    for f_alias in fighter_aliases:
+        close_f = difflib.get_close_matches(f_alias, all_first_names, n=3, cutoff=0.88)
+        for matched_f in close_f:
+            opp_candidates = sorted({k[1] for k in pair_lookup if k[0] == matched_f}, key=len, reverse=True)
+            for o_alias in opponent_aliases:
+                close_o = difflib.get_close_matches(o_alias, opp_candidates, n=3, cutoff=0.88)
+                for matched_o in close_o:
+                    pair = pair_lookup.get((matched_f, matched_o))
+                    if pair is not None:
+                        return pair
+    return None
+
+
+def _odds_name_for_log(df: pd.DataFrame, prefix: str, idx: int) -> str:
+    for col in (f"{prefix}_name_display", f"{prefix}_name_plain", f"{prefix}_name"):
+        if col in df.columns:
+            value = df[col].iat[idx]
+            if value is not None and str(value).strip():
+                return str(value)
+    return ""
+
+
+def _log_odds_match_coverage(
+    df: pd.DataFrame,
+    fighter_odds: np.ndarray,
+    opponent_odds: np.ndarray,
+    *,
+    source: str,
+    sample_size: int = 8,
+) -> None:
+    total = len(df)
+    fighter_ok = np.isfinite(fighter_odds)
+    opponent_ok = np.isfinite(opponent_odds)
+    both_ok = fighter_ok & opponent_ok
+    logger.info(
+        f"{source}: odds coverage fighter={int(np.sum(fighter_ok))}/{total}, "
+        f"opponent={int(np.sum(opponent_ok))}/{total}, both={int(np.sum(both_ok))}/{total}"
+    )
+
+    missing_idx = np.where(~both_ok)[0][:sample_size]
+    if len(missing_idx) == 0:
+        return
+
+    samples = []
+    for i in missing_idx:
+        event_name = str(df["event_name"].iat[i]) if "event_name" in df.columns else ""
+        samples.append(
+            {
+                "event": event_name,
+                "fighter": _odds_name_for_log(df, "fighter", i),
+                "opponent": _odds_name_for_log(df, "opponent", i),
+            }
+        )
+    logger.info(f"{source}: sample unmatched rows: {samples}")
 
 
 def _best_offer_odds_value(odds_values: list[object], odds_format: str) -> Optional[float]:
@@ -994,9 +1121,6 @@ def _fightodds_two_sided_odds(
         if c not in df.columns:
             raise RuntimeError(f"FightOdds odds source requires column {c!r} in the dataset")
 
-    fighter_col = "fighter_name_plain" if "fighter_name_plain" in df.columns else "fighter_name"
-    opponent_col = "opponent_name_plain" if "opponent_name_plain" in df.columns else "opponent_name"
-
     logger.info(f"Fetching FightOdds events for promotion={promotion_slug} from {start_date}...")
     events = _fightodds_fetch_events(promotion_slug=promotion_slug, start_date=start_date)
     if not events:
@@ -1031,8 +1155,10 @@ def _fightodds_two_sided_odds(
             f1 = node.get("fighter1") or {}
             f2 = node.get("fighter2") or {}
 
-            n1 = _norm_name(f"{f1.get('firstName','')} {f1.get('lastName','')}")
-            n2 = _norm_name(f"{f2.get('firstName','')} {f2.get('lastName','')}")
+            raw_n1 = f"{f1.get('firstName','')} {f1.get('lastName','')}"
+            raw_n2 = f"{f2.get('firstName','')} {f2.get('lastName','')}"
+            n1 = _norm_name(raw_n1)
+            n2 = _norm_name(raw_n2)
             if not n1 or not n2:
                 continue
 
@@ -1062,7 +1188,7 @@ def _fightodds_two_sided_odds(
                 o1v = _best_offer_odds_value(o1_vals, odds_format=odds_format)
                 o2v = _best_offer_odds_value(o2_vals, odds_format=odds_format)
 
-            fmap[(n1, n2)] = (o1v, o2v)
+            _store_two_sided_pair(fmap, [raw_n1], [raw_n2], o1v, o2v)
 
         fight_maps[int(pk)] = fmap
 
@@ -1079,19 +1205,14 @@ def _fightodds_two_sided_odds(
             continue
         fmap = fight_maps.get(pk) or {}
 
-        fn = _norm_name(df[fighter_col].iat[i])
-        on = _norm_name(df[opponent_col].iat[i])
-        if not fn or not on:
+        pair = _lookup_two_sided_pair(
+            fmap,
+            _row_name_values(df, "fighter", i),
+            _row_name_values(df, "opponent", i),
+        )
+        if pair is None:
             continue
-
-        pair = fmap.get((fn, on))
-        if pair is not None:
-            o_f, o_o = pair[0], pair[1]
-        else:
-            pair2 = fmap.get((on, fn))
-            if pair2 is None:
-                continue
-            o_f, o_o = pair2[1], pair2[0]
+        o_f, o_o = pair
 
         if o_f is not None:
             fighter_odds[i] = float(o_f)
@@ -1249,10 +1370,12 @@ _BFO_BASE = "https://www.bestfightodds.com"
 
 _RE_EVENT_URL   = re.compile(r'href="(/events/[^"]+)"', re.I)
 _RE_FIGHTER_ROW = re.compile(
-    r'<tr\s*>\s*<th[^>]*>\s*<a href="(/fighters/[^"]+)"[^>]*>\s*<span class="t-b-fcc">([^<]+)</span>',
+    r'<tr\b[^>]*>\s*<th[^>]*>.*?<a href="(/fighters/[^"]+)"[^>]*>\s*<span class="t-b-fcc">([^<]+)</span>',
     re.S,
 )
 _RE_FIGHTER_ODDS = re.compile(r'<td class="but-sg"[^>]*><span[^>]*>([\+\-]?\d+)</span>', re.S)
+_RE_MATCHUP_ID = re.compile(r'id="mu-(\d+)"', re.I)
+_RE_DATA_LI = re.compile(r'data-li="\[(\d+),(\d+),(\d+)\]"', re.I)
 _RE_PROP_ROW     = re.compile(r'<tr class="pr"', re.I)
 
 
@@ -1290,15 +1413,11 @@ def _bfo_extract_h2h_fights(html: str) -> list[dict]:
     # Strategy: split the HTML at each <tr...> tag, classify each chunk.
     
     tr_split = re.split(r'(?=<tr[\s>])', html, flags=re.I)
-    
-    fights: list[dict] = []
-    pending: dict | None = None   # first fighter in current bout
+    rows_by_matchup: dict[str, dict[int, tuple[str, Optional[int]]]] = {}
 
     for chunk in tr_split:
         # Skip prop rows
         if re.match(r'<tr\s+class="pr"', chunk, re.I):
-            # A prop row between two fighter rows resets the pairing
-            # (don't reset pending - props appear AFTER the fight rows pair)
             continue
 
         # Is this a fighter row?
@@ -1316,22 +1435,31 @@ def _bfo_extract_h2h_fights(html: str) -> list[dict]:
             return 100.0 / (o + 100.0) if o >= 0 else (-o) / (-o + 100.0)
 
         best_odds: int | None = min(raw_odds, key=_impl) if raw_odds else None
+        data_li = _RE_DATA_LI.search(chunk)
+        row_id = _RE_MATCHUP_ID.search(chunk)
+        matchup_id = data_li.group(3) if data_li else (row_id.group(1) if row_id else None)
+        side = int(data_li.group(2)) if data_li else (1 if row_id else None)
+        if matchup_id is None or side not in (1, 2):
+            continue
 
-        if pending is None:
-            pending = {
-                "f1_display": fighter_name,
-                "f1_url":     fighter_url,
-                "odds1":      best_odds,
-            }
-        else:
-            fights.append({
-                "f1_display": pending["f1_display"],
-                "f2_display": fighter_name,
-                "odds1":      pending["odds1"],
-                "odds2":      best_odds,
-            })
-            pending = None
+        matchup_rows = rows_by_matchup.setdefault(matchup_id, {})
+        existing = matchup_rows.get(side)
+        if existing is None or int(best_odds is not None) >= int(existing[1] is not None):
+            matchup_rows[side] = (fighter_name, best_odds)
 
+    fights: list[dict] = []
+    for matchup_id in sorted(rows_by_matchup):
+        matchup_rows = rows_by_matchup[matchup_id]
+        if 1 not in matchup_rows or 2 not in matchup_rows:
+            continue
+        (f1_name, odds1) = matchup_rows[1]
+        (f2_name, odds2) = matchup_rows[2]
+        fights.append({
+            "f1_display": f1_name,
+            "f2_display": f2_name,
+            "odds1": odds1,
+            "odds2": odds2,
+        })
     return fights
 
 
@@ -1407,9 +1535,6 @@ def _bfo_two_sided_odds(
         if c not in df.columns:
             raise RuntimeError(f"BFO odds source requires column {c!r} in the dataset")
 
-    fighter_col = "fighter_name_plain" if "fighter_name_plain" in df.columns else "fighter_name"
-    opponent_col = "opponent_name_plain" if "opponent_name_plain" in df.columns else "opponent_name"
-
     logger.info(f"BFO: fetching upcoming events for promotion='{promotion_filter}'...")
     events_meta, all_fights = _bfo_fetch_upcoming_events(promotion_filter=promotion_filter)
 
@@ -1422,13 +1547,14 @@ def _bfo_two_sided_odds(
     # Build lookup: norm_pair → (odds1, odds2)
     pair_lookup: dict[tuple[str, str], tuple[int | None, int | None]] = {}
     for fight in all_fights:
-        n1 = _norm_name(fight.get("f1_display") or "")
-        n2 = _norm_name(fight.get("f2_display") or "")
+        raw_n1 = fight.get("f1_display") or ""
+        raw_n2 = fight.get("f2_display") or ""
+        n1 = _norm_name(raw_n1)
+        n2 = _norm_name(raw_n2)
         if not n1 or not n2:
             continue
         o1, o2 = fight.get("odds1"), fight.get("odds2")
-        pair_lookup[(n1, n2)] = (o1, o2)
-        pair_lookup[(n2, n1)] = (o2, o1)
+        _store_two_sided_pair(pair_lookup, [raw_n1], [raw_n2], o1, o2)
 
     # Optionally also fetch individual event pages for events with no odds yet
     if not pair_lookup and events_meta:
@@ -1438,12 +1564,19 @@ def _bfo_two_sided_odds(
                 ev_html = _bfo_fetch_html(ev_meta["url"])
                 ev_fights = _bfo_extract_h2h_fights(ev_html)
                 for fight in ev_fights:
-                    n1 = _norm_name(fight.get("f1_display") or "")
-                    n2 = _norm_name(fight.get("f2_display") or "")
+                    raw_n1 = fight.get("f1_display") or ""
+                    raw_n2 = fight.get("f2_display") or ""
+                    n1 = _norm_name(raw_n1)
+                    n2 = _norm_name(raw_n2)
                     if not n1 or not n2:
                         continue
-                    pair_lookup[(n1, n2)] = (fight.get("odds1"), fight.get("odds2"))
-                    pair_lookup[(n2, n1)] = (fight.get("odds2"), fight.get("odds1"))
+                    _store_two_sided_pair(
+                        pair_lookup,
+                        [raw_n1],
+                        [raw_n2],
+                        fight.get("odds1"),
+                        fight.get("odds2"),
+                    )
             except Exception as e:
                 logger.warning(f"BFO: failed to fetch event page {ev_meta['url']}: {e}")
 
@@ -1456,22 +1589,11 @@ def _bfo_two_sided_odds(
     opponent_odds = np.full(len(df), np.nan, dtype=float)
 
     for i in range(len(df)):
-        fn = _norm_name(df[fighter_col].iat[i])
-        on = _norm_name(df[opponent_col].iat[i])
-        if not fn or not on:
-            continue
-
-        pair = pair_lookup.get((fn, on))
-        if pair is None:
-            all_names = {k[0] for k in pair_lookup}
-            close = difflib.get_close_matches(fn, all_names, n=1, cutoff=0.80)
-            if close:
-                matched = close[0]
-                opp_names = {k[1] for k in pair_lookup if k[0] == matched}
-                close2 = difflib.get_close_matches(on, opp_names, n=1, cutoff=0.80)
-                if close2:
-                    pair = pair_lookup.get((matched, close2[0]))
-
+        pair = _lookup_two_sided_pair(
+            pair_lookup,
+            _row_name_values(df, "fighter", i),
+            _row_name_values(df, "opponent", i),
+        )
         if pair is None:
             continue
 
@@ -2432,63 +2554,74 @@ def main() -> None:
             if odds_df.empty:
                 logger.info("No upcoming/unlabeled fights found; skipping odds fetch")
             else:
-                used_source = args.odds_source
-                try:
-                    if args.odds_source == "bestfightodds":
-                        f_sub, o_sub = _bfo_two_sided_odds(
-                            df=odds_df,
+                def _fightodds_start(df_part: pd.DataFrame) -> str:
+                    if args.fightodds_start_date:
+                        return args.fightodds_start_date
+                    dmin = pd.to_datetime(df_part["event_date"], errors="coerce").min() if not df_part.empty else pd.NaT
+                    if pd.isna(dmin):
+                        return (today.date() - timedelta(days=7)).strftime("%Y-%m-%d")
+                    return (pd.to_datetime(dmin).date() - timedelta(days=7)).strftime("%Y-%m-%d")
+
+                def _fetch_external_odds(source_name: str, df_part: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
+                    if source_name == "bestfightodds":
+                        return _bfo_two_sided_odds(
+                            df=df_part,
                             promotion_filter=args.bfo_promotion_filter,
                             odds_format=args.odds_format,
                         )
-                    else:
-                        # legacy fightodds path (may fail if they went fully premium)
-                        if args.fightodds_start_date:
-                            start_date = args.fightodds_start_date
-                        else:
-                            dmin = pd.to_datetime(odds_df["event_date"], errors="coerce").min() if not odds_df.empty else pd.NaT
-                            if pd.isna(dmin):
-                                start_date = (today.date() - timedelta(days=7)).strftime("%Y-%m-%d")
-                            else:
-                                start_date = (pd.to_datetime(dmin).date() - timedelta(days=7)).strftime("%Y-%m-%d")
-                        f_sub, o_sub = _fightodds_two_sided_odds(
-                            df=odds_df,
+                    if source_name == "fightodds":
+                        return _fightodds_two_sided_odds(
+                            df=df_part,
                             promotion_slug=args.fightodds_promotion_slug,
                             sportsbooks=args.sportsbook,
                             odds_format=args.odds_format,
-                            start_date=start_date,
+                            start_date=_fightodds_start(df_part),
                         )
-                except Exception as e:
-                    logger.warning(f"Primary odds fetch ({args.odds_source}) failed: {e}")
-                    if args.odds_fallback == "fightodds":
-                        logger.info("Trying FightOdds (free GraphQL) fallback...")
-                        if args.fightodds_start_date:
-                            fb_start_date = args.fightodds_start_date
-                        else:
-                            dmin = pd.to_datetime(odds_df["event_date"], errors="coerce").min() if not odds_df.empty else pd.NaT
-                            if pd.isna(dmin):
-                                fb_start_date = (today.date() - timedelta(days=7)).strftime("%Y-%m-%d")
-                            else:
-                                fb_start_date = (pd.to_datetime(dmin).date() - timedelta(days=7)).strftime("%Y-%m-%d")
-                        f_sub, o_sub = _fightodds_two_sided_odds(
-                            df=odds_df,
-                            promotion_slug=args.fightodds_promotion_slug,
-                            sportsbooks=args.sportsbook,
-                            odds_format=args.odds_format,
-                            start_date=fb_start_date,
-                        )
-                        used_source = "fightodds"
-                    elif args.odds_fallback == "oddsapi":
-                        logger.info("Trying The Odds API fallback...")
-                        f_sub, o_sub = _oddsapi_two_sided_odds(
-                            df=odds_df,
+                    if source_name == "oddsapi":
+                        return _oddsapi_two_sided_odds(
+                            df=df_part,
                             api_key=str(args.the_odds_api_key or "").strip(),
                             sport_key=args.the_odds_api_sport_key,
                             regions=args.the_odds_api_regions,
                             odds_format=args.odds_format,
                         )
-                        used_source = "oddsapi"
+                    raise RuntimeError(f"Unsupported odds source {source_name!r}")
+
+                used_source = args.odds_source
+                try:
+                    f_sub, o_sub = _fetch_external_odds(args.odds_source, odds_df)
+                    _log_odds_match_coverage(odds_df, f_sub, o_sub, source=args.odds_source)
+                except Exception as e:
+                    logger.warning(f"Primary odds fetch ({args.odds_source}) failed: {e}")
+                    if args.odds_fallback != "none":
+                        logger.info(f"Trying {args.odds_fallback} fallback...")
+                        f_sub, o_sub = _fetch_external_odds(args.odds_fallback, odds_df)
+                        used_source = args.odds_fallback
+                        _log_odds_match_coverage(odds_df, f_sub, o_sub, source=used_source)
                     else:
                         raise
+
+                fallback_source = args.odds_fallback
+                if (
+                    fallback_source not in ("none", used_source)
+                    and len(odds_df) > 0
+                ):
+                    missing_mask = ~(np.isfinite(f_sub) & np.isfinite(o_sub))
+                    if np.any(missing_mask):
+                        logger.info(
+                            f"Topping up missing odds from {fallback_source} for "
+                            f"{int(np.sum(missing_mask))}/{len(odds_df)} upcoming rows"
+                        )
+                        fallback_df = odds_df.loc[missing_mask].copy()
+                        try:
+                            f_fb, o_fb = _fetch_external_odds(fallback_source, fallback_df)
+                            _log_odds_match_coverage(fallback_df, f_fb, o_fb, source=f"{fallback_source} top-up")
+                            missing_idx = np.where(missing_mask)[0]
+                            f_sub[missing_idx] = np.where(np.isfinite(f_fb), f_fb, f_sub[missing_idx])
+                            o_sub[missing_idx] = np.where(np.isfinite(o_fb), o_fb, o_sub[missing_idx])
+                            _log_odds_match_coverage(odds_df, f_sub, o_sub, source=f"{used_source}+{fallback_source}")
+                        except Exception as e:
+                            logger.warning(f"Fallback top-up ({fallback_source}) failed: {e}")
 
                 pos = np.where(upcoming_mask.to_numpy(dtype=bool, copy=False))[0]
                 fighter_odds[pos] = np.asarray(f_sub, dtype=float)
