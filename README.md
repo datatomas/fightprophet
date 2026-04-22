@@ -41,7 +41,7 @@ src/ml_kuda_sports_lab/etl/silver/      Public data-shaping layer
 src/ml_kuda_sports_lab/etl/gold/        Public ranking + feature logic
 datasets/manual_overrides/              Manual override examples and notes
 .github/workflows/                      CI and open-source sync workflows
-docker-compose.md                       Compose notes for container-based runs
+docker-compose.yml                      Compose file for container-based runs
 ```
 
 ## Quick start
@@ -83,7 +83,7 @@ streamlit run src/ml_kuda_sports_lab/front_end/mma_front_streamlit.py
 If you want more frontend context, see:
 
 - [streamlit.md](src/ml_kuda_sports_lab/front_end/streamlit.md)
-- [docker-compose.md](docker-compose.md)
+- `docker-compose.yml`
 
 ## Good first contribution areas
 
@@ -133,7 +133,6 @@ If you open an issue or PR, context is appreciated. Explain what feels broken, c
 
 ## Repo docs
 
-- [docker-compose.md](docker-compose.md)
 - [datasets/manual_overrides/readme.md](datasets/manual_overrides/readme.md)
 - [streamlit.md](src/ml_kuda_sports_lab/front_end/streamlit.md)
 
