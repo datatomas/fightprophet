@@ -4429,8 +4429,8 @@ def page_upcoming() -> None:
                 "- **🟢 STRONG**: Higher-confidence signal based on model edge and agreement; shortlist first.",
                 "- **🟡 MEDIUM**: Possible value, but needs extra checks (injuries, style matchup, line movement).",
                 "- **⚪ WEAK**: Low edge/noisy setup; usually a pass.",
-                "- **✅ Recommended Bet**: Passed model thresholds; not a guaranteed outcome.",
-                "- **Quick check**: If `Model Prob` is clearly above `Market Prob`, edge is stronger.",
+                "- **✅ Recommended Bet**: Passed internal thresholds, but value bets are still high-variance and can lose often.",
+                "- **Quick check**: `Model` bars show win probability for each fighter. `Best Betting Value` is only the side that looks most mispriced versus the market.",
             ]
         )
     )
@@ -4535,18 +4535,50 @@ def _render_fight_card(row: pd.Series) -> None:
 
         # Prediction summary row
         if bet_on:
-            edge_pct = f"{edge:+.1%}" if edge is not None and not pd.isna(edge) else "—"
-            market_str = f"{market_prob:.1%}" if market_prob is not None and not pd.isna(market_prob) else "—"
+            fighter_name = "" if fighter is None else str(fighter).strip()
+            opponent_name = "" if opponent is None else str(opponent).strip()
+            bet_on_name = "" if bet_on is None else str(bet_on).strip()
+            bet_on_fighter_side = bet_on_name == fighter_name
+            likely_winner_name = fighter_name
+            likely_winner_prob = model_prob
+            if model_prob is not None and not pd.isna(model_prob) and float(model_prob) < 0.5:
+                likely_winner_name = opponent_name
+                likely_winner_prob = 1.0 - float(model_prob)
 
-            rec_badge = "✅ Recommended" if recommended else ""
+            market_prob_bet_side = market_prob
+            if market_prob is not None and not pd.isna(market_prob) and not bet_on_fighter_side:
+                market_prob_bet_side = 1.0 - float(market_prob)
+
+            edge_pct = f"{edge:+.1%}" if edge is not None and not pd.isna(edge) else "—"
+            market_str = (
+                f"{float(market_prob_bet_side):.1%}"
+                if market_prob_bet_side is not None and not pd.isna(market_prob_bet_side)
+                else "—"
+            )
+
+            rec_badge = "✅ Threshold Passed" if recommended else ""
             bet_on_label = _fighter_profile_link(bet_on) if bet_on else ""
+            likely_winner_label = _fighter_profile_link(likely_winner_name) if likely_winner_name else ""
+            likely_winner_str = (
+                f"{float(likely_winner_prob):.1%}"
+                if likely_winner_prob is not None and not pd.isna(likely_winner_prob)
+                else "—"
+            )
             st.markdown(
-                f"{icon} **Pick: {bet_on_label}** &nbsp;|&nbsp; "
+                f"**Most Likely Winner: {likely_winner_label}** "
+                f"({likely_winner_str})",
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                f"{icon} **Best Betting Value: {bet_on_label}** &nbsp;|&nbsp; "
                 f"Edge: `{edge_pct}` &nbsp;|&nbsp; "
-                f"Market: `{market_str}` &nbsp;|&nbsp; "
+                f"Bet-Side Market: `{market_str}` &nbsp;|&nbsp; "
                 f"Signal: **{signal}** {rec_badge}"
                 ,
                 unsafe_allow_html=True,
+            )
+            st.caption(
+                "Best Betting Value is a market-price signal, not a safe outcome prediction."
             )
         st.markdown("---")
 
