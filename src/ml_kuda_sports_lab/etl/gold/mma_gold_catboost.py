@@ -217,9 +217,9 @@ def parse_args() -> argparse.Namespace:
 
     p.add_argument(
         "--odds-fallback",
-        choices=["none", "oddsapi"],
-        default="oddsapi",
-        help="Fallback provider when --odds-source fightodds fails.",
+        choices=["none", "oddsapi", "fightodds"],
+        default="fightodds",
+        help="Fallback provider when --odds-source primary fails or returns 0 matches.",
     )
     p.add_argument(
         "--the-odds-api-key",
@@ -1483,6 +1483,11 @@ def _bfo_two_sided_odds(
 
     matched = int(np.sum(np.isfinite(fighter_odds)))
     logger.info(f"BFO: matched odds for {matched}/{len(df)} rows")
+    if matched == 0:
+        raise RuntimeError(
+            f"BFO returned no fighter-name matches for {len(df)} upcoming rows. "
+            "Either the card isn't priced on BestFightOdds yet, or fighter names diverged."
+        )
     return fighter_odds, opponent_odds
 # -----------------------------
 # Signals / recommendation
@@ -2454,7 +2459,25 @@ def main() -> None:
                         )
                 except Exception as e:
                     logger.warning(f"Primary odds fetch ({args.odds_source}) failed: {e}")
-                    if args.odds_fallback == "oddsapi":
+                    if args.odds_fallback == "fightodds":
+                        logger.info("Trying FightOdds (free GraphQL) fallback...")
+                        if args.fightodds_start_date:
+                            fb_start_date = args.fightodds_start_date
+                        else:
+                            dmin = pd.to_datetime(odds_df["event_date"], errors="coerce").min() if not odds_df.empty else pd.NaT
+                            if pd.isna(dmin):
+                                fb_start_date = (today.date() - timedelta(days=7)).strftime("%Y-%m-%d")
+                            else:
+                                fb_start_date = (pd.to_datetime(dmin).date() - timedelta(days=7)).strftime("%Y-%m-%d")
+                        f_sub, o_sub = _fightodds_two_sided_odds(
+                            df=odds_df,
+                            promotion_slug=args.fightodds_promotion_slug,
+                            sportsbooks=args.sportsbook,
+                            odds_format=args.odds_format,
+                            start_date=fb_start_date,
+                        )
+                        used_source = "fightodds"
+                    elif args.odds_fallback == "oddsapi":
                         logger.info("Trying The Odds API fallback...")
                         f_sub, o_sub = _oddsapi_two_sided_odds(
                             df=odds_df,
