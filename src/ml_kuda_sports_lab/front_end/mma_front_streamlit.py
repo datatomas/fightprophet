@@ -4021,7 +4021,7 @@ def _ui_copy_pack() -> dict[str, object]:
     packs: dict[str, dict[str, object]] = {
         "en": {
             "hero_title": "Fight Prophet",
-            "hero_sub": "Fight Prophet makes MMA analytics easy to read: upcoming picks, model diagnostics, rankings, belt holders, title-vacate overrides, and fighter profiles in one place.",
+            "hero_sub": "Fight Prophet makes MMA analytics easy to read: upcoming picks, model diagnostics, rankings, belt holders, and fighter profiles in one place.",
             "hero_badge": "For information and education only — never financial advice.",
             "tabs": ["How to use", "Model engine", "Risk controls"],
             "how_intro": "Simple workflow for new users:",
@@ -4055,7 +4055,7 @@ def _ui_copy_pack() -> dict[str, object]:
         },
         "es": {
             "hero_title": "Fight Prophet",
-            "hero_sub": "Fight Prophet simplifica la analítica MMA: picks próximos, diagnóstico de modelos, rankings, cinturones, vacantes manuales y perfiles en un solo lugar.",
+            "hero_sub": "Fight Prophet facilita la analítica de MMA: picks próximos, diagnóstico de modelos, rankings, cinturones y perfiles en un solo lugar.",
             "hero_badge": "Solo para información y educación — nunca asesoría financiera.",
             "tabs": ["Cómo usar", "Motor del modelo", "Controles de riesgo"],
             "how_intro": "Flujo simple para nuevos usuarios:",
@@ -4089,7 +4089,7 @@ def _ui_copy_pack() -> dict[str, object]:
         },
         "pt": {
             "hero_title": "Fight Prophet",
-            "hero_sub": "Fight Prophet deixa a análise de MMA fácil de entender: previsões, diagnóstico de modelo, rankings, cinturões, vacâncias manuais e perfis em um só lugar.",
+            "hero_sub": "Fight Prophet deixa a análise de MMA fácil de entender: previsões, diagnóstico de modelo, rankings, cinturões e perfis em um só lugar.",
             "hero_badge": "Somente para informação e educação — nunca aconselhamento financeiro.",
             "tabs": ["Como usar", "Motor do modelo", "Controles de risco"],
             "how_intro": "Fluxo simples para novos usuários:",
@@ -4289,6 +4289,10 @@ def page_home() -> None:
         <div class="fp-redirect-wrap">
             <h2>Welcome to Fight Prophet</h2>
             <p>
+                <strong>The fight data already knows who's getting smashed. We just highlight it.</strong><br /><br />
+                Fight Prophet makes MMA analytics easy to read: upcoming picks, model diagnostics,
+                rankings, belt holders, and fighter profiles in one place.
+                <br /><br />
                 The home page has moved to
                 <a href="https://fightprophet.com" target="_blank" rel="noopener noreferrer">fightprophet.com</a>.
                 Use the sidebar to navigate directly to Upcoming Predictions, Fight Lab, Rankings, and more.
