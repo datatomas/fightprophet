@@ -1,108 +1,144 @@
-# Fight Prophet (Open-Source Module)
+# Fight Prophet Community Repo
 
-**Fight Prophet** is a UFC/MMA prediction platform.  
-This repository currently open-sources a **limited module** of the system: ranking logic, feature engineering, and model training components.
+Fight Prophet is an MMA analytics project focused on making fight data easier to explore, discuss, and build on.
 
-> This is **not** the full production codebase.
+This repository is the community-facing layer of the project. It includes the public website, the Streamlit app, and selected data-prep and ranking logic that are useful for contributors, designers, analysts, and curious MMA fans who want to help shape the product.
 
----
+## Why this repo exists
 
-## Why Contribute?
+We want Fight Prophet to feel open, collaborative, and useful even if not every production detail is public.
 
-MMA prediction is a hard problem. The models in this repo improve when more people stress-test the feature engineering, experiment with alternative architectures, and surface edge cases the current pipeline misses.
+This repo is meant to help the community:
 
-If you improve the ranking logic or find a better modeling approach here, that improvement flows into the public module — and you get credited for it. The scrapers, orchestration, and production data stay private, but the science is open.
+- improve the user experience
+- contribute copy, layouts, and content
+- explore rankings and feature ideas
+- suggest better ways to present MMA data
+- build trust around the product direction
 
-Good contributions we're looking for:
-- Better feature engineering ideas (fighter styles, matchup dynamics, late-notice effects)
-- Alternative model architectures or ensemble strategies
-- Diagnostic tooling and evaluation improvements
-- Documentation and methodology corrections
+## What is included
 
-See [LICENSE.md](LICENSE.md) for terms — personal, non-commercial, and evaluation use is freely allowed.
+The current public surface area includes:
 
----
+- the Astro site in `astro_adsense_starter/`
+- the Streamlit app in `src/ml_kuda_sports_lab/front_end/`
+- selected `silver` data-shaping logic
+- selected `gold` ranking and feature logic
+- frontend docs and deployment-friendly config files
 
-## Open-Source Scope (Current)
+## What is intentionally not the focus here
 
-This repo currently includes and maintains the following files, automatically synced via GitHub Actions on every push to `main`:
+This repository is centered on the community/product layer, not every internal production detail.
 
-| Layer | File | Purpose |
-|---|---|---|
-| Silver | `etl/silver/mma_silver_etl.py` | Silver layer ETL transformations |
-| Silver | `etl/silver/mma_silver_schema.py` | Silver schema definitions |
-| Gold | `etl/gold/mma_gold_ranking.py` | Fighter/fight ranking generation |
-| Gold | `etl/gold/mma_gold_features.py` | Gold feature engineering |
-| Gold | `etl/gold/mma_gold_catboost.py` | CatBoost training pipeline |
-| Gold | `etl/gold/mma_gold_catboost_tune.py` | CatBoost hyperparameter tuning |
+That means the public README avoids low-level server operations, private deployment routines, and model-training internals that are better kept out of the main onboarding path.
 
----
+## Project layout
 
-## What This Module Covers
-
-### `mma_silver_etl.py` + `mma_silver_schema.py`
-Silver layer transformations and schema definitions — cleans and structures raw bronze data into a consistent format for downstream feature engineering.
-
-### `mma_gold_features.py`
-Builds the gold prefight feature table used as input to all models. This is where the core feature engineering lives — fighter stats, matchup deltas, streaks, and inactivity signals.
-
-### `mma_gold_ranking.py`
-Generates fighter and fight rankings used as additional input features downstream.
-
-### `mma_gold_catboost.py`
-Trains and scores UFC win/loss models using CatBoost (and optionally logistic regression).
-- Handles missing values natively via CatBoost
-- Reads tuned hyperparameters from DuckDB
-- Supports market odds blending and incremental scoring
-- CLI options for device selection (CPU/GPU), odds source, and more
-
-```bash
-python -m ml_kuda_sports_lab.etl.gold.mma_gold_catboost --help
+```text
+astro_adsense_starter/                  Astro marketing and landing site
+src/ml_kuda_sports_lab/front_end/       Streamlit dashboard and frontend docs
+src/ml_kuda_sports_lab/etl/silver/      Public data-shaping layer
+src/ml_kuda_sports_lab/etl/gold/        Public ranking + feature logic
+datasets/manual_overrides/              Manual override examples and notes
+.github/workflows/                      CI and open-source sync workflows
+docker-compose.md                       Compose notes for container-based runs
 ```
 
-### `mma_gold_catboost_tune.py`
-Hyperparameter tuning for the CatBoost model using Optuna. Run this before retraining to find optimal parameters, which are written back to DuckDB for the training pipeline to pick up.
+## Quick start
+
+### 1. Clone the repo
 
 ```bash
-python -m ml_kuda_sports_lab.etl.gold.mma_gold_catboost_tune --help
+git clone https://github.com/datatomas/fight_prophet.git
+cd fight_prophet
 ```
 
----
+### 2. Run the Astro site
 
-## How to Use
+```bash
+cd astro_adsense_starter
+npm ci
+npm run dev
+```
 
-1. **Set up your environment** — follow the setup instructions in `copilot-instructions.md` (activate the correct Python environment and set DuckDB paths)
-2. **Run feature engineering** — run `mma_gold_features.py` first to build the gold feature table
-3. **Tune hyperparameters** — run `mma_gold_catboost_tune.py` to find optimal parameters (written back to DuckDB)
-4. **Run model training** — use `mma_gold_catboost.py` with your preferred CLI arguments
-5. **Outputs** — model artifacts saved to the specified output directory; scored predictions written back to DuckDB for downstream use
+Useful files:
 
----
+- `astro_adsense_starter/src/pages/`
+- `astro_adsense_starter/src/components/`
+- `astro_adsense_starter/public/`
+- `astro_adsense_starter/README.md`
 
-## Not Included (Private)
+### 3. Run the Streamlit app
 
-The following are private and not part of this open-source release:
+From repo root:
 
-- Front end (not available yet)
-- Full ETL/lakehouse orchestration
-- Internal infra and deployment code
-- Production data assets and configs
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -U pip
+pip install -r requirements.front.txt
+streamlit run src/ml_kuda_sports_lab/front_end/mma_front_streamlit.py
+```
 
----
+If you want more frontend context, see:
 
-## License
+- [streamlit.md](src/ml_kuda_sports_lab/front_end/streamlit.md)
+- [docker-compose.md](docker-compose.md)
 
-This project is licensed under **[Business Source License 1.1 (BSL 1.1)](LICENSE.md)**.
+## Good first contribution areas
 
-**Plain English:** You can use, study, and contribute to this code freely for personal, non-commercial, and evaluation purposes. Commercial or production use requires a separate license. On **2030-01-01** this code converts to **GPL-2.0-or-later** and becomes fully open source.
+- improve navigation, layout, and mobile polish in Astro
+- improve usability in Streamlit
+- improve public docs and onboarding
+- improve labels, explanations, and MMA terminology for casual fans
+- improve ranking presentation and feature transparency
+- propose new public pages, content sections, or comparison views
 
-For commercial licensing inquiries contact: datatomas@uppercutanalytics.com
+## Design direction
 
----
+Fight Prophet should feel:
 
-## Contact
+- clear rather than overly academic
+- sharp and modern without looking generic
+- useful to serious fans, but readable for newcomers
+- opinionated in presentation, careful in claims
 
-- Business LinkedIn: https://www.linkedin.com/company/fight-prophet
-- Founder LinkedIn: https://www.linkedin.com/in/datatomas/
-- Business GitHub: https://github.com/datatomas/fight_prophet
-- Business Email: datatomas@uppercutanalytics.com
+## Community principles
+
+We want contributors who care about:
+
+- clarity
+- honesty
+- thoughtful product design
+- MMA domain curiosity
+- respectful collaboration
+
+If you open an issue or PR, context is appreciated. Explain what feels broken, confusing, misleading, or worth improving.
+
+## Public roadmap ideas
+
+- cleaner event-by-event prediction browsing
+- better fighter profile storytelling
+- richer public rankings pages
+- clearer methodology pages
+- community-requested comparison tools
+- more polished Astro content and landing flows
+
+## Notes for contributors
+
+- keep secrets and environment-specific values out of commits
+- avoid committing generated build output unless explicitly needed
+- prefer small, focused pull requests
+- optimize for readability and maintainability
+
+## Repo docs
+
+- [docker-compose.md](docker-compose.md)
+- [datasets/manual_overrides/readme.md](datasets/manual_overrides/readme.md)
+- [streamlit.md](src/ml_kuda_sports_lab/front_end/streamlit.md)
+
+## Vision
+
+Fight Prophet is not just a picks page.
+
+The long-term goal is to build a strong MMA analytics product with a real community around it: fans, builders, designers, analysts, and contributors who want better tools, better presentation, and a better conversation around fights.

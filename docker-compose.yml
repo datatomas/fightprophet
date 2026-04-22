@@ -1,0 +1,603 @@
+# Guardrails for scrape ordering:
+# 1) Always scrape events before fights (fights uses --events-source db).
+# 2) Always scrape fights before --refresh-stats (refresh is update-only).
+# 3) Run profile pipelines end-to-end; avoid running refresh-only services standalone.
+# 4) Sunday ML + publish order MUST be strictly sequential (DuckDB-safe, no concurrent writers):
+#    mma_manual_title_vacates_load
+#      -> mma_manual_title_vacates_upload
+#      -> ws_ufc_events_recent ... mma_silver_schema ... mma_gold_features
+#      -> mma_gold_ranking
+#      -> mma_gold_belt_holders
+#      -> mma_manual_fighter_countries_sync
+#      -> mma_gold_catboost_train_sunday_initial
+#      -> mma_gold_catboost_tune_sunday
+#      -> mma_gold_catboost_train_tuned
+#      -> mma_parquets_dashboard
+#      -> duckdb_disaster_clone_weekly (last)
+# 5) Enforce order with depends_on: condition: service_completed_successfully and restart: "no"
+#    so each next step starts only after previous exits successfully.
+# Host DB mount source is DUCK_HOST_DB_DIR (default: /home/ares/db/duck/warehouse).
+# Recommended shell setup: export DUCK_HOST_DB_DIR="$(dirname "$DUCK_WH_DB")"
+# Preferred centralized env source: /home/ares/.config/ml_kuda_sports_lab/pipeline.env (use with: docker compose --env-file ...)
+
+services:
+  mma_manual_title_vacates_load:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-gold-etl:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+      - ${ML_REPO_ROOT:-/home/ares/Documents/gitrepos/ml_kuda_sports_lab}:/workspace:ro
+    command: >
+      python3 -m ml_kuda_sports_lab.etl.gold.mma_gold_manual_title_vacates
+      --target prod
+      --rebuild
+      --csv-path /workspace/datasets/manual_overrides/ufc_title_vacates.csv
+    restart: "no"
+
+  mma_manual_title_vacates_upload:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-gold-etl:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      mma_manual_title_vacates_load:
+        condition: service_completed_successfully
+    environment:
+      - AZURE_STORAGE_ACCOUNT=${AZURE_STORAGE_ACCOUNT}
+      - AZURE_STORAGE_KEY=${AZURE_STORAGE_KEY}
+      - AZURE_STORAGE_CONTAINER=${AZURE_STORAGE_CONTAINER:-fightprophet-dashboard}
+    volumes:
+      - ${ML_REPO_ROOT:-/home/ares/Documents/gitrepos/ml_kuda_sports_lab}:/workspace:ro
+    command: >
+      python3 -m ml_kuda_sports_lab.etl.gold.mma_upload_manual_title_vacates
+      --csv-path /workspace/datasets/manual_overrides/ufc_title_vacates.csv
+    restart: "no"
+
+  ws_ufc_events_recent:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-bronze-webscraping:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      mma_manual_title_vacates_upload:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.webscraping.mmascrapers.ws_ufc_events_all
+      --target prod
+      --events past
+    restart: "no"
+
+  ws_ufc_events_upcoming:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-bronze-webscraping:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      ws_ufc_events_recent:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.webscraping.mmascrapers.ws_ufc_events_all
+      --target prod
+      --events upcoming
+    restart: "no"
+
+  ws_ufc_events_based_fighters_prod:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-bronze-webscraping:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      ws_ufc_events_upcoming:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.webscraping.mmascrapers.ws_ufc_events_based_fighters
+      --target prod
+      --threads 24
+      --concurrency 2
+      --days-back 90
+    restart: "no"
+
+  ws_ufc_events_based_fighters_upcoming:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-bronze-webscraping:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      ws_ufc_events_based_fighters_prod:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.webscraping.mmascrapers.ws_ufc_events_based_fighters
+      --target prod
+      --threads 24
+      --concurrency 2
+      --events upcoming
+    restart: "no"
+
+  ws_ufc_events_based_fights_recent:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-bronze-webscraping:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      ws_ufc_events_based_fighters_upcoming:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.webscraping.mmascrapers.ws_ufc_events_based_fights
+      --target prod
+      --mode recent
+      --fights completed
+      --events-source db
+    restart: "no"
+
+  ws_ufc_events_based_fights_upcoming:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-bronze-webscraping:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      ws_ufc_events_based_fights_recent:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.webscraping.mmascrapers.ws_ufc_events_based_fights
+      --target prod
+      --mode full
+      --status upcoming
+      --events-source db
+    restart: "no"
+
+  ws_ufc_events_based_fights_refresh_stats_recent:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-bronze-webscraping:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      ws_ufc_events_based_fights_upcoming:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.webscraping.mmascrapers.ws_ufc_events_based_fights
+      --target prod
+      --refresh-stats
+      --status completed
+      --mode recent
+      --events-source db
+    restart: "no"
+
+  mma_silver_schema:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-silver-etl:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      ws_ufc_events_based_fights_refresh_stats_recent:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.etl.silver.mma_silver_schema
+      --target prod
+    restart: "no"
+
+  mma_manual_fighter_countries_sync:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-gold-etl:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      mma_gold_belt_holders:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+      - ${ML_REPO_ROOT:-/home/ares/Documents/gitrepos/ml_kuda_sports_lab}:/workspace
+    command: >
+      python3 -m ml_kuda_sports_lab.etl.gold.mma_gold_fighter_countries
+      --target prod
+      --csv-path /workspace/datasets/manual_overrides/ufc_fighter_manual_country.csv
+    restart: "no"
+
+  mma_gold_features:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-gold-etl:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      mma_silver_schema:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.etl.gold.mma_gold_features
+      --target prod --rebuild
+    restart: "no"
+
+  mma_gold_ranking:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-gold-etl:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      mma_gold_features:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.etl.gold.mma_gold_ranking
+      --target prod
+    restart: "no"
+
+  mma_gold_belt_holders:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-gold-etl:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      mma_gold_ranking:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.etl.gold.mma_gold_belt_holders
+      --target prod
+      --rebuild
+    restart: "no"
+
+  ws_ufc_events_based_fights_full:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-bronze-webscraping:latest
+    entrypoint: []
+    profiles: ["monthly"]
+    depends_on:
+      ws_ufc_events_upcoming_monthly:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.webscraping.mmascrapers.ws_ufc_events_based_fights
+      --target prod
+      --mode full
+      --status completed
+      --limit-events 0
+      --limit-fights 0
+      --events-source db
+    restart: "no"
+
+  ws_ufc_events_recent_monthly:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-bronze-webscraping:latest
+    entrypoint: []
+    profiles: ["monthly"]
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.webscraping.mmascrapers.ws_ufc_events_all
+      --target prod
+      --events past
+    restart: "no"
+
+  ws_ufc_events_upcoming_monthly:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-bronze-webscraping:latest
+    entrypoint: []
+    profiles: ["monthly"]
+    depends_on:
+      ws_ufc_events_recent_monthly:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.webscraping.mmascrapers.ws_ufc_events_all
+      --target prod
+      --events upcoming
+    restart: "no"
+
+  ws_ufc_events_based_fights_refresh_stats_full:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-bronze-webscraping:latest
+    entrypoint: []
+    profiles: ["monthly"]
+    depends_on:
+      ws_ufc_events_based_fights_full:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.webscraping.mmascrapers.ws_ufc_events_based_fights
+      --target prod
+      --refresh-stats
+      --status completed
+      --mode full
+      --events-source db
+    restart: "no"
+
+  ws_ufc_fighters_full:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-bronze-webscraping:latest
+    entrypoint: []
+    profiles: ["monthly"]
+    depends_on:
+      ws_ufc_events_based_fights_refresh_stats_full:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.webscraping.mmascrapers.ws_ufc_fighters_all
+      --target prod
+      --type urls,fighters,stats
+    restart: "no"
+
+  duckdb_disaster_clone:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-duckdb:latest
+    profiles: ["monthly"]
+    depends_on:
+      ws_ufc_fighters_full:
+        condition: service_completed_successfully
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    environment:
+      - DB_SCRIPT_NAME=duckdb_disaster_clone.py
+      - DB_SCRIPT_ARGS=/data/db/sports_ml_warehouse.duckdb /data/db/drdb /data/db/drdatasets
+    restart: "no"
+
+  duckdb_disaster_clone_weekly:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-duckdb:latest
+    profiles: ["sunday"]
+    depends_on:
+      mma_parquets_dashboard:
+        condition: service_completed_successfully
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    environment:
+      - DB_SCRIPT_NAME=duckdb_disaster_clone.py
+      - DB_SCRIPT_ARGS=/data/db/sports_ml_warehouse.duckdb /data/db/drdb /data/db/drdatasets
+    restart: "no"
+
+  duckdb_dev_clone:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-duckdb:latest
+    profiles: ["monthly"]
+    depends_on:
+      duckdb_disaster_clone:
+        condition: service_completed_successfully
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    environment:
+      - DB_SCRIPT_NAME=duckdb_disaster_clone.py
+      - DB_SCRIPT_ARGS=/data/db/dev_sports_ml_warehouse.duckdb /data/db/drdb /data/db/drdatasets
+    restart: "no"
+
+  mma_gold_catboost_train:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-gold-etl:latest
+    entrypoint: []
+    profiles: ["manual"]
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+      - /home/ares/Documents/uppercutanalytics/models:/root/Documents/uppercutanalytics/models
+    command: >
+      python3 -m ml_kuda_sports_lab.etl.gold.mma_gold_catboost
+      --target prod
+      --model all
+      --rebuild
+      --overwrite-trainall
+      --min-event-date 1995-01-01
+      --min-feature-coverage 0.0
+      --odds-source bestfightodds
+      --odds-format american
+      --sportsbook Pinnacle
+      --sportsbook Stake
+      --sportsbook DraftKings
+      --sportsbook FanDuel
+      --sportsbook BetMGM
+      --odds-fallback fightodds
+      --market-blend-weight 0.70
+      --strong-min-edge 0.08
+      --strong-min-agreement 0.80
+      --medium-min-edge 0.04
+      --medium-min-agreement 0.65
+    restart: "no"
+
+  mma_gold_catboost_tune:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-gold-etl:latest
+    entrypoint: []
+    profiles: ["manual"]
+    shm_size: "4g"
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.etl.gold.mma_gold_catboost_tune
+      --target prod
+      --n-trials 250
+      --metric auc
+      --device cuda
+      --min-event-date 1995-01-01
+      --min-feature-coverage 0.0
+    restart: "no"
+
+  mma_gold_catboost_train_sunday_initial:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-gold-etl:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      mma_manual_fighter_countries_sync:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+      - /home/ares/Documents/uppercutanalytics/models:/root/Documents/uppercutanalytics/models
+    command: >
+      python3 -m ml_kuda_sports_lab.etl.gold.mma_gold_catboost
+      --target prod
+      --model all
+      --rebuild
+      --overwrite-trainall
+      --min-event-date 1995-01-01
+      --min-feature-coverage 0.0
+      --odds-source bestfightodds
+      --odds-format american
+      --sportsbook Pinnacle
+      --sportsbook Stake
+      --sportsbook DraftKings
+      --sportsbook FanDuel
+      --sportsbook BetMGM
+      --odds-fallback fightodds
+      --market-blend-weight 0.70
+      --strong-min-edge 0.08
+      --strong-min-agreement 0.80
+      --medium-min-edge 0.04
+      --medium-min-agreement 0.65
+    restart: "no"
+
+  mma_gold_catboost_tune_sunday:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-gold-etl:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    shm_size: "4g"
+    depends_on:
+      mma_gold_catboost_train_sunday_initial:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+    command: >
+      python3 -m ml_kuda_sports_lab.etl.gold.mma_gold_catboost_tune
+      --target prod
+      --n-trials 250
+      --metric auc
+      --device cuda
+      --min-event-date 1995-01-01
+      --min-feature-coverage 0.0
+    restart: "no"
+
+  mma_gold_catboost_train_tuned:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-gold-etl:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      mma_gold_catboost_tune_sunday:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+      - /home/ares/Documents/uppercutanalytics/models:/root/Documents/uppercutanalytics/models
+    command: >
+      python3 -m ml_kuda_sports_lab.etl.gold.mma_gold_catboost
+      --target prod
+      --model all
+      --rebuild
+      --overwrite-trainall
+      --min-event-date 1995-01-01
+      --min-feature-coverage 0.0
+      --odds-source bestfightodds
+      --odds-format american
+      --sportsbook Pinnacle
+      --sportsbook Stake
+      --sportsbook DraftKings
+      --sportsbook FanDuel
+      --sportsbook BetMGM
+      --odds-fallback fightodds
+      --market-blend-weight 0.70
+      --strong-min-edge 0.08
+      --strong-min-agreement 0.80
+      --medium-min-edge 0.04
+      --medium-min-agreement 0.65
+    restart: "no"
+
+  mma_parquets_dashboard:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-gold-etl:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      mma_gold_catboost_train_tuned:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+      - PYTHONPATH=/workspace/src
+      - AZURE_STORAGE_ACCOUNT=${AZURE_STORAGE_ACCOUNT}
+      - AZURE_STORAGE_KEY=${AZURE_STORAGE_KEY}
+      - AZURE_STORAGE_CONTAINER=${AZURE_STORAGE_CONTAINER:-fightprophet-dashboard}
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+      - ${ML_REPO_ROOT:-/home/ares/Documents/gitrepos/ml_kuda_sports_lab}:/workspace:ro
+    command: >
+      python3 -m ml_kuda_sports_lab.etl.gold.mma_parquets_dashboard
+      --target prod
+      --dataset all
+      --prefix mma/diamond
+      --parquet-base az://fightprophet-dashboard
+    restart: "no"
+
+  mma_parquets_dashboard_manual:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-gold-etl:latest
+    entrypoint: []
+    profiles: ["manual"]
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+      - PYTHONPATH=/workspace/src
+      - AZURE_STORAGE_ACCOUNT=${AZURE_STORAGE_ACCOUNT}
+      - AZURE_STORAGE_KEY=${AZURE_STORAGE_KEY}
+      - AZURE_STORAGE_CONTAINER=${AZURE_STORAGE_CONTAINER:-fightprophet-dashboard}
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+      - ${ML_REPO_ROOT:-/home/ares/Documents/gitrepos/ml_kuda_sports_lab}:/workspace:ro
+    command: >
+      python3 -m ml_kuda_sports_lab.etl.gold.mma_parquets_dashboard
+      --target prod
+      --dataset all
+      --prefix mma/diamond
+      --parquet-base az://fightprophet-dashboard
+    restart: "no"

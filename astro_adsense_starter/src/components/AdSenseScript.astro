@@ -1,0 +1,12 @@
+---
+const enabled = import.meta.env.PUBLIC_ADSENSE_ENABLED === 'true';
+const client = import.meta.env.PUBLIC_ADSENSE_CLIENT ?? '';
+const shouldInject = enabled && client.startsWith('ca-pub-');
+---
+{shouldInject && (
+  <script
+    async
+    src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}`}
+    crossorigin="anonymous"
+  ></script>
+)}

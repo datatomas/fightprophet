@@ -1,0 +1,28 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AppSectionLanding from '../components/AppSectionLanding.astro';
+---
+
+<BaseLayout
+  title="Terms of Use | Fight Prophet"
+  description="Terms of use for Fight Prophet — an MMA analytics and prediction platform provided for information and education only, never as financial or betting advice."
+>
+  <AppSectionLanding
+    pageSlug="terms"
+    heading="Terms of Use"
+    intro="Fight Prophet is an open-source MMA analytics and prediction platform. Predictions, rankings, and model outputs are provided strictly for informational and educational purposes — they are not financial, gambling, or investment advice."
+    bullets={[
+      { title: 'Information only', body: 'Outputs help you understand probability and historical patterns; they do not guarantee any outcome.' },
+      { title: 'No betting advice', body: 'Decisions about wagers, bankroll, or risk are entirely your own responsibility.' },
+      { title: 'Data sourcing', body: 'Predictions are based on public fight data which may contain errors or omissions.' },
+      { title: 'Open source', body: 'Source code and methodology are open to community review and contribution.' },
+    ]}
+    whatYouWillSee={[
+      'Full terms of use as displayed in the application',
+      'Disclosure on data sources and modeling approach',
+      'Disclaimers on predictions and risk',
+      'Contact and contribution guidance',
+    ]}
+    ctaLabel="Open full terms in app"
+  />
+</BaseLayout>

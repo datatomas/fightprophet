@@ -1,0 +1,16 @@
+{
+  "name": "astro-adsense-starter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^12.6.0",
+    "@astrojs/sitemap": "^3.7.2",
+    "astro": "^5.2.0"
+  }
+}

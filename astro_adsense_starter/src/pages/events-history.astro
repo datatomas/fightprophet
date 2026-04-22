@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AppSectionLanding from '../components/AppSectionLanding.astro';
+---
+
+<BaseLayout
+  title="UFC & MMA Events History | Fight Prophet"
+  description="Browse historical UFC and MMA events with full fight cards, results, and model retro-predictions for each bout. A complete archive built for analytics, not just box scores."
+>
+  <AppSectionLanding
+    pageSlug="events-history"
+    heading="UFC & MMA Events History"
+    intro="Every tracked event in one place. Open a card to see the bouts, the official result, and how the model would have rated each fight in advance."
+    bullets={[
+      { title: 'Full event archive', body: 'Years of UFC and MMA events with fighters, results, and weight classes.' },
+      { title: 'Retro-predictions', body: 'See what the model would have said before each historical bout.' },
+      { title: 'Quick navigation', body: 'Jump from any event into individual fighter profiles or rankings.' },
+      { title: 'Event-level summaries', body: 'Card-wide hit rates and notable upsets surfaced automatically.' },
+    ]}
+    whatYouWillSee={[
+      'A chronological list of past events with fight cards',
+      'Per-fight result, method, and round',
+      'Model probability vs market probability for that night',
+      'Links into each fighter\'s profile and ranking history',
+    ]}
+  />
+</BaseLayout>

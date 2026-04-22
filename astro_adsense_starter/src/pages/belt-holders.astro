@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AppSectionLanding from '../components/AppSectionLanding.astro';
+---
+
+<BaseLayout
+  title="Current UFC Belt Holders & Title History | Fight Prophet"
+  description="Current UFC champions across every division plus full title history — title fights, defenses, vacancies, and lineage. Tracked and updated as belts change hands."
+>
+  <AppSectionLanding
+    pageSlug="belt-holders"
+    heading="UFC Belt Holders & Title History"
+    intro="Who's the champ in every division — right now. Open the section for the full title lineage, defenses, and vacancies for each weight class, including manual overrides for unusual cases."
+    bullets={[
+      { title: 'Current champions', body: 'A live view of who holds each major title.' },
+      { title: 'Title fight history', body: 'Every title bout per division, with outcome and method.' },
+      { title: 'Vacancies tracked', body: 'Manual overrides record vacates and interim situations cleanly.' },
+      { title: 'Lineage at a glance', body: 'Follow the belt across reigns and divisions over time.' },
+    ]}
+    whatYouWillSee={[
+      'Current belt holders across all weight classes',
+      'Past title fights with date, opponent, and outcome',
+      'Vacancy history and interim title context',
+      'Links into each champion\'s fighter profile',
+    ]}
+  />
+</BaseLayout>

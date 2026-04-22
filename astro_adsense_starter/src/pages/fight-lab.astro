@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AppSectionLanding from '../components/AppSectionLanding.astro';
+---
+
+<BaseLayout
+  title="Fight Lab — Historical MMA Picks & Model Metrics | Fight Prophet"
+  description="Backtest results for Fight Prophet's MMA prediction models — accuracy, F1, AUC, Brier score, log loss, and full historical pick logs across past UFC events."
+>
+  <AppSectionLanding
+    pageSlug="fight-lab"
+    heading="Fight Lab — Historical Picks & Model Metrics"
+    intro="Fight Lab is the model audit room. Every past prediction is logged with the actual outcome so you can validate calibration, accuracy, and edge across thousands of historical MMA bouts."
+    bullets={[
+      { title: 'Per-pick history', body: 'Every model prediction with the closing line, model probability, and final result.' },
+      { title: 'Calibration analysis', body: 'How often "70% picks" actually win 70% of the time — across the full dataset.' },
+      { title: 'Standard ML metrics', body: 'Accuracy, F1, AUC, Brier score, and log loss broken down by model variant.' },
+      { title: 'Model comparison', body: 'Ensemble vs CatBoost vs LogReg head-to-head on the same fights.' },
+    ]}
+    whatYouWillSee={[
+      'A searchable table of historical predictions with outcomes',
+      'Aggregate accuracy and edge metrics over time',
+      'Calibration curves comparing predicted vs actual win rates',
+      'Filter controls for date range, weight class, and event',
+    ]}
+  />
+</BaseLayout>

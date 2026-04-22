@@ -1,0 +1,107 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Fight Prophet',
+  description = 'AI-powered sports analytics and prediction insights',
+} = Astro.props as Props;
+
+const siteUrl = import.meta.env.PUBLIC_SITE_URL ?? 'https://fightprophet.com';
+const appUrl = import.meta.env.PUBLIC_APP_URL ?? 'https://app.fightprophet.com';
+const canonicalUrl = new URL(Astro.url.pathname, siteUrl).toString();
+const ogImageUrl = new URL('/branding/fightprophet_logo_white.png', siteUrl).toString();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href={canonicalUrl} />
+    <link rel="preconnect" href={appUrl} crossorigin />
+    <link rel="dns-prefetch" href={appUrl} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+    <link rel="icon" type="image/png" sizes="32x32" media="(prefers-color-scheme: dark)" href="/branding/white_ear_favicon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" media="(prefers-color-scheme: light)" href="/branding/ear_favicon_transparent.png" />
+    <link rel="icon" type="image/x-icon" media="(prefers-color-scheme: dark)" href="/branding/white_ear_favicon.ico" />
+    <link rel="icon" type="image/x-icon" media="(prefers-color-scheme: light)" href="/branding/ear_favicon_transparent.ico" />
+    <link id="dynamic-favicon" rel="icon" type="image/png" sizes="32x32" href="/branding/ear_favicon_transparent.png" />
+    <meta name="theme-color" content="#09090b" />
+    <title>{title}</title>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5085788292969536" crossorigin="anonymous"></script>
+    <script is:inline define:vars={{ appUrl }}>
+      // Prewarm the Streamlit app so Azure Container Apps cold-start finishes
+      // before the user clicks "Open App". Fires after the page has had a
+      // moment to render its own resources.
+      (() => {
+        if (typeof window === 'undefined') return;
+        const warm = () => {
+          try {
+            fetch(appUrl + '/_stcore/health', {
+              mode: 'no-cors',
+              credentials: 'omit',
+              cache: 'no-store',
+              keepalive: true,
+            }).catch(() => {});
+          } catch (e) { /* no-op */ }
+        };
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(warm, { timeout: 2500 });
+        } else {
+          setTimeout(warm, 1500);
+        }
+      })();
+    </script>
+    <script is:inline>
+      (() => {
+        const updateFavicon = () => {
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const favicon = document.getElementById('dynamic-favicon');
+          if (!favicon) return;
+          favicon.setAttribute('href', prefersDark ? '/branding/white_ear_favicon.png' : '/branding/ear_favicon_transparent.png');
+        };
+
+        updateFavicon();
+        const media = window.matchMedia('(prefers-color-scheme: dark)');
+        if (typeof media.addEventListener === 'function') {
+          media.addEventListener('change', updateFavicon);
+        } else if (typeof media.addListener === 'function') {
+          media.addListener(updateFavicon);
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <main>
+      <slot />
+    </main>
+  </body>
+</html>
+
+<style>
+  :global(html, body) {
+    margin: 0;
+    font-family: Inter, system-ui, sans-serif;
+    background: #09090b;
+    color: #f4f4f5;
+  }
+
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 1.25rem;
+  }
+</style>

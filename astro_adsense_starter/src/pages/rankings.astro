@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AppSectionLanding from '../components/AppSectionLanding.astro';
+---
+
+<BaseLayout
+  title="MMA Fighter Rankings by Division | Fight Prophet"
+  description="Data-driven MMA fighter rankings by weight class. See the model's pound-for-pound view, divisional risers and fallers, and the metrics behind every position."
+>
+  <AppSectionLanding
+    pageSlug="rankings"
+    heading="MMA Fighter Rankings"
+    intro="Fight Prophet ranks active MMA fighters within each division using model performance, recent results, and opponent strength. This is the data view of who is actually trending up — independent of promotional rankings."
+    bullets={[
+      { title: 'Divisional rankings', body: 'A ranked list per weight class, refreshed as new fight data lands.' },
+      { title: 'Risers and fallers', body: 'See who is climbing or dropping based on recent performance.' },
+      { title: 'Opponent-adjusted scoring', body: 'Wins over higher-ranked opponents weight more than padding records.' },
+      { title: 'Profile drill-down', body: 'Click any fighter to open a full statistical breakdown.' },
+    ]}
+    whatYouWillSee={[
+      'Top-ranked fighters per division with score and movement',
+      'A pound-for-pound view across all weight classes',
+      'Recent fight results that drove the latest movement',
+      'Direct links into each fighter\'s profile',
+    ]}
+  />
+</BaseLayout>

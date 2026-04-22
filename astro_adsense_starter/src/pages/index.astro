@@ -1,0 +1,1175 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AdSlot from '../components/AdSlot.astro';
+
+const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
+const subscribeEndpoint = import.meta.env.PUBLIC_SUBSCRIBE_ENDPOINT || '';
+const withPage = (slug: string) => `${appUrl}${appUrl.includes('?') ? '&' : '?'}page=${encodeURIComponent(slug)}`;
+const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'https://fightprophet.com').replace(/\/$/, '');
+interface NewsItem {
+  id: string;
+  title: string;
+  description: string;
+  datePublished: string;
+  url: string;
+  source: string;
+}
+
+const MMA_FEEDS = [
+  { name: 'MMA Fighting', url: 'https://www.mmafighting.com/rss/index.xml' },
+  { name: 'ESPN MMA', url: 'https://www.espn.com/espn/rss/mma/news' },
+];
+
+function stripHtml(input: string): string {
+  return input
+    .replace(/<!\[CDATA\[|\]\]>/g, '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function toIsoDate(input: string): string {
+  const parsed = new Date(input);
+  if (Number.isNaN(parsed.getTime())) return new Date().toISOString().slice(0, 10);
+  return parsed.toISOString().slice(0, 10);
+}
+
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 72) || 'mma-news';
+}
+
+function parseRssItems(xml: string, source: string, limit = 12): NewsItem[] {
+  const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, limit);
+
+  return itemMatches
+    .map((match, idx) => {
+      const itemXml = match[1] || '';
+      const titleRaw = itemXml.match(/<title>([\s\S]*?)<\/title>/i)?.[1] || '';
+      const descRaw = itemXml.match(/<description>([\s\S]*?)<\/description>/i)?.[1] || '';
+      const linkRaw = itemXml.match(/<link>([\s\S]*?)<\/link>/i)?.[1] || '';
+      const dateRaw = itemXml.match(/<pubDate>([\s\S]*?)<\/pubDate>/i)?.[1] || '';
+
+      const title = stripHtml(titleRaw) || 'MMA News Update';
+      const description = stripHtml(descRaw) || 'Latest MMA world update.';
+      const url = stripHtml(linkRaw) || siteUrl;
+      const datePublished = toIsoDate(stripHtml(dateRaw));
+
+      return {
+        id: `${slugify(title)}-${idx}`,
+        title,
+        description,
+        datePublished,
+        url,
+        source,
+      };
+    })
+    .filter((item) => !!item.title && !!item.url);
+}
+
+async function getMmaNewsItems(): Promise<NewsItem[]> {
+  const allItems: NewsItem[] = [];
+  const perFeed = 6;
+
+  for (const feed of MMA_FEEDS) {
+    try {
+      const response = await fetch(feed.url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36',
+        },
+      });
+      if (!response.ok) continue;
+      const xml = await response.text();
+      allItems.push(...parseRssItems(xml, feed.name, perFeed));
+    } catch {
+      continue;
+    }
+  }
+
+  const deduped = allItems
+    .filter((item, index, arr) => arr.findIndex((other) => other.url === item.url) === index)
+    .sort((a, b) => b.datePublished.localeCompare(a.datePublished))
+    .slice(0, 12);
+
+  if (deduped.length > 0) {
+    return deduped;
+  }
+
+  return [
+    {
+      id: 'mma-fallback-1',
+      title: 'MMA headlines are updating — source temporarily unavailable',
+      description: 'Latest MMA world feed is temporarily unavailable. Please check back shortly for refreshed fight news.',
+      datePublished: new Date().toISOString().slice(0, 10),
+      url: 'https://www.mmafighting.com',
+      source: 'MMA News',
+    },
+    {
+      id: 'mma-fallback-2',
+      title: 'Fight cards, rankings, and roster movement remain in focus',
+      description: 'Coverage includes event announcements, divisional developments, and key matchup updates across MMA.',
+      datePublished: new Date().toISOString().slice(0, 10),
+      url: 'https://www.mmafighting.com/latest-news',
+      source: 'MMA News',
+    },
+  ];
+}
+
+const newsItems = await getMmaNewsItems();
+
+const initialNews = newsItems[0];
+
+const newsStructuredData = newsItems.map((item) => ({
+  '@context': 'https://schema.org',
+  '@type': 'NewsArticle',
+  headline: item.title,
+  description: item.description,
+  datePublished: item.datePublished,
+  dateModified: item.datePublished,
+  author: {
+    '@type': 'Organization',
+    name: 'Fight Prophet',
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Fight Prophet',
+    logo: {
+      '@type': 'ImageObject',
+      url: `${siteUrl}/branding/fightprophet_logo_white.png`,
+    },
+  },
+  mainEntityOfPage: `${siteUrl}/#news-${item.id}`,
+  url: `${siteUrl}/#news-${item.id}`,
+}));
+---
+
+<BaseLayout title="Fight Prophet | Home" description="MMA AI and ML-powered fight analytics, predictions, fighter rankings, and model insights to help fight fans bet smarter.">
+  <section class="fp-hero">
+    <div class="fp-hero-top">
+      <div class="fp-hero-top-controls">
+        <div class="fp-lang-switch" aria-label="Language selector">
+          <button type="button" class="fp-lang-btn" data-lang="es" title="Español">🇨🇴</button>
+          <button type="button" class="fp-lang-btn" data-lang="pt" title="Português">🇧🇷</button>
+          <button type="button" class="fp-lang-btn" data-lang="en" title="English">🇺🇸</button>
+        </div>
+        <img class="fp-hero-mark" src="/branding/fightprophet_ear_white.png" alt="Fight Prophet mark" loading="lazy" />
+      </div>
+      <div class="fp-hero-brand">
+        <img src="/branding/fightprophet_logo_white.png" alt="FightProphet.com" class="fp-hero-logo" loading="lazy" />
+        <p class="fp-hero-subtitle" id="i18n-topbar-subtitle">The fight data already knows who's getting smashed, we just highlight it — MMA AI &amp; ML-powered analytics for fight fans to bet smarter</p>
+      </div>
+    </div>
+
+    <div class="fp-hero-main">
+      <p class="fp-hero-sub" id="i18n-hero-sub">
+        Fight Prophet makes MMA analytics easy to read: upcoming picks, model diagnostics,
+        rankings, belt holders, and fighter profiles in one place.
+      </p>
+      <div class="fp-hero-pills" aria-label="Highlights">
+        <span class="fp-hero-pill" id="i18n-pill-1">AI-powered fight previews</span>
+        <span class="fp-hero-pill" id="i18n-pill-2">Model confidence</span>
+        <span class="fp-hero-pill" id="i18n-pill-3">Risk-aware decision support</span>
+      </div>
+      <p class="fp-hero-datasci" id="i18n-hero-datasci">Built with sports data science: probability modeling, calibration analysis, and historical backtesting.</p>
+      <p class="fp-hero-note" id="i18n-hero-note">For information and education only — never financial advice.</p>
+      <div class="fp-hero-actions">
+        <a class="fp-btn fp-btn-primary" href={appUrl} target="_blank" rel="noopener noreferrer" id="i18n-open-app-main">Open Fight Prophet App</a>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="fp-section-label" id="i18n-simple-workflow">Simple workflow for new users</p>
+    <ul class="fp-workflow-list">
+      <li id="i18n-wf-1">Start in <strong>Upcoming Predictions</strong> to compare model probability vs market probability.</li>
+      <li id="i18n-wf-2">Open <strong>Fight Lab</strong> to review historical outcomes plus metrics like accuracy, F1, AUC, Brier, and log loss.</li>
+      <li id="i18n-wf-3">Use <strong>Fighter Rankings</strong> and <strong>Fighter Profile</strong> to understand matchup context.</li>
+      <li id="i18n-wf-4">Use <strong>Belt Holders</strong> to track champions, title-fight history, and manual vacate overrides.</li>
+    </ul>
+  </section>
+
+  <section>
+    <p class="fp-section-label" id="i18n-platform-snapshot">Platform snapshot</p>
+    <div class="fp-stats-strip">
+      <article class="fp-stat-item"><p class="fp-stat-label" id="i18n-stat-upcoming">Upcoming Fights</p><p class="fp-stat-value" id="i18n-live-1">Live in app</p></article>
+      <article class="fp-stat-item"><p class="fp-stat-label" id="i18n-stat-events">Tracked Events</p><p class="fp-stat-value" id="i18n-live-2">Live in app</p></article>
+      <article class="fp-stat-item"><p class="fp-stat-label" id="i18n-stat-acc">Historical Accuracy</p><p class="fp-stat-value" id="i18n-live-3">Live in app</p></article>
+      <article class="fp-stat-item"><p class="fp-stat-label" id="i18n-stat-edge">Avg Edge</p><p class="fp-stat-value" id="i18n-live-4">Live in app</p></article>
+      <article class="fp-stat-item"><p class="fp-stat-label" id="i18n-stat-fighters">Tracked Fighters</p><p class="fp-stat-value" id="i18n-live-5">Live in app</p></article>
+    </div>
+  </section>
+
+  <AdSlot slot="1234567890" />
+
+  <section>
+    <p class="fp-section-label" id="i18n-workflow">Learn the workflow</p>
+    <div class="fp-content-grid">
+      <article class="fp-panel">
+        <h2 id="i18n-how-to-use">How to use</h2>
+        <ul>
+          <li id="i18n-how-1">Review upcoming prediction confidence and market deltas.</li>
+          <li id="i18n-how-2">Validate model quality with historical calibration and backtests.</li>
+          <li id="i18n-how-3">Use outputs as informational analytics, not guaranteed outcomes.</li>
+        </ul>
+      </article>
+      <article class="fp-panel">
+        <h2 id="i18n-model-engine">Model engine</h2>
+        <ul>
+          <li id="i18n-engine-1">Ensemble view for balanced confidence and calibration.</li>
+          <li id="i18n-engine-2">CatBoost and LogReg comparisons for cross-checking picks.</li>
+          <li id="i18n-engine-3">Signal strength markers to surface clearer spots.</li>
+        </ul>
+      </article>
+      <article class="fp-panel">
+        <h2 id="i18n-risk-controls">Risk controls</h2>
+        <ul>
+          <li id="i18n-risk-1">Use model outputs as decision support, not guarantees.</li>
+          <li id="i18n-risk-2">Compare probability deltas vs market before acting.</li>
+          <li id="i18n-risk-3">Skip low-signal fights and favor long-term discipline.</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <p class="fp-section-label" id="i18n-start-exploring">Start exploring</p>
+    <div class="fp-cta-grid">
+      <a class="fp-cta-card" href="/predictions/"><strong id="i18n-cta-1-title">Predictions</strong><span id="i18n-cta-1-desc">Compare model vs market probability</span></a>
+      <a class="fp-cta-card" href="/fight-lab/"><strong id="i18n-cta-2-title">Fight Lab</strong><span id="i18n-cta-2-desc">Historical picks + model metrics</span></a>
+      <a class="fp-cta-card" href="/rankings/"><strong id="i18n-cta-3-title">Fighter Rankings</strong><span id="i18n-cta-3-desc">Divisional performance and risers</span></a>
+      <a class="fp-cta-card" href="/belt-holders/"><strong id="i18n-cta-4-title">Belt Holders</strong><span id="i18n-cta-4-desc">Champions and title history</span></a>
+      <a class="fp-cta-card" href="/fighter-profile/"><strong id="i18n-cta-5-title">Fighter Profile</strong><span id="i18n-cta-5-desc">Deep dive on any fighter</span></a>
+    </div>
+  </section>
+
+  <section>
+    <p class="fp-section-label" id="i18n-latest-news">Latest news</p>
+    <div class="fp-news-shell">
+      <nav class="fp-news-menu" id="fp-news-menu" aria-label="News menu">
+        {newsItems.map((item, idx) => (
+          <button
+            type="button"
+            class={`fp-news-menu-item${idx === 0 ? ' is-active' : ''}`}
+            data-news-id={item.id}
+            id={`news-${item.id}`}
+          >
+            <span class="fp-news-menu-date">{item.datePublished}</span>
+            <span class="fp-news-menu-title">{item.title}</span>
+            <span class="fp-news-menu-source">{item.source}</span>
+          </button>
+        ))}
+      </nav>
+      <article class="fp-news-detail" id="fp-news-detail">
+        <p class="fp-news-date" id="fp-news-detail-date">{initialNews.datePublished}</p>
+        <h2 id="fp-news-detail-title">{initialNews.title}</h2>
+        <p id="fp-news-detail-desc">{initialNews.description}</p>
+        <a id="fp-news-detail-link" class="fp-news-detail-link" href={initialNews.url || appUrl} target="_blank" rel="noopener noreferrer">
+          Open related page
+        </a>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <p class="fp-section-label" id="i18n-why-open-source">Why open source</p>
+    <div class="fp-story">
+      <h2 class="fp-story-title" id="i18n-story-title">Built by fans, improved by community</h2>
+      <p id="i18n-story-text">Fight Prophet is open source. Community members can contribute by reporting data issues, suggesting features, improving model diagnostics, and helping maintain manual override datasets (like title vacates and fighter countries).</p>
+    </div>
+  </section>
+
+  <section class="fp-subscribe-wrap">
+    <div class="fp-subscribe-logo-wrap">
+      <img src="/branding/fightprophet_logo_white.png" alt="Fight Prophet" class="fp-subscribe-logo" loading="lazy" />
+    </div>
+    <div>
+      <h2 id="i18n-subscribe-title">Subscribe for updates</h2>
+      <p id="i18n-subscribe-copy">Get release notes, feature updates, and major model changes.</p>
+      <form id="subscribe-form" class="fp-subscribe-form">
+        <label for="subscribe-email" id="i18n-email-label">Email</label>
+        <div class="fp-subscribe-row">
+          <input id="subscribe-email" name="email" type="email" autocomplete="email" required />
+          <button type="submit" id="i18n-subscribe-btn">Subscribe</button>
+        </div>
+      </form>
+      <p id="subscribe-status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <AdSlot slot="1234567890" format="rectangle" responsive={false} />
+
+  <script define:vars={{ subscribeEndpoint }}>
+    const form = document.getElementById('subscribe-form');
+    const status = document.getElementById('subscribe-status');
+
+    function getStatusText(key, fallback) {
+      const pack = window.__fpLangStatus || {};
+      return pack[key] || fallback;
+    }
+
+    if (form && status) {
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        const email = String(formData.get('email') || '').trim();
+
+        if (!email) {
+          status.textContent = getStatusText('invalid', 'Please enter a valid email.');
+          return;
+        }
+
+        if (!subscribeEndpoint) {
+          status.textContent = getStatusText('noEndpoint', 'Subscription endpoint is not configured yet.');
+          return;
+        }
+
+        status.textContent = getStatusText('submitting', 'Submitting...');
+
+        try {
+          const response = await fetch(subscribeEndpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, source: 'fightprophet-astro' }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Request failed');
+          }
+
+          form.reset();
+          status.textContent = getStatusText('success', 'Thanks. You are subscribed.');
+        } catch {
+          status.textContent = getStatusText('failed', 'Subscription failed. Please try again.');
+        }
+      });
+    }
+  </script>
+
+  <script>
+    const FP_LANG_KEY = 'fp_lang';
+    const translations = {
+      en: {
+        topbarSubtitle: "The fight data already knows who's getting smashed, we just highlight it — MMA AI & ML-powered analytics for fight fans to bet smarter",
+        topbarTagline: 'AI-powered MMA fight predictions',
+        openAppTop: 'Open App',
+        heroSub: 'Fight Prophet makes MMA analytics easy to read: upcoming picks, model diagnostics, rankings, belt holders, and fighter profiles in one place.',
+        pill1: 'AI-powered fight previews',
+        pill2: 'Model confidence',
+        pill3: 'Risk-aware decision support',
+        heroNote: 'For information and education only — never financial advice.',
+        openAppMain: 'Open Fight Prophet App',
+        upcomingShort: 'Predictions',
+        platformSnapshot: 'Platform snapshot',
+        statUpcoming: 'Upcoming Fights',
+        statEvents: 'Tracked Events',
+        statAcc: 'Historical Accuracy',
+        statEdge: 'Avg Edge',
+        statFighters: 'Tracked Fighters',
+        live: 'Live in app',
+        workflow: 'Learn the workflow',
+        howToUse: 'How to use',
+        how1: 'Review upcoming prediction confidence and market deltas.',
+        how2: 'Validate model quality with historical calibration and backtests.',
+        how3: 'Use outputs as informational analytics, not guaranteed outcomes.',
+        modelEngine: 'Model engine',
+        engine1: 'Ensemble view for balanced confidence and calibration.',
+        engine2: 'CatBoost and LogReg comparisons for cross-checking picks.',
+        engine3: 'Signal strength markers to surface clearer spots.',
+        riskControls: 'Risk controls',
+        risk1: 'Use model outputs as decision support, not guarantees.',
+        risk2: 'Compare probability deltas vs market before acting.',
+        risk3: 'Skip low-signal fights and favor long-term discipline.',
+        startExploring: 'Start exploring',
+        cta1Title: 'Predictions',
+        cta1Desc: 'Compare model vs market probability',
+        cta2Title: 'Fight Lab',
+        cta2Desc: 'Historical picks + model metrics',
+        cta3Title: 'Fighter Rankings',
+        cta3Desc: 'Divisional performance and risers',
+        cta4Title: 'Belt Holders',
+        cta4Desc: 'Champions and title history',
+        cta5Title: 'Fighter Profile',
+        cta5Desc: 'Deep dive on any fighter',
+        latestNews: 'Latest news',
+        subscribeTitle: 'Subscribe for updates',
+        subscribeCopy: 'Get release notes, feature updates, and major model changes.',
+        emailLabel: 'Email',
+        subscribeBtn: 'Subscribe',
+        heroDatasci: 'Built with sports data science: probability modeling, calibration analysis, and historical backtesting.',
+        simpleWorkflow: 'Simple workflow for new users',
+        wf1: 'Start in <strong>Upcoming Predictions</strong> to compare model probability vs market probability.',
+        wf2: 'Open <strong>Fight Lab</strong> to review historical outcomes plus metrics like accuracy, F1, AUC, Brier, and log loss.',
+        wf3: 'Use <strong>Fighter Rankings</strong> and <strong>Fighter Profile</strong> to understand matchup context.',
+        wf4: 'Use <strong>Belt Holders</strong> to track champions, title-fight history, and manual vacate overrides.',
+        whyOpenSource: 'Why open source',
+        storyTitle: 'Built by fans, improved by community',
+        storyText: 'Fight Prophet is open source. Community members can contribute by reporting data issues, suggesting features, improving model diagnostics, and helping maintain manual override datasets (like title vacates and fighter countries).',
+        statusInvalid: 'Please enter a valid email.',
+        statusNoEndpoint: 'Subscription endpoint is not configured yet.',
+        statusSubmitting: 'Submitting...',
+        statusSuccess: 'Thanks. You are subscribed.',
+        statusFailed: 'Subscription failed. Please try again.'
+      },
+      es: {
+        topbarSubtitle: "Los datos ya saben quién va a caer — analítica MMA con IA y ML para fanáticos de las peleas que quieren apostar con inteligencia",
+        topbarTagline: 'Predicciones de peleas MMA impulsadas por IA',
+        openAppTop: 'Abrir App',
+        heroSub: 'Fight Prophet facilita la analítica de MMA: picks próximos, diagnóstico de modelos, rankings, campeones y perfiles en un solo lugar.',
+        pill1: 'Previews de peleas con IA',
+        pill2: 'Confianza del modelo',
+        pill3: 'Soporte de decisión con riesgo',
+        heroNote: 'Solo para información y educación — nunca asesoría financiera.',
+        openAppMain: 'Abrir App de Fight Prophet',
+        upcomingShort: 'Predicciones',
+        platformSnapshot: 'Resumen de plataforma',
+        statUpcoming: 'Peleas próximas',
+        statEvents: 'Eventos seguidos',
+        statAcc: 'Precisión histórica',
+        statEdge: 'Edge promedio',
+        statFighters: 'Peleadores seguidos',
+        live: 'En vivo en la app',
+        workflow: 'Flujo de trabajo',
+        howToUse: 'Cómo usar',
+        how1: 'Revisa confianza de predicción y diferencia con mercado.',
+        how2: 'Valida calidad con calibración y backtests históricos.',
+        how3: 'Usa los resultados como analítica, no como garantía.',
+        modelEngine: 'Motor de modelos',
+        engine1: 'Vista Ensemble para confianza y calibración balanceadas.',
+        engine2: 'Comparación CatBoost y LogReg para contraste.',
+        engine3: 'Señales de fuerza para detectar mejores spots.',
+        riskControls: 'Controles de riesgo',
+        risk1: 'Usa el modelo como apoyo, no como garantía.',
+        risk2: 'Compara probabilidades del modelo vs mercado.',
+        risk3: 'Evita peleas de baja señal y prioriza disciplina.',
+        startExploring: 'Comenzar a explorar',
+        cta1Title: 'Predicciones',
+        cta1Desc: 'Compara probabilidad del modelo vs mercado',
+        cta2Title: 'Fight Lab',
+        cta2Desc: 'Picks históricos + métricas de modelo',
+        cta3Title: 'Rankings de Peleadores',
+        cta3Desc: 'Rendimiento por división y ascensos',
+        cta4Title: 'Poseedores del Cinturón',
+        cta4Desc: 'Campeones e historial de títulos',
+        cta5Title: 'Perfil del Peleador',
+        cta5Desc: 'Análisis profundo por peleador',
+        latestNews: 'Últimas noticias',
+        subscribeTitle: 'Suscríbete a actualizaciones',
+        subscribeCopy: 'Recibe notas de versión, funciones nuevas y cambios de modelo.',
+        emailLabel: 'Correo',
+        subscribeBtn: 'Suscribirme',
+        heroDatasci: 'Construido con ciencia de datos deportiva: modelado probabilístico, análisis de calibración y backtesting histórico.',
+        simpleWorkflow: 'Flujo simple para nuevos usuarios',
+        wf1: 'Ve a <strong>Próximas Predicciones</strong> y compara probabilidad del modelo vs probabilidad de mercado.',
+        wf2: 'Abre <strong>Fight Lab</strong> para revisar histórico y métricas (accuracy, F1, AUC, Brier y log loss).',
+        wf3: 'Usa <strong>Rankings</strong> y <strong>Perfil del Peleador</strong> para contexto del combate.',
+        wf4: 'Usa <strong>Poseedores del Cinturón</strong> para campeones, historial titular y vacantes manuales.',
+        whyOpenSource: 'Por qué open source',
+        storyTitle: 'Hecho por fans, mejorado por la comunidad',
+        storyText: 'Fight Prophet es open source. La comunidad puede contribuir reportando errores de datos, proponiendo funciones, mejorando métricas del modelo y manteniendo datasets manuales (vacantes y países).',
+        statusInvalid: 'Ingresa un correo válido.',
+        statusNoEndpoint: 'El endpoint de suscripción aún no está configurado.',
+        statusSubmitting: 'Enviando...',
+        statusSuccess: 'Listo. Ya estás suscrito.',
+        statusFailed: 'Falló la suscripción. Intenta de nuevo.'
+      },
+      pt: {
+        topbarSubtitle: "Os dados já sabem quem vai apanhar — análise MMA com IA e ML para fãs de lutas apostarem com mais inteligência",
+        topbarTagline: 'Previsões de lutas de MMA com IA',
+        openAppTop: 'Abrir App',
+        heroSub: 'Fight Prophet facilita a análise de MMA: previsões próximas, diagnóstico de modelos, rankings, campeões e perfis em um só lugar.',
+        pill1: 'Prévias de luta com IA',
+        pill2: 'Confiança do modelo',
+        pill3: 'Suporte à decisão com risco',
+        heroNote: 'Apenas para informação e educação — nunca aconselhamento financeiro.',
+        openAppMain: 'Abrir App Fight Prophet',
+        upcomingShort: 'Previsões',
+        platformSnapshot: 'Visão da plataforma',
+        statUpcoming: 'Lutas próximas',
+        statEvents: 'Eventos monitorados',
+        statAcc: 'Precisão histórica',
+        statEdge: 'Edge médio',
+        statFighters: 'Lutadores monitorados',
+        live: 'Ao vivo no app',
+        workflow: 'Fluxo de uso',
+        howToUse: 'Como usar',
+        how1: 'Revise confiança da previsão e delta vs mercado.',
+        how2: 'Valide qualidade com calibração e backtests.',
+        how3: 'Use resultados como análise, não garantia.',
+        modelEngine: 'Motor de modelos',
+        engine1: 'Visão Ensemble para confiança e calibração equilibradas.',
+        engine2: 'Comparações CatBoost e LogReg para validar picks.',
+        engine3: 'Marcadores de força para evidenciar melhores spots.',
+        riskControls: 'Controles de risco',
+        risk1: 'Use a saída do modelo como apoio, não garantia.',
+        risk2: 'Compare probabilidades do modelo com o mercado.',
+        risk3: 'Evite lutas de sinal fraco e mantenha disciplina.',
+        startExploring: 'Começar exploração',
+        cta1Title: 'Previsões',
+        cta1Desc: 'Compare probabilidade do modelo vs mercado',
+        cta2Title: 'Fight Lab',
+        cta2Desc: 'Picks históricos + métricas de modelo',
+        cta3Title: 'Rankings de Lutadores',
+        cta3Desc: 'Desempenho por divisão e destaques',
+        cta4Title: 'Detentores do Cinturão',
+        cta4Desc: 'Campeões e histórico de títulos',
+        cta5Title: 'Perfil do Lutador',
+        cta5Desc: 'Análise profunda de cada lutador',
+        latestNews: 'Últimas notícias',
+        subscribeTitle: 'Inscreva-se para atualizações',
+        subscribeCopy: 'Receba notas de versão, novos recursos e mudanças de modelo.',
+        emailLabel: 'E-mail',
+        subscribeBtn: 'Inscrever',
+        heroDatasci: 'Construído com ciência de dados esportiva: modelagem probabilística, análise de calibração e backtesting histórico.',
+        simpleWorkflow: 'Fluxo simples para novos usuários',
+        wf1: 'Vá em <strong>Próximas Previsões</strong> e compare probabilidade do modelo vs mercado.',
+        wf2: 'Abra o <strong>Fight Lab</strong> para histórico + métricas (acurácia, F1, AUC, Brier e log loss).',
+        wf3: 'Use <strong>Rankings</strong> e <strong>Perfil do Lutador</strong> para contexto da luta.',
+        wf4: 'Use <strong>Detentores do Cinturão</strong> para campeões, histórico de títulos e vacâncias manuais.',
+        whyOpenSource: 'Por que open source',
+        storyTitle: 'Feito por fãs, melhorado pela comunidade',
+        storyText: 'Fight Prophet é open source. A comunidade pode contribuir reportando erros de dados, sugerindo recursos, melhorando diagnósticos de modelo e mantendo datasets manuais (vacâncias e países).',
+        statusInvalid: 'Digite um e-mail válido.',
+        statusNoEndpoint: 'O endpoint de inscrição ainda não está configurado.',
+        statusSubmitting: 'Enviando...',
+        statusSuccess: 'Obrigado. Você está inscrito.',
+        statusFailed: 'Falha na inscrição. Tente novamente.'
+      }
+    };
+
+    const keyToId = {
+      topbarSubtitle: 'i18n-topbar-subtitle',
+      topbarTagline: 'i18n-topbar-tagline',
+      openAppTop: 'i18n-open-app-top',
+      heroSub: 'i18n-hero-sub',
+      pill1: 'i18n-pill-1',
+      pill2: 'i18n-pill-2',
+      pill3: 'i18n-pill-3',
+      heroNote: 'i18n-hero-note',
+      openAppMain: 'i18n-open-app-main',
+      upcomingShort: 'i18n-upcoming-short',
+      platformSnapshot: 'i18n-platform-snapshot',
+      statUpcoming: 'i18n-stat-upcoming',
+      statEvents: 'i18n-stat-events',
+      statAcc: 'i18n-stat-acc',
+      statEdge: 'i18n-stat-edge',
+      statFighters: 'i18n-stat-fighters',
+      workflow: 'i18n-workflow',
+      howToUse: 'i18n-how-to-use',
+      how1: 'i18n-how-1',
+      how2: 'i18n-how-2',
+      how3: 'i18n-how-3',
+      modelEngine: 'i18n-model-engine',
+      engine1: 'i18n-engine-1',
+      engine2: 'i18n-engine-2',
+      engine3: 'i18n-engine-3',
+      riskControls: 'i18n-risk-controls',
+      risk1: 'i18n-risk-1',
+      risk2: 'i18n-risk-2',
+      risk3: 'i18n-risk-3',
+      startExploring: 'i18n-start-exploring',
+      cta1Title: 'i18n-cta-1-title',
+      cta1Desc: 'i18n-cta-1-desc',
+      cta2Title: 'i18n-cta-2-title',
+      cta2Desc: 'i18n-cta-2-desc',
+      cta3Title: 'i18n-cta-3-title',
+      cta3Desc: 'i18n-cta-3-desc',
+      cta4Title: 'i18n-cta-4-title',
+      cta4Desc: 'i18n-cta-4-desc',
+      cta5Title: 'i18n-cta-5-title',
+      cta5Desc: 'i18n-cta-5-desc',
+      latestNews: 'i18n-latest-news',
+      subscribeTitle: 'i18n-subscribe-title',
+      subscribeCopy: 'i18n-subscribe-copy',
+      emailLabel: 'i18n-email-label',
+      subscribeBtn: 'i18n-subscribe-btn',
+      heroDatasci: 'i18n-hero-datasci',
+      simpleWorkflow: 'i18n-simple-workflow',
+      wf1: 'i18n-wf-1',
+      wf2: 'i18n-wf-2',
+      wf3: 'i18n-wf-3',
+      wf4: 'i18n-wf-4',
+      whyOpenSource: 'i18n-why-open-source',
+      storyTitle: 'i18n-story-title',
+      storyText: 'i18n-story-text'
+    };
+
+    const statusByLang = {};
+    Object.entries(translations).forEach(([lang, pack]) => {
+      statusByLang[lang] = {
+        invalid: pack.statusInvalid,
+        noEndpoint: pack.statusNoEndpoint,
+        submitting: pack.statusSubmitting,
+        success: pack.statusSuccess,
+        failed: pack.statusFailed,
+      };
+    });
+
+    function applyLanguage(lang) {
+      const selected = translations[lang] ? lang : 'en';
+      const pack = translations[selected];
+
+      const htmlKeys = new Set(['wf1', 'wf2', 'wf3', 'wf4']);
+      Object.entries(keyToId).forEach(([key, id]) => {
+        const el = document.getElementById(id);
+        if (el && typeof pack[key] === 'string') {
+          if (htmlKeys.has(key)) {
+            el.innerHTML = pack[key];
+          } else {
+            el.textContent = pack[key];
+          }
+        }
+      });
+
+      document.querySelectorAll('[id^="i18n-live-"]').forEach((el) => {
+        el.textContent = pack.live;
+      });
+
+      document.querySelectorAll('.fp-lang-btn').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.getAttribute('data-lang') === selected);
+      });
+
+      document.documentElement.lang = selected;
+      localStorage.setItem(FP_LANG_KEY, selected);
+      window.__fpLangStatus = statusByLang[selected] || statusByLang.en;
+    }
+
+    const initialLang = localStorage.getItem(FP_LANG_KEY) || 'en';
+    applyLanguage(initialLang);
+
+    document.querySelectorAll('.fp-lang-btn').forEach((btn) => {
+      btn.addEventListener('click', () => applyLanguage(btn.getAttribute('data-lang') || 'en'));
+    });
+  </script>
+
+  <script type="application/ld+json" set:html={JSON.stringify(newsStructuredData)}></script>
+
+  <script define:vars={{ newsItems }}>
+    const newsList = Array.isArray(newsItems) ? newsItems : [];
+    const byId = Object.fromEntries(newsList.map((item) => [item.id, item]));
+    const menu = document.getElementById('fp-news-menu');
+    const dateEl = document.getElementById('fp-news-detail-date');
+    const titleEl = document.getElementById('fp-news-detail-title');
+    const descEl = document.getElementById('fp-news-detail-desc');
+    const linkEl = document.getElementById('fp-news-detail-link');
+
+    function renderNews(newsId) {
+      const item = byId[newsId];
+      if (!item || !dateEl || !titleEl || !descEl || !linkEl) return;
+      dateEl.textContent = item.datePublished || '';
+      titleEl.textContent = item.title || '';
+      descEl.textContent = item.description || '';
+      linkEl.href = item.url || '#';
+      linkEl.style.display = item.url ? 'inline-flex' : 'none';
+
+      menu?.querySelectorAll('.fp-news-menu-item').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.getAttribute('data-news-id') === newsId);
+      });
+    }
+
+    menu?.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const button = target.closest('.fp-news-menu-item');
+      if (!button) return;
+      renderNews(button.getAttribute('data-news-id') || '');
+    });
+  </script>
+
+  <style>
+    .fp-lang-switch {
+      display: inline-flex;
+      gap: 0.28rem;
+      background: rgba(15, 15, 18, 0.64);
+      border: 1px solid rgba(113, 113, 122, 0.42);
+      border-radius: 9999px;
+      padding: 0.2rem;
+    }
+    .fp-lang-btn {
+      border: 0;
+      background: transparent;
+      color: #f4f4f5;
+      border-radius: 9999px;
+      width: 2rem;
+      height: 2rem;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+    }
+    .fp-lang-btn.is-active {
+      background: linear-gradient(160deg, #ef4444, #b91c1c);
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);
+    }
+    .fp-hero-subtitle {
+      margin: 0.1rem 0 0;
+      font-size: 1.18rem;
+      color: #d4d4d8;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .fp-hero {
+      position: relative;
+      display: grid;
+      gap: 0.62rem;
+      margin-bottom: 0.9rem;
+    }
+    .fp-hero-top,
+    .fp-hero-main {
+      position: relative;
+      background: linear-gradient(155deg, rgba(20, 20, 22, 0.96) 0%, rgba(40, 20, 20, 0.84) 100%);
+      border: 1px solid rgba(220, 38, 38, 0.28);
+      border-radius: 1.05rem;
+      padding: 0.9rem 0.95rem;
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 26px rgba(0, 0, 0, 0.28), 0 0 22px rgba(220, 38, 38, 0.12);
+    }
+    .fp-hero-top {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .fp-hero-top-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    .fp-hero-main::after {
+      content: '';
+      position: absolute;
+      inset: -12% -20% -18% -20%;
+      background: url('/branding/cageiconmma.png') center center / 92% auto no-repeat;
+      opacity: 0.12;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .fp-hero-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      min-width: 0;
+      justify-content: center;
+    }
+    .fp-hero-logo {
+      width: clamp(210px, 25vw, 320px);
+      height: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 0 10px rgba(220, 38, 38, 0.28));
+    }
+    .fp-hero-brand-copy {
+      min-width: 0;
+    }
+    .fp-hero-site {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #ffffff;
+      text-shadow: 0 0 12px rgba(220, 38, 38, 0.35);
+    }
+
+    .fp-hero-title {
+      margin: 0;
+      font-size: clamp(1.8rem, 5vw, 2.45rem);
+      line-height: 1.1;
+      font-weight: 800;
+    }
+    .fp-hero-mark {
+      width: 88px;
+      height: 88px;
+      object-fit: contain;
+      opacity: 0.94;
+      filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.2));
+    }
+    .fp-hero-sub {
+      line-height: 1.55;
+      color: #e4e4e7;
+      max-width: 60ch;
+      margin: 0;
+      position: relative;
+      z-index: 1;
+      font-size: 1.05rem;
+    }
+    .fp-hero-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin: 0.46rem 0 0.2rem;
+      position: relative;
+      z-index: 1;
+    }
+    .fp-hero-pill {
+      background: rgba(39, 39, 42, 0.72);
+      border: 1px solid rgba(113, 113, 122, 0.5);
+      color: #d4d4d8;
+      border-radius: 9999px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 0.22rem 0.58rem;
+      letter-spacing: 0.025em;
+    }
+    .fp-hero-datasci {
+      color: #a1a1aa;
+      font-size: 0.88rem;
+      margin: 0.35rem 0 0.1rem;
+      position: relative;
+      z-index: 1;
+      line-height: 1.5;
+      max-width: 72ch;
+    }
+    .fp-hero-note {
+      color: #a1a1aa;
+      font-size: 0.9rem;
+      margin: 0.1rem 0 0.62rem;
+      position: relative;
+      z-index: 1;
+    }
+    .fp-hero-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+      align-items: center;
+    }
+    .fp-hero-actions .fp-btn {
+      position: relative;
+      z-index: 1;
+    }
+    .fp-btn {
+      border: 1px solid rgba(220, 38, 38, 0.45);
+      border-radius: 0.65rem;
+      padding: 0.5rem 0.75rem;
+      text-decoration: none;
+      color: #f4f4f5;
+      background: linear-gradient(160deg, rgba(45, 24, 24, 0.65), rgba(39, 39, 42, 0.45));
+      font-weight: 650;
+      font-size: 0.9rem;
+      box-shadow: 0 0 12px rgba(220, 38, 38, 0.14);
+    }
+    .fp-btn-primary {
+      background: linear-gradient(160deg, #ef4444, #dc2626);
+      color: #ffffff;
+      border-color: rgba(248, 113, 113, 0.65);
+      box-shadow: 0 0 14px rgba(239, 68, 68, 0.35);
+    }
+    .fp-section-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+      color: #71717a;
+      margin: 1rem 0 0.4rem;
+    }
+    .fp-stats-strip {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      background: rgba(22, 22, 26, 0.88);
+      border: 1px solid rgba(113, 113, 122, 0.42);
+      border-radius: 0.9rem;
+      overflow: hidden;
+    }
+    .fp-stat-item {
+      padding: 0.62rem 0.5rem;
+      text-align: center;
+      border-right: 1px solid rgba(113, 113, 122, 0.3);
+    }
+    .fp-stat-item:last-child {
+      border-right: none;
+    }
+    .fp-stat-label {
+      margin: 0 0 0.12rem;
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #a1a1aa;
+      font-weight: 600;
+    }
+    .fp-stat-value {
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+    .fp-content-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.55rem;
+    }
+    .fp-panel {
+      background: linear-gradient(150deg, rgba(22, 22, 26, 0.9), rgba(36, 36, 42, 0.68));
+      border: 1px solid rgba(113, 113, 122, 0.42);
+      border-radius: 0.9rem;
+      padding: 0.78rem 0.95rem;
+    }
+    .fp-panel h2 {
+      font-size: 1.02rem;
+      margin: 0 0 0.35rem;
+    }
+    .fp-panel ul {
+      margin: 0;
+      padding-left: 1rem;
+      line-height: 1.55;
+      color: #d4d4d8;
+    }
+    .fp-cta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.55rem;
+    }
+    .fp-cta-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.22rem;
+      background: linear-gradient(155deg, rgba(35, 20, 20, 0.7), rgba(28, 28, 32, 0.82));
+      border: 1px solid rgba(220, 38, 38, 0.24);
+      border-radius: 0.75rem;
+      padding: 0.68rem 0.72rem;
+      text-decoration: none;
+      color: #e4e4e7;
+      box-shadow: 0 0 10px rgba(220, 38, 38, 0.1);
+    }
+    .fp-cta-card span {
+      font-size: 0.78rem;
+      color: #a1a1aa;
+      line-height: 1.4;
+    }
+    .fp-workflow-list {
+      margin: 0.15rem 0 0;
+      padding-left: 1.2rem;
+      line-height: 1.68;
+      color: #d4d4d8;
+      font-size: 1.02rem;
+      background: linear-gradient(150deg, rgba(22, 22, 26, 0.9), rgba(36, 36, 42, 0.68));
+      border: 1px solid rgba(113, 113, 122, 0.42);
+      border-radius: 0.9rem;
+      padding: 0.78rem 0.95rem 0.78rem 1.8rem;
+    }
+    .fp-workflow-list li {
+      margin-bottom: 0.25rem;
+    }
+    .fp-workflow-list strong {
+      color: #fef2f2;
+    }
+    .fp-story {
+      background: linear-gradient(150deg, rgba(35, 20, 20, 0.72), rgba(22, 22, 26, 0.90));
+      border: 1px solid rgba(220, 38, 38, 0.28);
+      border-radius: 0.9rem;
+      padding: 0.78rem 0.95rem;
+      color: #d4d4d8;
+      font-size: 0.96rem;
+      line-height: 1.55;
+      box-shadow: 0 0 14px rgba(220, 38, 38, 0.10);
+    }
+    .fp-story-title {
+      font-size: 1.04rem;
+      font-weight: 700;
+      color: #fef2f2;
+      margin: 0 0 0.22rem;
+      text-shadow: 0 0 10px rgba(220, 38, 38, 0.28);
+    }
+    .fp-story p {
+      margin: 0;
+    }
+    .fp-subscribe-wrap {
+      margin-top: 0.85rem;
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 1rem;
+      align-items: center;
+      background: rgba(22, 22, 26, 0.88);
+      border: 1px solid rgba(113, 113, 122, 0.42);
+      border-radius: 0.9rem;
+      padding: 0.95rem;
+    }
+    .fp-subscribe-logo-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .fp-news-shell {
+      display: grid;
+      grid-template-columns: minmax(220px, 310px) 1fr;
+      gap: 0.6rem;
+      margin-top: 0.15rem;
+    }
+    .fp-news-menu {
+      max-height: 340px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.42rem;
+      padding-right: 0.2rem;
+    }
+    .fp-news-menu-item {
+      text-align: left;
+      border: 1px solid rgba(220, 38, 38, 0.2);
+      border: 1px solid rgba(220, 38, 38, 0.2);
+      border-radius: 0.75rem;
+      background: linear-gradient(160deg, rgba(35, 20, 20, 0.55), rgba(22, 22, 26, 0.88));
+      color: #f4f4f5;
+      padding: 0.58rem;
+      cursor: pointer;
+      box-shadow: 0 0 9px rgba(220, 38, 38, 0.1);
+    }
+    .fp-news-menu-item.is-active {
+      border-color: rgba(248, 113, 113, 0.58);
+      box-shadow: 0 0 14px rgba(239, 68, 68, 0.22);
+      background: linear-gradient(160deg, rgba(75, 20, 20, 0.6), rgba(22, 22, 26, 0.9));
+    }
+    .fp-news-menu-date {
+      display: block;
+      margin: 0 0 0.2rem;
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fca5a5;
+      font-weight: 700;
+    }
+    .fp-news-menu-title {
+      display: block;
+      font-size: 0.82rem;
+      line-height: 1.4;
+      color: #fef2f2;
+      font-weight: 650;
+    }
+    .fp-news-menu-source {
+      display: block;
+      margin-top: 0.18rem;
+      font-size: 0.64rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #a1a1aa;
+      font-weight: 700;
+    }
+    .fp-news-detail {
+      background: linear-gradient(160deg, rgba(35, 20, 20, 0.55), rgba(22, 22, 26, 0.88));
+      border: 1px solid rgba(220, 38, 38, 0.24);
+      border-radius: 0.75rem;
+      padding: 0.82rem;
+      box-shadow: 0 0 12px rgba(220, 38, 38, 0.12);
+    }
+    .fp-news-date {
+      margin: 0 0 0.2rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fca5a5;
+      font-weight: 700;
+    }
+    .fp-news-detail h2 {
+      margin: 0 0 0.3rem;
+      font-size: 0.96rem;
+      line-height: 1.35;
+      color: #fef2f2;
+    }
+    .fp-news-detail p {
+      margin: 0;
+      color: #e4e4e7;
+      line-height: 1.5;
+      font-size: 0.85rem;
+    }
+    .fp-news-detail-link {
+      margin-top: 0.58rem;
+      display: inline-flex;
+      text-decoration: none;
+      color: #fef2f2;
+      font-size: 0.82rem;
+      font-weight: 700;
+      border: 1px solid rgba(248, 113, 113, 0.45);
+      border-radius: 9999px;
+      padding: 0.34rem 0.58rem;
+      background: linear-gradient(160deg, rgba(127, 29, 29, 0.72), rgba(24, 24, 27, 0.7));
+    }
+    .fp-subscribe-logo {
+      width: 150px;
+      max-width: 100%;
+      height: auto;
+      opacity: 0.92;
+    }
+    .fp-subscribe-form label {
+      font-size: 0.82rem;
+      color: #d4d4d8;
+      font-weight: 600;
+    }
+    .fp-subscribe-row {
+      display: flex;
+      gap: 0.45rem;
+      margin-top: 0.35rem;
+    }
+    .fp-subscribe-row input {
+      flex: 1;
+      background: rgba(39, 39, 42, 0.75);
+      border: 1px solid rgba(113, 113, 122, 0.55);
+      color: #f4f4f5;
+      border-radius: 0.55rem;
+      padding: 0.52rem 0.6rem;
+      min-width: 0;
+    }
+    .fp-subscribe-row button {
+      background: #f4f4f5;
+      color: #09090b;
+      border: none;
+      border-radius: 0.55rem;
+      padding: 0.52rem 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    #subscribe-status {
+      margin: 0.45rem 0 0;
+      color: #a1a1aa;
+      font-size: 0.9rem;
+    }
+    @media (max-width: 900px) {
+      .fp-hero-top-controls {
+        gap: 0.5rem;
+      }
+      .fp-content-grid {
+        grid-template-columns: 1fr;
+      }
+      .fp-news-shell {
+        grid-template-columns: 1fr;
+      }
+      .fp-news-menu {
+        max-height: 280px;
+      }
+      .fp-stats-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .fp-stat-item {
+        border-right: none;
+        border-bottom: 1px solid rgba(113, 113, 122, 0.3);
+      }
+      .fp-subscribe-wrap {
+        grid-template-columns: 1fr;
+      }
+      .fp-subscribe-logo {
+        max-width: 180px;
+      }
+      .fp-hero-logo {
+        width: min(72vw, 240px);
+      }
+      .fp-hero-mark {
+        width: 58px;
+        height: 58px;
+      }
+      .fp-hero-subtitle {
+        font-size: 0.86rem;
+      }
+      .fp-btn {
+        font-size: 0.84rem;
+        padding: 0.46rem 0.68rem;
+      }
+      .fp-hero-main::after {
+        inset: -8% -10% -12% -10%;
+        background-size: 100% auto;
+      }
+    }
+  </style>
+</BaseLayout>

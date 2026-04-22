@@ -1,0 +1,10 @@
+name = "fight-prophet"
+compatibility_date = "2026-04-11"
+
+# Used by Cloudflare Pages/Workers build pipelines.
+pages_build_output_dir = "./dist"
+
+[vars]
+PUBLIC_SITE_URL = "https://fightprophet.com"
+
+

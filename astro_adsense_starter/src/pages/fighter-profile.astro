@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AppSectionLanding from '../components/AppSectionLanding.astro';
+---
+
+<BaseLayout
+  title="MMA Fighter Profiles — Stats, Records & Model View | Fight Prophet"
+  description="Deep MMA fighter profiles: complete fight record, finishing rates, win method breakdowns, ranking history, and Fight Prophet model context for every tracked fighter."
+>
+  <AppSectionLanding
+    pageSlug="fighter-profile"
+    heading="MMA Fighter Profiles"
+    intro="A full statistical view of every tracked fighter — record, finishing rates, win methods, ranking history, and how the model has rated them across past matchups."
+    bullets={[
+      { title: 'Complete fight record', body: 'Wins, losses, no contests, draws — with method and round.' },
+      { title: 'Win method breakdown', body: 'KO/TKO, submission, decision, and the rate of each.' },
+      { title: 'Ranking history', body: 'Trajectory inside the division over time.' },
+      { title: 'Model context', body: 'How Fight Prophet has rated this fighter in past matchups.' },
+    ]}
+    whatYouWillSee={[
+      'A search box to jump to any fighter by name',
+      'Career record summary with finishing rates',
+      'Recent fight log with opponents and outcomes',
+      'Quick links into events and rankings',
+    ]}
+  />
+</BaseLayout>

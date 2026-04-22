@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AppSectionLanding from '../components/AppSectionLanding.astro';
+---
+
+<BaseLayout
+  title="MMA Predictions — Upcoming UFC Fights | Fight Prophet"
+  description="AI-powered MMA predictions for upcoming UFC fights — model probability vs market probability, confidence signals, and edge analysis for the next events."
+>
+  <AppSectionLanding
+    pageSlug="predictions"
+    heading="MMA Predictions"
+    intro="Browse Fight Prophet's AI-generated predictions for upcoming MMA bouts. Compare the model's probability against the market line, see confidence signals, and surface the strongest edges before the next event."
+    bullets={[
+      { title: 'Model probability vs market', body: 'Side-by-side view of what the model thinks vs what the sportsbook is pricing in.' },
+      { title: 'Confidence signal', body: 'Strong / Medium / Weak markers help filter out low-signal fights.' },
+      { title: 'Per-bout edge', body: 'Quick read on where model and market disagree the most.' },
+      { title: 'Multi-model agreement', body: 'See where Ensemble, CatBoost, and LogReg line up — or split.' },
+    ]}
+    whatYouWillSee={[
+      'A list of upcoming UFC and MMA cards with predictions per bout',
+      'Probability percentages from the model and from the market',
+      'A signal column flagging high-conviction picks',
+      'Quick links into each fighter\'s profile',
+    ]}
+  />
+</BaseLayout>
