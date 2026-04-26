@@ -6124,42 +6124,6 @@ def page_fighter_profile() -> None:
         belt_count = min(2, len(belt_parts)) if belt_parts else 1
     belt_icons = "🥇" * max(1, belt_count)
 
-    title_left, title_right = st.columns([5, 3])
-    with title_left:
-        profile_visual = _fighter_visual_chip_html(
-            selected_fighter,
-            fighter_id=p.get("fighter_id"),
-            country=p.get("country"),
-            size=72,
-            context="profile",
-        )
-        if profile_visual:
-            st.markdown(f"<div style='margin-bottom:0.35rem;'>{profile_visual}</div>", unsafe_allow_html=True)
-        st.header("Fighter Profile")
-        st.subheader(str(selected_fighter))
-    with title_right:
-        st.markdown("<div style='height: 0.35rem;'></div>", unsafe_allow_html=True)
-        if is_belt_holder:
-            st.markdown(
-                (
-                    '<div style="display:inline-flex;align-items:center;gap:0.45rem;'
-                    'padding:0.30rem 0.62rem;border-radius:999px;'
-                    'border:1px solid rgba(113,113,122,0.55);background:rgba(39,39,42,0.65);margin-bottom:0.4rem;">'
-                    f'<span style="font-size:0.95rem;">{belt_icons}</span>'
-                    '<span style="font-size:0.82rem;color:#d4d4d8;text-transform:uppercase;letter-spacing:0.05em;">Belt Holder</span>'
-                    f'<span style="font-size:0.90rem;font-weight:700;color:#f4f4f5;">{escape(belt_label)}</span>'
-                    '</div>'
-                ),
-                unsafe_allow_html=True,
-            )
-        _r1, _r2, _r3 = st.columns(3)
-        with _r1:
-            _render_fighter_meta_card("Str Def", _fmt_pct_compact(p.get("str_def")), icon="🛡️", accent="#22c55e")
-        with _r2:
-            _render_fighter_meta_card("TD Def", _fmt_pct_compact(p.get("td_def")), icon="🤼", accent="#eab308")
-        with _r3:
-            _render_fighter_meta_card("SApM", _fmt_float_compact(p.get("sapm"), 2), icon="📉", accent="#ef4444")
-
     fighter_weight_class = ""
     for candidate in [
         "weight_class",
@@ -6187,12 +6151,15 @@ def page_fighter_profile() -> None:
     if sub_rate_card_value is None or pd.isna(sub_rate_card_value):
         sub_rate_card_value = p.get("sub_rate")
 
-    st.markdown("<div style='height: 0.65rem;'></div>", unsafe_allow_html=True)
-    _, card_col, _ = st.columns([1.1, 1.6, 1.1])
-    with card_col:
+    country_header = str(p.get("country", "") or "").strip()
+    header_meta_parts = [part for part in [fighter_weight_class, country_header] if part]
+    header_meta = " • ".join(header_meta_parts)
+
+    title_card, title_info, title_metrics = st.columns([1.35, 2.0, 3.15])
+    with title_card:
         _render_fighter_card_html(
             name=str(selected_fighter),
-            country=str(p.get("country", "") or ""),
+            country=country_header,
             weight_class=fighter_weight_class,
             is_champion=is_current_champion,
             finish_rate=finish_rate_card_value,
@@ -6202,6 +6169,35 @@ def page_fighter_profile() -> None:
             wins=p.get("wins"),
             losses=p.get("losses"),
         )
+    with title_info:
+        st.markdown("<div style='height: 0.6rem;'></div>", unsafe_allow_html=True)
+        st.header("Fighter Profile")
+        if header_meta:
+            st.caption(header_meta)
+        if is_belt_holder:
+            st.markdown(
+                (
+                    '<div style="display:inline-flex;align-items:center;gap:0.45rem;'
+                    'padding:0.30rem 0.62rem;border-radius:999px;'
+                    'border:1px solid rgba(113,113,122,0.55);background:rgba(39,39,42,0.65);margin:0.2rem 0 0.15rem;">'
+                    f'<span style="font-size:0.95rem;">{belt_icons}</span>'
+                    '<span style="font-size:0.82rem;color:#d4d4d8;text-transform:uppercase;letter-spacing:0.05em;">Belt Holder</span>'
+                    f'<span style="font-size:0.90rem;font-weight:700;color:#f4f4f5;">{escape(belt_label)}</span>'
+                    '</div>'
+                ),
+                unsafe_allow_html=True,
+            )
+    with title_metrics:
+        st.markdown("<div style='height: 0.6rem;'></div>", unsafe_allow_html=True)
+        _r1, _r2, _r3 = st.columns(3)
+        with _r1:
+            _render_fighter_meta_card("Str Def", _fmt_pct_compact(p.get("str_def")), icon="🛡️", accent="#22c55e")
+        with _r2:
+            _render_fighter_meta_card("TD Def", _fmt_pct_compact(p.get("td_def")), icon="🤼", accent="#eab308")
+        with _r3:
+            _render_fighter_meta_card("SApM", _fmt_float_compact(p.get("sapm"), 2), icon="📉", accent="#ef4444")
+
+    st.markdown("<div style='height: 0.35rem;'></div>", unsafe_allow_html=True)
 
     dob_val = p.get("dob")
     dob_text = "—"
