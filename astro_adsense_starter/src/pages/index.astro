@@ -9,6 +9,7 @@ const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
 const subscribeEndpoint = import.meta.env.PUBLIC_SUBSCRIBE_ENDPOINT || '';
 const withPage = (slug: string) => `${appUrl}${appUrl.includes('?') ? '&' : '?'}page=${encodeURIComponent(slug)}`;
 const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'https://fightprophet.com').replace(/\/$/, '');
+const beltHoldersAppUrl = withPage('belt-holders');
 
 const champions = await getChampionRecords(runtimeEnvFromLocals(Astro.locals));
 interface NewsItem {
@@ -182,12 +183,17 @@ const newsStructuredData = newsItems.map((item) => ({
     </div>
   </section>
 
-  {champions.length > 0 && (
-    <section>
-      <p class="fp-section-label" id="i18n-current-champions">Current Champions</p>
-      <p class="fp-section-intro" id="i18n-current-champions-intro">
-        Data-rich fighter cards for the current UFC title holders with division, country, record, finish rate, submission rate, and streak context.
-      </p>
+  <section>
+    <div class="fp-section-head">
+      <div>
+        <p class="fp-section-label" id="i18n-current-champions">Current Champions</p>
+        <p class="fp-section-intro" id="i18n-current-champions-intro">
+          Data-rich fighter cards for the current UFC title holders with division, country, record, finish rate, submission rate, and streak context.
+        </p>
+      </div>
+      <a class="fp-btn fp-btn-secondary" href="/belt-holders/">Champion history</a>
+    </div>
+    {champions.length > 0 ? (
       <div class="fp-champ-grid">
         {champions.map((c) => (
           <FighterCard
@@ -206,11 +212,26 @@ const newsStructuredData = newsItems.map((item) => ({
           />
         ))}
       </div>
-    </section>
-  )}
+    ) : (
+      <div class="fp-empty-state">
+        <strong>Champion cards are loading from the live Fight Prophet data source.</strong>
+        <span>
+          If they are missing here, the Astro server still needs the same Azure parquet settings the app is already using.
+        </span>
+        <a class="fp-btn fp-btn-primary" href={beltHoldersAppUrl} target="_blank" rel="noopener noreferrer">Open live belt holders in app</a>
+      </div>
+    )}
+  </section>
 
   <section>
-    <p class="fp-section-label" id="i18n-start-exploring">Sections</p>
+    <div class="fp-section-head">
+      <div>
+        <p class="fp-section-label" id="i18n-start-exploring">Sections</p>
+        <p class="fp-section-intro fp-section-intro-tight">
+          Keep these links on the site for crawling and indexing, then open the app from each section page when you want the live interactive view.
+        </p>
+      </div>
+    </div>
     <div class="fp-cta-grid">
       <a class="fp-cta-card" href="/predictions/"><strong id="i18n-cta-1-title">Predictions</strong><span id="i18n-cta-1-desc">Compare model vs market probability</span></a>
       <a class="fp-cta-card" href="/fight-lab/"><strong id="i18n-cta-2-title">Fight Lab</strong><span id="i18n-cta-2-desc">Historical picks + model metrics</span></a>
@@ -842,6 +863,13 @@ const newsStructuredData = newsItems.map((item) => ({
       border-color: rgba(248, 113, 113, 0.65);
       box-shadow: 0 0 14px rgba(239, 68, 68, 0.35);
     }
+    .fp-btn-secondary {
+      background: rgba(24, 24, 27, 0.85);
+      color: #f4f4f5;
+      border-color: rgba(113, 113, 122, 0.46);
+      box-shadow: none;
+      white-space: nowrap;
+    }
     .fp-section-label {
       font-size: 0.68rem;
       text-transform: uppercase;
@@ -850,11 +878,38 @@ const newsStructuredData = newsItems.map((item) => ({
       color: #71717a;
       margin: 1rem 0 0.4rem;
     }
+    .fp-section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 0.8rem;
+      margin-bottom: 0.1rem;
+    }
     .fp-section-intro {
       margin: -0.1rem 0 1rem;
       max-width: 68ch;
       color: #d4d4d8;
       line-height: 1.55;
+    }
+    .fp-section-intro-tight {
+      margin-bottom: 0.65rem;
+    }
+    .fp-empty-state {
+      display: grid;
+      gap: 0.6rem;
+      background: linear-gradient(150deg, rgba(22, 22, 26, 0.92), rgba(36, 36, 42, 0.78));
+      border: 1px solid rgba(113, 113, 122, 0.42);
+      border-radius: 0.9rem;
+      padding: 1rem 1.05rem;
+      color: #d4d4d8;
+      line-height: 1.55;
+    }
+    .fp-empty-state strong {
+      color: #fef2f2;
+      font-size: 1rem;
+    }
+    .fp-empty-state .fp-btn {
+      justify-self: start;
     }
     .fp-stats-strip {
       display: grid;
@@ -909,12 +964,12 @@ const newsStructuredData = newsItems.map((item) => ({
     }
     .fp-cta-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 0.55rem;
     }
     .fp-champ-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
       gap: 0.6rem;
     }
     .fp-cta-card {
@@ -1121,6 +1176,13 @@ const newsStructuredData = newsItems.map((item) => ({
       font-size: 0.9rem;
     }
     @media (max-width: 900px) {
+      .fp-section-head {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .fp-cta-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
       .fp-hero-top-controls {
         gap: 0.5rem;
       }
@@ -1163,6 +1225,11 @@ const newsStructuredData = newsItems.map((item) => ({
       .fp-hero-main::after {
         inset: -8% -10% -12% -10%;
         background-size: 100% auto;
+      }
+    }
+    @media (max-width: 620px) {
+      .fp-cta-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
