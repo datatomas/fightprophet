@@ -114,3 +114,10 @@ Return HTTP `200`/`201` for success so the UI shows confirmation.
 - Serve `ads.txt` from your site root (`/ads.txt`)
 - Implement consent management where required (EEA/UK/other regulated regions)
 - Avoid incentivized clicks and policy-violating ad placement
+
+
+
+# test logs from online worker
+
+cd /home/ares/Documents/gitrepos/ml_kuda_sports_lab/astro_adsense_starter
+npx wrangler pages deployment tail --project-name ml-kuda-sports-lab --environment production
