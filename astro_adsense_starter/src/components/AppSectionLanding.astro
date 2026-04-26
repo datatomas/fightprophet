@@ -13,6 +13,7 @@ interface Props {
   bullets: Bullet[];
   whatYouWillSee: string[];
   ctaLabel?: string;
+  noAd?: boolean;
 }
 
 const {
@@ -22,6 +23,7 @@ const {
   bullets,
   whatYouWillSee,
   ctaLabel = 'Open in Fight Prophet App',
+  noAd = false,
 } = Astro.props as Props;
 
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
@@ -57,7 +59,7 @@ const targetUrl = `${appUrl}${appUrl.includes('?') ? '&' : '?'}page=${encodeURIC
     </section>
   </div>
 
-  <AdSlot slot="1234567890" />
+  {!noAd && <AdSlot slot="1234567890" />}
 
   <section class="fp-landing-section fp-landing-disclaimer">
     <h2>Important note</h2>

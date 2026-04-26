@@ -88,6 +88,20 @@ const ogImageUrl = new URL('/branding/fightprophet_logo_white.png', siteUrl).toS
     <main>
       <slot />
     </main>
+    <footer class="fp-site-footer">
+      <nav class="fp-site-footer-nav" aria-label="Site sections">
+        <a href="/">Home</a>
+        <a href="/predictions/">Predictions</a>
+        <a href="/fight-lab/">Fight Lab</a>
+        <a href="/rankings/">Rankings</a>
+        <a href="/belt-holders/">Belt Holders</a>
+        <a href="/fighter-profile/">Fighter Profile</a>
+        <a href="/events-history/">Events History</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+      </nav>
+      <p class="fp-site-footer-meta">© Fight Prophet · Information and education only — not financial advice.</p>
+    </footer>
   </body>
 </html>
 
@@ -103,5 +117,34 @@ const ogImageUrl = new URL('/branding/fightprophet_logo_white.png', siteUrl).toS
     max-width: 980px;
     margin: 0 auto;
     padding: 1.25rem;
+  }
+
+  .fp-site-footer {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 1.25rem 1.25rem 2rem;
+    border-top: 1px solid rgba(113, 113, 122, 0.32);
+    color: #a1a1aa;
+  }
+  .fp-site-footer-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+    margin-bottom: 0.6rem;
+  }
+  .fp-site-footer-nav a {
+    color: #d4d4d8;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+  .fp-site-footer-nav a:hover {
+    color: #fef2f2;
+    text-decoration: underline;
+  }
+  .fp-site-footer-meta {
+    margin: 0;
+    font-size: 0.78rem;
+    color: #71717a;
   }
 </style>

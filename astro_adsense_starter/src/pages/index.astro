@@ -165,16 +165,11 @@ const newsStructuredData = newsItems.map((item) => ({
     </div>
 
     <div class="fp-hero-main">
-      <p class="fp-hero-sub" id="i18n-hero-sub">
-        Fight Prophet makes MMA analytics easy to read: upcoming picks, model diagnostics,
-        rankings, belt holders, and fighter profiles in one place.
-      </p>
       <div class="fp-hero-pills" aria-label="Highlights">
         <span class="fp-hero-pill" id="i18n-pill-1">AI-powered fight previews</span>
         <span class="fp-hero-pill" id="i18n-pill-2">Model confidence</span>
         <span class="fp-hero-pill" id="i18n-pill-3">Risk-aware decision support</span>
       </div>
-      <p class="fp-hero-datasci" id="i18n-hero-datasci">Built with sports data science: probability modeling, calibration analysis, and historical backtesting.</p>
       <p class="fp-hero-note" id="i18n-hero-note">For information and education only — never financial advice.</p>
       <div class="fp-hero-actions">
         <a class="fp-btn fp-btn-primary" href={appUrl} target="_blank" rel="noopener noreferrer" id="i18n-open-app-main">Open Fight Prophet App</a>
@@ -183,66 +178,14 @@ const newsStructuredData = newsItems.map((item) => ({
   </section>
 
   <section>
-    <p class="fp-section-label" id="i18n-simple-workflow">Simple workflow for new users</p>
-    <ul class="fp-workflow-list">
-      <li id="i18n-wf-1">Start in <strong>Upcoming Predictions</strong> to compare model probability vs market probability.</li>
-      <li id="i18n-wf-2">Open <strong>Fight Lab</strong> to review historical outcomes plus metrics like accuracy, F1, AUC, Brier, and log loss.</li>
-      <li id="i18n-wf-3">Use <strong>Fighter Rankings</strong> and <strong>Fighter Profile</strong> to understand matchup context.</li>
-      <li id="i18n-wf-4">Use <strong>Belt Holders</strong> to track champions, title-fight history, and manual vacate overrides.</li>
-    </ul>
-  </section>
-
-  <section>
-    <p class="fp-section-label" id="i18n-platform-snapshot">Platform snapshot</p>
-    <div class="fp-stats-strip">
-      <article class="fp-stat-item"><p class="fp-stat-label" id="i18n-stat-upcoming">Upcoming Fights</p><p class="fp-stat-value" id="i18n-live-1">Live in app</p></article>
-      <article class="fp-stat-item"><p class="fp-stat-label" id="i18n-stat-events">Tracked Events</p><p class="fp-stat-value" id="i18n-live-2">Live in app</p></article>
-      <article class="fp-stat-item"><p class="fp-stat-label" id="i18n-stat-acc">Historical Accuracy</p><p class="fp-stat-value" id="i18n-live-3">Live in app</p></article>
-      <article class="fp-stat-item"><p class="fp-stat-label" id="i18n-stat-edge">Avg Edge</p><p class="fp-stat-value" id="i18n-live-4">Live in app</p></article>
-      <article class="fp-stat-item"><p class="fp-stat-label" id="i18n-stat-fighters">Tracked Fighters</p><p class="fp-stat-value" id="i18n-live-5">Live in app</p></article>
-    </div>
-  </section>
-
-  <AdSlot slot="1234567890" />
-
-  <section>
-    <p class="fp-section-label" id="i18n-workflow">Learn the workflow</p>
-    <div class="fp-content-grid">
-      <article class="fp-panel">
-        <h2 id="i18n-how-to-use">How to use</h2>
-        <ul>
-          <li id="i18n-how-1">Review upcoming prediction confidence and market deltas.</li>
-          <li id="i18n-how-2">Validate model quality with historical calibration and backtests.</li>
-          <li id="i18n-how-3">Use outputs as informational analytics, not guaranteed outcomes.</li>
-        </ul>
-      </article>
-      <article class="fp-panel">
-        <h2 id="i18n-model-engine">Model engine</h2>
-        <ul>
-          <li id="i18n-engine-1">Ensemble view for balanced confidence and calibration.</li>
-          <li id="i18n-engine-2">CatBoost and LogReg comparisons for cross-checking picks.</li>
-          <li id="i18n-engine-3">Signal strength markers to surface clearer spots.</li>
-        </ul>
-      </article>
-      <article class="fp-panel">
-        <h2 id="i18n-risk-controls">Risk controls</h2>
-        <ul>
-          <li id="i18n-risk-1">Use model outputs as decision support, not guarantees.</li>
-          <li id="i18n-risk-2">Compare probability deltas vs market before acting.</li>
-          <li id="i18n-risk-3">Skip low-signal fights and favor long-term discipline.</li>
-        </ul>
-      </article>
-    </div>
-  </section>
-
-  <section>
-    <p class="fp-section-label" id="i18n-start-exploring">Start exploring</p>
+    <p class="fp-section-label" id="i18n-start-exploring">Sections</p>
     <div class="fp-cta-grid">
       <a class="fp-cta-card" href="/predictions/"><strong id="i18n-cta-1-title">Predictions</strong><span id="i18n-cta-1-desc">Compare model vs market probability</span></a>
       <a class="fp-cta-card" href="/fight-lab/"><strong id="i18n-cta-2-title">Fight Lab</strong><span id="i18n-cta-2-desc">Historical picks + model metrics</span></a>
       <a class="fp-cta-card" href="/rankings/"><strong id="i18n-cta-3-title">Fighter Rankings</strong><span id="i18n-cta-3-desc">Divisional performance and risers</span></a>
       <a class="fp-cta-card" href="/belt-holders/"><strong id="i18n-cta-4-title">Belt Holders</strong><span id="i18n-cta-4-desc">Champions and title history</span></a>
       <a class="fp-cta-card" href="/fighter-profile/"><strong id="i18n-cta-5-title">Fighter Profile</strong><span id="i18n-cta-5-desc">Deep dive on any fighter</span></a>
+      <a class="fp-cta-card" href="/events-history/"><strong id="i18n-cta-6-title">Events History</strong><span id="i18n-cta-6-desc">Past UFC cards and results</span></a>
     </div>
   </section>
 
@@ -274,6 +217,8 @@ const newsStructuredData = newsItems.map((item) => ({
     </div>
   </section>
 
+  <AdSlot slot="1234567890" />
+
   <section>
     <p class="fp-section-label" id="i18n-why-open-source">Why open source</p>
     <div class="fp-story">
@@ -299,8 +244,6 @@ const newsStructuredData = newsItems.map((item) => ({
       <p id="subscribe-status" aria-live="polite"></p>
     </div>
   </section>
-
-  <AdSlot slot="1234567890" format="rectangle" responsive={false} />
 
   <script define:vars={{ subscribeEndpoint }}>
     const form = document.getElementById('subscribe-form');
@@ -386,7 +329,7 @@ const newsStructuredData = newsItems.map((item) => ({
         risk1: 'Use model outputs as decision support, not guarantees.',
         risk2: 'Compare probability deltas vs market before acting.',
         risk3: 'Skip low-signal fights and favor long-term discipline.',
-        startExploring: 'Start exploring',
+        startExploring: 'Sections',
         cta1Title: 'Predictions',
         cta1Desc: 'Compare model vs market probability',
         cta2Title: 'Fight Lab',
@@ -397,6 +340,8 @@ const newsStructuredData = newsItems.map((item) => ({
         cta4Desc: 'Champions and title history',
         cta5Title: 'Fighter Profile',
         cta5Desc: 'Deep dive on any fighter',
+        cta6Title: 'Events History',
+        cta6Desc: 'Past UFC cards and results',
         latestNews: 'Latest news',
         subscribeTitle: 'Subscribe for updates',
         subscribeCopy: 'Get release notes, feature updates, and major model changes.',
@@ -448,7 +393,7 @@ const newsStructuredData = newsItems.map((item) => ({
         risk1: 'Usa el modelo como apoyo, no como garantía.',
         risk2: 'Compara probabilidades del modelo vs mercado.',
         risk3: 'Evita peleas de baja señal y prioriza disciplina.',
-        startExploring: 'Comenzar a explorar',
+        startExploring: 'Secciones',
         cta1Title: 'Predicciones',
         cta1Desc: 'Compara probabilidad del modelo vs mercado',
         cta2Title: 'Fight Lab',
@@ -459,6 +404,8 @@ const newsStructuredData = newsItems.map((item) => ({
         cta4Desc: 'Campeones e historial de títulos',
         cta5Title: 'Perfil del Peleador',
         cta5Desc: 'Análisis profundo por peleador',
+        cta6Title: 'Historial de Eventos',
+        cta6Desc: 'Carteleras UFC pasadas y resultados',
         latestNews: 'Últimas noticias',
         subscribeTitle: 'Suscríbete a actualizaciones',
         subscribeCopy: 'Recibe notas de versión, funciones nuevas y cambios de modelo.',
@@ -510,7 +457,7 @@ const newsStructuredData = newsItems.map((item) => ({
         risk1: 'Use a saída do modelo como apoio, não garantia.',
         risk2: 'Compare probabilidades do modelo com o mercado.',
         risk3: 'Evite lutas de sinal fraco e mantenha disciplina.',
-        startExploring: 'Começar exploração',
+        startExploring: 'Seções',
         cta1Title: 'Previsões',
         cta1Desc: 'Compare probabilidade do modelo vs mercado',
         cta2Title: 'Fight Lab',
@@ -521,6 +468,8 @@ const newsStructuredData = newsItems.map((item) => ({
         cta4Desc: 'Campeões e histórico de títulos',
         cta5Title: 'Perfil do Lutador',
         cta5Desc: 'Análise profunda de cada lutador',
+        cta6Title: 'Histórico de Eventos',
+        cta6Desc: 'Cards passados da UFC e resultados',
         latestNews: 'Últimas notícias',
         subscribeTitle: 'Inscreva-se para atualizações',
         subscribeCopy: 'Receba notas de versão, novos recursos e mudanças de modelo.',
@@ -584,6 +533,8 @@ const newsStructuredData = newsItems.map((item) => ({
       cta4Desc: 'i18n-cta-4-desc',
       cta5Title: 'i18n-cta-5-title',
       cta5Desc: 'i18n-cta-5-desc',
+      cta6Title: 'i18n-cta-6-title',
+      cta6Desc: 'i18n-cta-6-desc',
       latestNews: 'i18n-latest-news',
       subscribeTitle: 'i18n-subscribe-title',
       subscribeCopy: 'i18n-subscribe-copy',
