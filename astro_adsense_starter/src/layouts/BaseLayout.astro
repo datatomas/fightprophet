@@ -106,25 +106,34 @@ const ogImageUrl = new URL('/branding/fightprophet_logo_white.png', siteUrl).toS
 </html>
 
 <style>
+  :global(:root) {
+    --fp-shell-max: 1380px;
+  }
+
   :global(html, body) {
     margin: 0;
     font-family: Inter, system-ui, sans-serif;
-    background: #09090b;
+    background:
+      linear-gradient(180deg, rgba(9, 9, 11, 0.86) 0%, rgba(9, 9, 11, 0.93) 34%, rgba(9, 9, 11, 0.97) 100%),
+      url('/background.png') center top / cover fixed no-repeat,
+      #09090b;
     color: #f4f4f5;
   }
 
   main {
-    max-width: 980px;
+    max-width: var(--fp-shell-max);
     margin: 0 auto;
-    padding: 1.25rem;
+    padding: 1.25rem clamp(1rem, 2vw, 1.6rem);
   }
 
   .fp-site-footer {
-    max-width: 980px;
+    max-width: var(--fp-shell-max);
     margin: 0 auto;
-    padding: 1.25rem 1.25rem 2rem;
+    padding: 1.25rem clamp(1rem, 2vw, 1.6rem) 2rem;
     border-top: 1px solid rgba(113, 113, 122, 0.32);
     color: #a1a1aa;
+    background: linear-gradient(180deg, rgba(9, 9, 11, 0.1), rgba(9, 9, 11, 0.32));
+    backdrop-filter: blur(1px);
   }
   .fp-site-footer-nav {
     display: flex;

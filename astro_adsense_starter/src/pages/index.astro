@@ -14,6 +14,12 @@ const rankingsAppUrl = withPage('rankings');
 const allRankedFighters = await getAllRankedFighterCards(runtimeEnvFromLocals(Astro.locals));
 const rankedDivisions = groupRankedFightersByDivision(allRankedFighters);
 const totalRankedFighters = allRankedFighters.length;
+const divisionSlug = (value: string) => value.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
+const defaultDivision =
+  rankedDivisions.find((group) => group.weight_class.trim().toLowerCase() === 'heavyweight')?.weight_class
+  ?? rankedDivisions[0]?.weight_class
+  ?? 'Heavyweight';
+const defaultDivisionSlug = divisionSlug(defaultDivision);
 interface NewsItem {
   id: string;
   title: string;
@@ -191,23 +197,42 @@ const newsStructuredData = newsItems.map((item) => ({
       <div>
         <p class="fp-section-label">Ranked Fighters Wall</p>
         <p class="fp-section-intro fp-section-intro-tight">
-          Live ranking cards for every active fighter across {rankedDivisions.length || 0} divisions{totalRankedFighters ? ` (${totalRankedFighters} cards)` : ''}. Pick any division to jump straight to the cards and open one for the full profile.
+          Live ranking cards for every active fighter across {rankedDivisions.length || 0} divisions{totalRankedFighters ? ` (${totalRankedFighters} cards)` : ''}. Start with {defaultDivision}, then switch divisions without crowding the page.
         </p>
       </div>
       <a class="fp-btn fp-btn-secondary" href="/rankings/">Full rankings</a>
     </div>
     {rankedDivisions.length > 0 ? (
-      <>
-        <nav class="fp-division-jump" aria-label="Jump to division">
+      <div class="fp-rankings-wall" data-default-division={defaultDivisionSlug}>
+        <div class="fp-division-tools">
+          <label class="fp-visually-hidden" for="fp-division-select">Select division</label>
+          <select id="fp-division-select" class="fp-division-select" aria-label="Select division">
+            {rankedDivisions.map((group) => (
+              <option value={divisionSlug(group.weight_class)} selected={divisionSlug(group.weight_class) === defaultDivisionSlug}>
+                {group.weight_class} ({group.fighters.length})
+              </option>
+            ))}
+          </select>
+        </div>
+        <nav class="fp-division-jump" aria-label="Choose division">
           {rankedDivisions.map((g) => (
-            <a class="fp-division-pill" href={`#division-${g.weight_class.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}`}>
+            <button
+              type="button"
+              class={`fp-division-pill${divisionSlug(g.weight_class) === defaultDivisionSlug ? ' is-active' : ''}`}
+              data-division-target={divisionSlug(g.weight_class)}
+              aria-pressed={divisionSlug(g.weight_class) === defaultDivisionSlug ? 'true' : 'false'}
+            >
               {g.weight_class}
               <span class="fp-division-pill-count">{g.fighters.length}</span>
-            </a>
+            </button>
           ))}
         </nav>
         {rankedDivisions.map((group) => (
-          <div class="fp-division-block" id={`division-${group.weight_class.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}`}>
+          <div
+            class={`fp-division-block${divisionSlug(group.weight_class) === defaultDivisionSlug ? ' is-active' : ''}`}
+            data-division-panel={divisionSlug(group.weight_class)}
+            hidden={divisionSlug(group.weight_class) === defaultDivisionSlug ? undefined : true}
+          >
             <div class="fp-division-header">
               <h3 class="fp-division-title">{group.weight_class}</h3>
               <span class="fp-division-count">{group.fighters.length} ranked</span>
@@ -232,7 +257,7 @@ const newsStructuredData = newsItems.map((item) => ({
             </div>
           </div>
         ))}
-      </>
+      </div>
     ) : (
       <div class="fp-empty-state">
         <strong>Ranked fighter cards are temporarily unavailable on the homepage.</strong>
@@ -706,7 +731,68 @@ const newsStructuredData = newsItems.map((item) => ({
     });
   </script>
 
+  <script>
+    const rankingsWall = document.querySelector('.fp-rankings-wall');
+    const divisionSelect = document.getElementById('fp-division-select');
+    const divisionButtons = Array.from(document.querySelectorAll('.fp-division-pill[data-division-target]'));
+    const divisionPanels = Array.from(document.querySelectorAll('.fp-division-block[data-division-panel]'));
+
+    function setActiveDivision(slug) {
+      if (!slug) return;
+
+      divisionButtons.forEach((button) => {
+        const isActive = button.getAttribute('data-division-target') === slug;
+        button.classList.toggle('is-active', isActive);
+        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      });
+
+      divisionPanels.forEach((panel) => {
+        const isActive = panel.getAttribute('data-division-panel') === slug;
+        panel.classList.toggle('is-active', isActive);
+        panel.hidden = !isActive;
+      });
+
+      if (divisionSelect instanceof HTMLSelectElement && divisionSelect.value !== slug) {
+        divisionSelect.value = slug;
+      }
+    }
+
+    const initialDivision = rankingsWall?.getAttribute('data-default-division')
+      || divisionButtons[0]?.getAttribute('data-division-target')
+      || divisionPanels[0]?.getAttribute('data-division-panel')
+      || '';
+
+    if (initialDivision) {
+      setActiveDivision(initialDivision);
+    }
+
+    divisionButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        setActiveDivision(button.getAttribute('data-division-target') || '');
+      });
+    });
+
+    if (divisionSelect instanceof HTMLSelectElement) {
+      divisionSelect.addEventListener('change', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLSelectElement)) return;
+        setActiveDivision(target.value);
+      });
+    }
+  </script>
+
   <style>
+    .fp-visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
     .fp-lang-switch {
       display: inline-flex;
       gap: 0.28rem;
@@ -988,16 +1074,35 @@ const newsStructuredData = newsItems.map((item) => ({
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 0.55rem;
     }
+    .fp-rankings-wall {
+      display: grid;
+      gap: 0.9rem;
+    }
+    .fp-division-tools {
+      display: none;
+    }
+    .fp-division-select {
+      width: 100%;
+      background: rgba(22, 22, 26, 0.92);
+      border: 1px solid rgba(220, 38, 38, 0.32);
+      color: #fef2f2;
+      border-radius: 0.8rem;
+      padding: 0.72rem 0.9rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(220, 38, 38, 0.08);
+    }
     .fp-champ-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
-      gap: 0.6rem;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 190px));
+      justify-content: center;
+      gap: 0.85rem;
     }
     .fp-division-jump {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.32rem;
-      margin: 0 0 0.85rem;
+      gap: 0.42rem;
+      margin: 0;
     }
     .fp-division-pill {
       display: inline-flex;
@@ -1008,13 +1113,23 @@ const newsStructuredData = newsItems.map((item) => ({
       color: #fef2f2;
       font-size: 0.78rem;
       font-weight: 700;
-      padding: 0.28rem 0.55rem;
+      padding: 0.34rem 0.62rem;
       border-radius: 9999px;
-      text-decoration: none;
+      appearance: none;
+      -webkit-appearance: none;
+      text-align: left;
       letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: background 140ms ease, border-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+    }
+    .fp-division-pill.is-active {
+      background: linear-gradient(160deg, rgba(127, 29, 29, 0.72), rgba(35, 20, 20, 0.92));
+      border-color: rgba(248, 113, 113, 0.58);
+      box-shadow: 0 0 12px rgba(220, 38, 38, 0.18);
     }
     .fp-division-pill:hover {
       background: linear-gradient(160deg, rgba(127, 29, 29, 0.65), rgba(22, 22, 26, 0.85));
+      transform: translateY(-1px);
     }
     .fp-division-pill-count {
       background: rgba(220, 38, 38, 0.22);
@@ -1025,15 +1140,19 @@ const newsStructuredData = newsItems.map((item) => ({
       border-radius: 9999px;
     }
     .fp-division-block {
-      margin: 0.4rem 0 1.1rem;
+      margin: 0;
       scroll-margin-top: 0.6rem;
+      display: none;
+    }
+    .fp-division-block.is-active {
+      display: block;
     }
     .fp-division-header {
       display: flex;
       align-items: baseline;
       justify-content: space-between;
       gap: 0.6rem;
-      margin: 0 0 0.42rem;
+      margin: 0 0 0.6rem;
       padding: 0.32rem 0.5rem;
       border-left: 3px solid rgba(220, 38, 38, 0.55);
       background: linear-gradient(90deg, rgba(127, 29, 29, 0.28), rgba(22, 22, 26, 0));
@@ -1261,6 +1380,12 @@ const newsStructuredData = newsItems.map((item) => ({
         flex-direction: column;
         align-items: flex-start;
       }
+      .fp-division-tools {
+        display: block;
+      }
+      .fp-division-jump {
+        display: none;
+      }
       .fp-cta-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
@@ -1273,6 +1398,10 @@ const newsStructuredData = newsItems.map((item) => ({
       }
       .fp-content-grid {
         grid-template-columns: 1fr;
+      }
+      .fp-champ-grid {
+        grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+        gap: 0.7rem;
       }
       .fp-news-shell {
         grid-template-columns: 1fr;
@@ -1315,6 +1444,13 @@ const newsStructuredData = newsItems.map((item) => ({
     @media (max-width: 620px) {
       .fp-cta-grid {
         grid-template-columns: 1fr;
+      }
+      .fp-champ-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .fp-division-header {
+        flex-direction: column;
+        align-items: flex-start;
       }
     }
   </style>
