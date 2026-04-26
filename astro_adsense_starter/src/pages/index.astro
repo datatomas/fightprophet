@@ -159,7 +159,7 @@ const newsStructuredData = newsItems.map((item) => ({
 
 <BaseLayout title="Fight Prophet | Home" description="MMA AI and ML-powered fight analytics, predictions, fighter rankings, and model insights to help fight fans bet smarter.">
   <section class="fp-hero">
-    <div class="fp-hero-top">
+    <div class="fp-hero-shell">
       <div class="fp-hero-top-controls">
         <div class="fp-lang-switch" aria-label="Language selector">
           <button type="button" class="fp-lang-btn" data-lang="es" title="Español">🇨🇴</button>
@@ -168,21 +168,22 @@ const newsStructuredData = newsItems.map((item) => ({
         </div>
         <img class="fp-hero-mark" src="/branding/fightprophet_ear_white.png" alt="Fight Prophet mark" loading="lazy" />
       </div>
-      <div class="fp-hero-brand">
-        <img src="/branding/fightprophet_logo_white.png" alt="FightProphet.com" class="fp-hero-logo" loading="lazy" />
-        <p class="fp-hero-subtitle" id="i18n-topbar-subtitle">The fight data already knows who's getting smashed. We just highlight it.</p>
-      </div>
-    </div>
-
-    <div class="fp-hero-main">
-      <div class="fp-hero-pills" aria-label="Highlights">
-        <span class="fp-hero-pill" id="i18n-pill-1">AI-powered fight previews</span>
-        <span class="fp-hero-pill" id="i18n-pill-2">Model confidence</span>
-        <span class="fp-hero-pill" id="i18n-pill-3">Risk-aware decision support</span>
-      </div>
-      <p class="fp-hero-note" id="i18n-hero-note">For information and education only — never financial advice.</p>
-      <div class="fp-hero-actions">
-        <a class="fp-btn fp-btn-primary" href={appUrl} target="_blank" rel="noopener noreferrer" id="i18n-open-app-main">Open Fight Prophet App</a>
+      <div class="fp-hero-content">
+        <div class="fp-hero-brand">
+          <img src="/branding/fightprophet_logo_white.png" alt="FightProphet.com" class="fp-hero-logo" loading="lazy" />
+          <p class="fp-hero-subtitle" id="i18n-topbar-subtitle">The fight data already knows who's getting smashed. We just highlight it.</p>
+        </div>
+        <div class="fp-hero-main">
+          <div class="fp-hero-pills" aria-label="Highlights">
+            <span class="fp-hero-pill" id="i18n-pill-1">AI-powered fight previews</span>
+            <span class="fp-hero-pill" id="i18n-pill-2">Model confidence</span>
+            <span class="fp-hero-pill" id="i18n-pill-3">Risk-aware decision support</span>
+          </div>
+          <p class="fp-hero-note" id="i18n-hero-note">For information and education only — never financial advice.</p>
+          <div class="fp-hero-actions">
+            <a class="fp-btn fp-btn-primary" href={appUrl} target="_blank" rel="noopener noreferrer" id="i18n-open-app-main">Open Fight Prophet App</a>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -233,17 +234,13 @@ const newsStructuredData = newsItems.map((item) => ({
             </div>
           </div>
         ))}
-        <div class="fp-section-actions">
-          <a class="fp-btn fp-btn-primary" href={rankingsAppUrl} target="_blank" rel="noopener noreferrer">Open live rankings in app</a>
-        </div>
       </>
     ) : (
       <div class="fp-empty-state">
         <strong>Ranked fighter cards are not loading in the Astro runtime yet.</strong>
         <span>
-          The site deploy succeeded, but the Cloudflare Worker still needs the Azure/parquet variables at runtime to read rankings and champion cards.
+          The site deploy succeeded, but the Cloudflare Worker still needs the Azure/parquet variables at runtime to read rankings and champion cards. After changing Cloudflare variables, redeploy the site so the Worker picks them up.
         </span>
-        <a class="fp-btn fp-btn-primary" href={rankingsAppUrl} target="_blank" rel="noopener noreferrer">Open live rankings in app</a>
       </div>
     )}
   </section>
@@ -281,9 +278,8 @@ const newsStructuredData = newsItems.map((item) => ({
       <div class="fp-empty-state">
         <strong>Champion cards are loading from the live Fight Prophet data source.</strong>
         <span>
-          If they are missing here, the Astro server still needs the same Azure parquet settings the app is already using.
+          If they are missing here, the Astro server still needs the same Azure parquet settings the app is already using. After updating Cloudflare variables, redeploy the site.
         </span>
-        <a class="fp-btn fp-btn-primary" href={beltHoldersAppUrl} target="_blank" rel="noopener noreferrer">Open live belt holders in app</a>
       </div>
     )}
   </section>
@@ -788,42 +784,46 @@ const newsStructuredData = newsItems.map((item) => ({
       gap: 0.62rem;
       margin-bottom: 0.9rem;
     }
-    .fp-hero-top,
-    .fp-hero-main {
+    .fp-hero-shell {
       position: relative;
       background: linear-gradient(155deg, rgba(20, 20, 22, 0.96) 0%, rgba(40, 20, 20, 0.84) 100%);
       border: 1px solid rgba(220, 38, 38, 0.28);
       border-radius: 1.05rem;
-      padding: 0.9rem 0.95rem;
+      padding: 0.95rem 1rem 1rem;
       overflow: hidden;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 26px rgba(0, 0, 0, 0.28), 0 0 22px rgba(220, 38, 38, 0.12);
-    }
-    .fp-hero-top {
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
     }
     .fp-hero-top-controls {
       display: flex;
       justify-content: space-between;
       align-items: center;
       width: 100%;
+      margin-bottom: 0.8rem;
     }
-    .fp-hero-main::after {
+    .fp-hero-shell::after {
       content: '';
       position: absolute;
-      inset: -12% -20% -18% -20%;
+      inset: -10% -16% -18% -16%;
       background: url('/branding/cageiconmma.png') center center / 92% auto no-repeat;
-      opacity: 0.12;
+      opacity: 0.13;
       pointer-events: none;
       z-index: 0;
     }
+    .fp-hero-content {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.95fr);
+      gap: 1rem;
+      align-items: center;
+    }
     .fp-hero-brand {
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
       gap: 0.85rem;
       min-width: 0;
-      justify-content: center;
     }
     .fp-hero-logo {
       width: clamp(210px, 25vw, 320px);
@@ -972,14 +972,6 @@ const newsStructuredData = newsItems.map((item) => ({
     .fp-empty-state strong {
       color: #fef2f2;
       font-size: 1rem;
-    }
-    .fp-empty-state .fp-btn {
-      justify-self: start;
-    }
-    .fp-section-actions {
-      display: flex;
-      justify-content: center;
-      margin-top: 0.75rem;
     }
     .fp-stats-strip {
       display: grid;
@@ -1316,6 +1308,10 @@ const newsStructuredData = newsItems.map((item) => ({
       .fp-hero-top-controls {
         gap: 0.5rem;
       }
+      .fp-hero-content {
+        grid-template-columns: 1fr;
+        gap: 0.8rem;
+      }
       .fp-content-grid {
         grid-template-columns: 1fr;
       }
@@ -1352,21 +1348,14 @@ const newsStructuredData = newsItems.map((item) => ({
         font-size: 0.84rem;
         padding: 0.46rem 0.68rem;
       }
-      .fp-hero-main::after {
-        inset: -8% -10% -12% -10%;
-        background-size: 100% auto;
+      .fp-hero-shell::after {
+        inset: -8% -12% -12% -12%;
+        background-size: 108% auto;
       }
     }
     @media (max-width: 620px) {
       .fp-cta-grid {
         grid-template-columns: 1fr;
-      }
-      .fp-section-actions {
-        justify-content: stretch;
-      }
-      .fp-section-actions .fp-btn {
-        width: 100%;
-        text-align: center;
       }
     }
   </style>
