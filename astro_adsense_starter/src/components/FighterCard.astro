@@ -140,7 +140,34 @@ function flagFor(c: string): string {
   return map[c.toLowerCase().trim()] || '';
 }
 
+function countryShort(c: string): string {
+  if (!c) return '';
+  const map: Record<string, string> = {
+    usa: 'US',
+    us: 'US',
+    'united states': 'US',
+    'united states of america': 'US',
+    uk: 'UK',
+    england: 'UK',
+    'united kingdom': 'UK',
+    'great britain': 'UK',
+    'south korea': 'KR',
+    korea: 'KR',
+    'new zealand': 'NZ',
+    'saudi arabia': 'SA',
+    'czech republic': 'CZ',
+    czechia: 'CZ',
+    'dominican republic': 'DO',
+    'south africa': 'ZA',
+    'russian federation': 'RU',
+  };
+  const key = c.toLowerCase().trim();
+  if (key in map) return map[key];
+  return c.split(/\s+/).map((p) => p[0]).filter(Boolean).join('').slice(0, 3).toUpperCase();
+}
+
 const flag = flagFor(country);
+const countryCompact = countryShort(country);
 const init = initials(name);
 const wcAbbr = divisionAbbrev(weightClass);
 const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(losses)}` : '';
@@ -160,6 +187,13 @@ const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(l
     <span class="fp-card-initials">{init}</span>
   </div>
   <div class="fp-card-name">{name}</div>
+  {country && (
+    <div class="fp-card-country">
+      {flag && <span class="fp-card-country-flag" aria-hidden="true">{flag}</span>}
+      <span class="fp-card-country-full">{country}</span>
+      <span class="fp-card-country-short">{countryCompact}</span>
+    </div>
+  )}
   <div class="fp-card-stats">
     <div class="fp-card-stat"><span class="fp-card-stat-label">FIN</span><span class="fp-card-stat-val">{fmtPct(finishRate)}</span></div>
     <div class="fp-card-stat"><span class="fp-card-stat-label">SUB</span><span class="fp-card-stat-val">{fmtPct(subRate)}</span></div>
@@ -316,6 +350,38 @@ const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(l
   .is-default .fp-card-name {
     color: #fef2f2;
   }
+  .fp-card-country {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.28rem;
+    margin: -0.05rem 0 0.38rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.05;
+    min-height: 0.9rem;
+  }
+  .fp-card-country-flag {
+    font-size: 0.9rem;
+    line-height: 1;
+  }
+  .fp-card-country-full,
+  .fp-card-country-short {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fp-card-country-short {
+    display: none;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .is-champ .fp-card-country {
+    color: rgba(31, 19, 0, 0.84);
+  }
+  .is-default .fp-card-country {
+    color: rgba(255, 255, 255, 0.82);
+  }
 
   .fp-card-stats {
     display: grid;
@@ -351,5 +417,13 @@ const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(l
   }
   .is-champ .fp-card-stat-val {
     color: rgba(31, 19, 0, 0.96);
+  }
+  @media (max-width: 640px) {
+    .fp-card-country-full {
+      display: none;
+    }
+    .fp-card-country-short {
+      display: inline;
+    }
   }
 </style>
