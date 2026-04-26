@@ -3571,6 +3571,178 @@ def _render_fighter_meta_card(label: str, value: str, icon: str, accent: str) ->
     )
 
 
+_FIGHTER_CARD_DIVISION_ABBREV = {
+    "flyweight": "FLW",
+    "bantamweight": "BW",
+    "featherweight": "FW",
+    "lightweight": "LW",
+    "welterweight": "WW",
+    "middleweight": "MW",
+    "light heavyweight": "LHW",
+    "heavyweight": "HW",
+    "strawweight": "SW",
+    "women's strawweight": "WSW",
+    "women's flyweight": "WFLW",
+    "women's bantamweight": "WBW",
+    "women's featherweight": "WFW",
+}
+
+_FIGHTER_CARD_FLAG_MAP = {
+    "usa": "🇺🇸", "united states": "🇺🇸", "us": "🇺🇸", "united states of america": "🇺🇸",
+    "brazil": "🇧🇷", "br": "🇧🇷",
+    "russia": "🇷🇺", "russian federation": "🇷🇺",
+    "mexico": "🇲🇽", "canada": "🇨🇦", "ireland": "🇮🇪",
+    "australia": "🇦🇺", "new zealand": "🇳🇿",
+    "china": "🇨🇳", "japan": "🇯🇵", "south korea": "🇰🇷", "korea": "🇰🇷",
+    "england": "🇬🇧", "united kingdom": "🇬🇧", "uk": "🇬🇧", "great britain": "🇬🇧",
+    "france": "🇫🇷", "germany": "🇩🇪", "spain": "🇪🇸", "italy": "🇮🇹",
+    "poland": "🇵🇱", "netherlands": "🇳🇱", "sweden": "🇸🇪", "norway": "🇳🇴",
+    "kazakhstan": "🇰🇿", "kyrgyzstan": "🇰🇬", "georgia": "🇬🇪", "azerbaijan": "🇦🇿",
+    "nigeria": "🇳🇬", "south africa": "🇿🇦", "cameroon": "🇨🇲",
+    "ecuador": "🇪🇨", "peru": "🇵🇪", "argentina": "🇦🇷", "colombia": "🇨🇴", "chile": "🇨🇱",
+    "philippines": "🇵🇭", "thailand": "🇹🇭", "indonesia": "🇮🇩",
+    "czech republic": "🇨🇿", "czechia": "🇨🇿", "moldova": "🇲🇩", "romania": "🇷🇴",
+    "iceland": "🇮🇸", "finland": "🇫🇮", "denmark": "🇩🇰",
+    "austria": "🇦🇹", "belgium": "🇧🇪", "portugal": "🇵🇹",
+    "saudi arabia": "🇸🇦", "iran": "🇮🇷", "cuba": "🇨🇺", "dominican republic": "🇩🇴",
+    "suriname": "🇸🇷",
+}
+
+_FIGHTER_CARD_CSS = """
+<style>
+.fp-card{position:relative;display:flex;flex-direction:column;width:100%;max-width:220px;aspect-ratio:5/7;min-height:260px;border-radius:0.85rem;padding:0.55rem 0.55rem 0.65rem;overflow:hidden;isolation:isolate;color:#fef2f2;font-family:Inter,system-ui,sans-serif;}
+.fp-card::before{content:'';position:absolute;inset:0;border-radius:inherit;z-index:-1;}
+.fp-card.is-champ::before{background:radial-gradient(120% 80% at 50% 0%,rgba(255,215,0,0.45),transparent 65%),linear-gradient(160deg,#f7d046 0%,#b8860b 38%,#6b4e00 100%);box-shadow:inset 0 0 0 1.5px rgba(255,235,150,0.55),0 0 18px rgba(245,158,11,0.32);}
+.fp-card.is-default::before{background:radial-gradient(120% 80% at 50% 0%,rgba(160,174,192,0.35),transparent 65%),linear-gradient(160deg,#2a2f38 0%,#161a20 70%,#0c0d10 100%);box-shadow:inset 0 0 0 1px rgba(220,38,38,0.32),0 0 12px rgba(220,38,38,0.16);}
+.fp-card-crown{position:absolute;top:0.4rem;left:50%;transform:translateX(-50%);font-size:0.92rem;line-height:1;z-index:2;text-shadow:0 0 6px rgba(0,0,0,0.55);}
+.fp-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:0.4rem;}
+.fp-card-rating{display:flex;flex-direction:column;align-items:center;line-height:1;gap:0.05rem;}
+.fp-card-rating-num{font-size:1.05rem;font-weight:800;letter-spacing:0.02em;text-shadow:0 1px 2px rgba(0,0,0,0.55);}
+.fp-card.is-champ .fp-card-rating-num{color:#1f1300;text-shadow:0 1px 0 rgba(255,235,150,0.6);}
+.fp-card.is-default .fp-card-rating-num{color:#fef2f2;}
+.fp-card-rating-pos{font-size:0.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;}
+.fp-card.is-champ .fp-card-rating-pos{color:rgba(31,19,0,0.8);}
+.fp-card.is-default .fp-card-rating-pos{color:rgba(255,255,255,0.78);}
+.fp-card-flag{font-size:1rem;line-height:1;background:rgba(0,0,0,0.32);border-radius:0.4rem;padding:0.18rem 0.32rem;}
+.fp-card-portrait{position:relative;display:flex;align-items:center;justify-content:center;flex:1;margin:0.25rem 0 0.35rem;}
+.fp-card-portrait-silhouette{font-size:3.6rem;opacity:0.18;line-height:1;}
+.fp-card.is-champ .fp-card-portrait-silhouette{opacity:0.22;}
+.fp-card-initials{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:800;letter-spacing:0.05em;text-shadow:0 2px 6px rgba(0,0,0,0.7);}
+.fp-card.is-champ .fp-card-initials{color:rgba(31,19,0,0.92);}
+.fp-card.is-default .fp-card-initials{color:rgba(255,255,255,0.92);}
+.fp-card-name{font-size:0.86rem;font-weight:800;letter-spacing:0.01em;text-align:center;line-height:1.15;margin-bottom:0.4rem;word-break:break-word;}
+.fp-card.is-champ .fp-card-name{color:#1f1300;}
+.fp-card.is-default .fp-card-name{color:#fef2f2;}
+.fp-card-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.18rem 0.28rem;background:rgba(0,0,0,0.32);border-radius:0.55rem;padding:0.32rem 0.4rem;}
+.fp-card.is-champ .fp-card-stats{background:rgba(31,19,0,0.28);}
+.fp-card-stat{display:flex;align-items:center;justify-content:space-between;gap:0.25rem;line-height:1;}
+.fp-card-stat-label{font-size:0.58rem;font-weight:700;letter-spacing:0.06em;}
+.fp-card.is-champ .fp-card-stat-label{color:rgba(31,19,0,0.72);}
+.fp-card.is-default .fp-card-stat-label{color:rgba(255,255,255,0.72);}
+.fp-card-stat-val{font-size:0.78rem;font-weight:800;}
+.fp-card.is-champ .fp-card-stat-val{color:rgba(31,19,0,0.96);}
+.fp-card.is-default .fp-card-stat-val{color:rgba(255,255,255,0.96);}
+</style>
+"""
+
+
+def _fighter_card_division_abbrev(weight_class: str) -> str:
+    wc = (weight_class or "").strip()
+    if not wc:
+        return ""
+    key = wc.lower()
+    if key in _FIGHTER_CARD_DIVISION_ABBREV:
+        return _FIGHTER_CARD_DIVISION_ABBREV[key]
+    return "".join(part[0] for part in wc.split() if part)[:4].upper()
+
+
+def _fighter_card_flag(country: str) -> str:
+    if not country:
+        return ""
+    return _FIGHTER_CARD_FLAG_MAP.get(country.strip().lower(), "")
+
+
+def _fighter_card_initials(name: str) -> str:
+    parts = [p for p in (name or "").split() if p]
+    return "".join(p[0] for p in parts[:2]).upper() or "?"
+
+
+def _fighter_card_fmt_pct(value: object) -> str:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return "—"
+    try:
+        pct = float(value)
+    except Exception:
+        return "—"
+    if pct <= 1.0:
+        pct *= 100.0
+    return f"{round(pct)}%"
+
+
+def _fighter_card_fmt_int(value: object) -> str:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return "—"
+    try:
+        return str(int(float(value)))
+    except Exception:
+        return "—"
+
+
+def _render_fighter_card_html(
+    *,
+    name: str,
+    country: str = "",
+    weight_class: str = "",
+    is_champion: bool = False,
+    finish_rate: object = None,
+    sub_rate: object = None,
+    win_streak: object = None,
+    loss_streak: object = None,
+    wins: object = None,
+    losses: object = None,
+) -> None:
+    """Render a FUTBIN-style fighter card matching FighterCard.astro."""
+    initials = _fighter_card_initials(name)
+    wc_abbr = _fighter_card_division_abbrev(weight_class)
+    flag = _fighter_card_flag(country)
+    wins_txt = _fighter_card_fmt_int(wins)
+    losses_txt = _fighter_card_fmt_int(losses)
+    record_label = (
+        f"{wins_txt}-{losses_txt}"
+        if wins_txt != "—" and losses_txt != "—"
+        else wins_txt
+    )
+    css_class = "is-champ" if is_champion else "is-default"
+    crown_html = "<span class='fp-card-crown' aria-label='Current champion'>👑</span>" if is_champion else ""
+    flag_html = (
+        f"<span class='fp-card-flag' title='{escape(country)}'>{flag}</span>" if flag else ""
+    )
+    pos_html = f"<span class='fp-card-rating-pos'>{escape(wc_abbr)}</span>" if wc_abbr else ""
+
+    body = (
+        f"<div class='fp-card {css_class}'>"
+        f"{crown_html}"
+        "<div class='fp-card-top'>"
+        f"<div class='fp-card-rating'><span class='fp-card-rating-num'>{escape(record_label)}</span>{pos_html}</div>"
+        f"{flag_html}"
+        "</div>"
+        "<div class='fp-card-portrait' aria-hidden='true'>"
+        "<span class='fp-card-portrait-silhouette'>👤</span>"
+        f"<span class='fp-card-initials'>{escape(initials)}</span>"
+        "</div>"
+        f"<div class='fp-card-name'>{escape(name)}</div>"
+        "<div class='fp-card-stats'>"
+        f"<div class='fp-card-stat'><span class='fp-card-stat-label'>FIN</span><span class='fp-card-stat-val'>{_fighter_card_fmt_pct(finish_rate)}</span></div>"
+        f"<div class='fp-card-stat'><span class='fp-card-stat-label'>SUB</span><span class='fp-card-stat-val'>{_fighter_card_fmt_pct(sub_rate)}</span></div>"
+        f"<div class='fp-card-stat'><span class='fp-card-stat-label'>W★</span><span class='fp-card-stat-val'>{_fighter_card_fmt_int(win_streak)}</span></div>"
+        f"<div class='fp-card-stat'><span class='fp-card-stat-label'>L✗</span><span class='fp-card-stat-val'>{_fighter_card_fmt_int(loss_streak)}</span></div>"
+        "</div>"
+        "</div>"
+    )
+
+    st.markdown(_FIGHTER_CARD_CSS + body, unsafe_allow_html=True)
+
+
 def _render_kpi_card(
     label: str,
     value: str,
@@ -5987,6 +6159,49 @@ def page_fighter_profile() -> None:
             _render_fighter_meta_card("TD Def", _fmt_pct_compact(p.get("td_def")), icon="🤼", accent="#eab308")
         with _r3:
             _render_fighter_meta_card("SApM", _fmt_float_compact(p.get("sapm"), 2), icon="📉", accent="#ef4444")
+
+    fighter_weight_class = ""
+    for candidate in [
+        "weight_class",
+        "division",
+        "current_weight_class",
+        "primary_weight_class",
+        "ufc_weight_class",
+    ]:
+        raw_value = p.get(candidate)
+        if raw_value is not None and not pd.isna(raw_value):
+            value = str(raw_value).strip()
+            if value:
+                fighter_weight_class = value
+                break
+    if not fighter_weight_class and computed_current_classes:
+        fighter_weight_class = computed_current_classes[0]
+    if not fighter_weight_class and current_belts_raw:
+        fighter_weight_class = re.split(r"\s*,\s*|\s*/\s*|\s+and\s+", current_belts_raw, maxsplit=1, flags=re.I)[0].strip()
+
+    finish_rate_card_value = p.get("finish_rate_win_shrunk")
+    if finish_rate_card_value is None or pd.isna(finish_rate_card_value):
+        finish_rate_card_value = p.get("finish_rate")
+
+    sub_rate_card_value = p.get("sub_rate_win_shrunk")
+    if sub_rate_card_value is None or pd.isna(sub_rate_card_value):
+        sub_rate_card_value = p.get("sub_rate")
+
+    st.markdown("<div style='height: 0.65rem;'></div>", unsafe_allow_html=True)
+    _, card_col, _ = st.columns([1.1, 1.6, 1.1])
+    with card_col:
+        _render_fighter_card_html(
+            name=str(selected_fighter),
+            country=str(p.get("country", "") or ""),
+            weight_class=fighter_weight_class,
+            is_champion=is_current_champion,
+            finish_rate=finish_rate_card_value,
+            sub_rate=sub_rate_card_value,
+            win_streak=p.get("win_streak"),
+            loss_streak=p.get("loss_streak"),
+            wins=p.get("wins"),
+            losses=p.get("losses"),
+        )
 
     dob_val = p.get("dob")
     dob_text = "—"
