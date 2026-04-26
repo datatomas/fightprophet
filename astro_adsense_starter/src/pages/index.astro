@@ -1,11 +1,32 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import AdSlot from '../components/AdSlot.astro';
+import FighterCard from '../components/FighterCard.astro';
+import championsData from '../data/champions.json';
 
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
 const subscribeEndpoint = import.meta.env.PUBLIC_SUBSCRIBE_ENDPOINT || '';
 const withPage = (slug: string) => `${appUrl}${appUrl.includes('?') ? '&' : '?'}page=${encodeURIComponent(slug)}`;
 const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'https://fightprophet.com').replace(/\/$/, '');
+
+interface ChampionRecord {
+  fighter_id?: string;
+  name: string;
+  country?: string;
+  weight_class?: string;
+  is_champion?: boolean;
+  title_defenses?: number;
+  wins?: number;
+  losses?: number;
+  draws?: number;
+  win_streak?: number;
+  loss_streak?: number;
+  finish_rate?: number | null;
+  sub_rate?: number | null;
+  ko_rate?: number | null;
+}
+
+const champions: ChampionRecord[] = (championsData as { champions?: ChampionRecord[] })?.champions ?? [];
 interface NewsItem {
   id: string;
   title: string;
@@ -176,6 +197,30 @@ const newsStructuredData = newsItems.map((item) => ({
       </div>
     </div>
   </section>
+
+  {champions.length > 0 && (
+    <section>
+      <p class="fp-section-label" id="i18n-current-champions">Current Champions</p>
+      <div class="fp-champ-grid">
+        {champions.map((c) => (
+          <FighterCard
+            name={c.name}
+            fighterId={c.fighter_id}
+            country={c.country}
+            weightClass={c.weight_class}
+            isChampion={c.is_champion ?? true}
+            finishRate={c.finish_rate ?? null}
+            subRate={c.sub_rate ?? null}
+            winStreak={c.win_streak ?? null}
+            lossStreak={c.loss_streak ?? null}
+            wins={c.wins ?? null}
+            losses={c.losses ?? null}
+            appUrl={appUrl}
+          />
+        ))}
+      </div>
+    </section>
+  )}
 
   <section>
     <p class="fp-section-label" id="i18n-start-exploring">Sections</p>
@@ -873,6 +918,11 @@ const newsStructuredData = newsItems.map((item) => ({
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 0.55rem;
+    }
+    .fp-champ-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 0.6rem;
     }
     .fp-cta-card {
       display: flex;
