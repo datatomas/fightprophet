@@ -3479,6 +3479,13 @@ _FIGHTER_CARD_CSS = """
 .fp-card-name{font-size:0.86rem;font-weight:800;letter-spacing:0.01em;text-align:center;line-height:1.15;margin-bottom:0.4rem;word-break:break-word;}
 .fp-card.is-champ .fp-card-name{color:#1f1300;}
 .fp-card.is-default .fp-card-name{color:#fef2f2;}
+.fp-card-meta{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0.28rem 0.36rem;margin:-0.08rem 0 0.34rem;min-height:1rem;}
+.fp-card-division{max-width:100%;font-size:0.58rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fp-card-badge{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:0.16rem 0.42rem;font-size:0.54rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;}
+.fp-card.is-champ .fp-card-division{color:rgba(31,19,0,0.82);}
+.fp-card.is-default .fp-card-division{color:rgba(255,255,255,0.72);}
+.fp-card.is-champ .fp-card-badge{background:rgba(31,19,0,0.14);color:rgba(31,19,0,0.92);box-shadow:inset 0 0 0 1px rgba(31,19,0,0.18);}
+.fp-card.is-default .fp-card-badge{background:rgba(220,38,38,0.2);color:rgba(255,228,228,0.95);box-shadow:inset 0 0 0 1px rgba(248,113,113,0.22);}
 .fp-card-country{display:flex;align-items:center;justify-content:center;gap:0.28rem;margin:-0.05rem 0 0.38rem;font-size:0.68rem;font-weight:700;line-height:1.05;min-height:0.9rem;}
 .fp-card-country-flag{font-size:0.9rem;line-height:1;}
 .fp-card-country-full,.fp-card-country-short{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -3559,6 +3566,7 @@ def _render_fighter_card_html(
     """Render a FUTBIN-style fighter card matching FighterCard.astro."""
     initials = _fighter_card_initials(name)
     wc_abbr = _fighter_card_division_abbrev(weight_class)
+    division_label = (weight_class or "").strip()
     flag = _fighter_card_flag(country)
     country_short = _fighter_card_country_short(country)
     wins_txt = _fighter_card_fmt_int(wins)
@@ -3574,6 +3582,14 @@ def _render_fighter_card_html(
         f"<span class='fp-card-flag' title='{escape(country)}'>{flag}</span>" if flag else ""
     )
     pos_html = f"<span class='fp-card-rating-pos'>{escape(wc_abbr)}</span>" if wc_abbr else ""
+    meta_html = (
+        "<div class='fp-card-meta'>"
+        + (f"<span class='fp-card-division'>{escape(division_label)}</span>" if division_label else "")
+        + ("<span class='fp-card-badge'>Champion</span>" if is_champion else "")
+        + "</div>"
+        if division_label or is_champion
+        else ""
+    )
     country_html = (
         "<div class='fp-card-country'>"
         + (f"<span class='fp-card-country-flag' aria-hidden='true'>{flag}</span>" if flag else "")
@@ -3596,6 +3612,7 @@ def _render_fighter_card_html(
         f"<span class='fp-card-initials'>{escape(initials)}</span>"
         "</div>"
         f"<div class='fp-card-name'>{escape(name)}</div>"
+        f"{meta_html}"
         f"{country_html}"
         "<div class='fp-card-stats'>"
         f"<div class='fp-card-stat'><span class='fp-card-stat-label'>FIN</span><span class='fp-card-stat-val'>{_fighter_card_fmt_pct(finish_rate)}</span></div>"

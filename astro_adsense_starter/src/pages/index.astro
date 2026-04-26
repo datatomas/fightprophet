@@ -185,6 +185,9 @@ const newsStructuredData = newsItems.map((item) => ({
   {champions.length > 0 && (
     <section>
       <p class="fp-section-label" id="i18n-current-champions">Current Champions</p>
+      <p class="fp-section-intro" id="i18n-current-champions-intro">
+        Data-rich fighter cards for the current UFC title holders with division, country, record, finish rate, submission rate, and streak context.
+      </p>
       <div class="fp-champ-grid">
         {champions.map((c) => (
           <FighterCard
@@ -846,6 +849,12 @@ const newsStructuredData = newsItems.map((item) => ({
       font-weight: 700;
       color: #71717a;
       margin: 1rem 0 0.4rem;
+    }
+    .fp-section-intro {
+      margin: -0.1rem 0 1rem;
+      max-width: 68ch;
+      color: #d4d4d8;
+      line-height: 1.55;
     }
     .fp-stats-strip {
       display: grid;
