@@ -6106,19 +6106,19 @@ def page_fighter_profile() -> None:
         sub_rate_card_value = p.get("sub_rate")
 
     country_header = _canonical_country_name(p.get("country", ""))
+    belt_holder_html = ""
     if is_belt_holder:
-        st.markdown(
-            (
-                '<div style="display:inline-flex;align-items:center;gap:0.45rem;'
-                'padding:0.30rem 0.62rem;border-radius:999px;'
-                'border:1px solid rgba(113,113,122,0.55);background:rgba(39,39,42,0.65);'
-                'margin:0.05rem 0 0.45rem;">'
-                f'<span style="font-size:0.95rem;">{belt_icons}</span>'
-                '<span style="font-size:0.82rem;color:#d4d4d8;text-transform:uppercase;letter-spacing:0.05em;">Belt Holder</span>'
-                f'<span style="font-size:0.90rem;font-weight:700;color:#f4f4f5;">{escape(belt_label)}</span>'
-                '</div>'
-            ),
-            unsafe_allow_html=True,
+        belt_holder_html = (
+            '<div style="display:inline-flex;align-items:center;gap:0.38rem;'
+            'width:fit-content;max-width:100%;'
+            'padding:0.24rem 0.52rem;border-radius:999px;'
+            'border:1px solid rgba(113,113,122,0.42);background:rgba(24,24,27,0.74);'
+            'box-shadow:inset 0 0 0 1px rgba(255,255,255,0.03);'
+            'margin:0 0 0.48rem 0;">'
+            f'<span style="font-size:0.86rem;line-height:1;">{belt_icons}</span>'
+            '<span style="font-size:0.72rem;color:#d4d4d8;text-transform:uppercase;letter-spacing:0.08em;font-weight:800;">Belt Holder</span>'
+            f'<span style="font-size:0.84rem;font-weight:700;color:#f4f4f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{escape(belt_label)}</span>'
+            '</div>'
         )
     title_card, title_side = st.columns([1.6, 4.4])
     with title_card:
@@ -6135,6 +6135,8 @@ def page_fighter_profile() -> None:
             losses=p.get("losses"),
         )
     with title_side:
+        if belt_holder_html:
+            st.markdown(belt_holder_html, unsafe_allow_html=True)
         _r1, _r2, _r3 = st.columns(3)
         with _r1:
             _render_fighter_meta_card("Str Def", _fmt_pct_compact(p.get("str_def")), icon="🛡️", accent="#22c55e")
