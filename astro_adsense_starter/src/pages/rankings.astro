@@ -1,27 +1,313 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import AppSectionLanding from '../components/AppSectionLanding.astro';
+import FighterCard from '../components/FighterCard.astro';
+import { runtimeEnvFromLocals } from '../lib/country-master';
+import { getAllRankedFighterCards, groupRankedFightersByDivision } from '../lib/champions';
+
+const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
+const rankingsAppUrl = `${appUrl}${appUrl.includes('?') ? '&' : '?'}page=rankings`;
+
+const allRanked = await getAllRankedFighterCards(runtimeEnvFromLocals(Astro.locals));
+const divisions = groupRankedFightersByDivision(allRanked);
+const totalRanked = allRanked.length;
+
+function divisionAnchor(weightClass: string): string {
+  return `division-${weightClass.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}`;
+}
 ---
 
 <BaseLayout
   title="MMA Fighter Rankings by Division | Fight Prophet"
-  description="Data-driven MMA fighter rankings by weight class. See the model's pound-for-pound view, divisional risers and fallers, and the metrics behind every position."
+  description="Data-driven MMA fighter rankings by weight class. See the model's pound-for-pound view, divisional risers, and the metrics behind every position."
 >
-  <AppSectionLanding
-    pageSlug="rankings"
-    heading="MMA Fighter Rankings"
-    intro="Fight Prophet ranks active MMA fighters within each division using model performance, recent results, and opponent strength. This is the data view of who is actually trending up — independent of promotional rankings."
-    bullets={[
-      { title: 'Divisional rankings', body: 'A ranked list per weight class, refreshed as new fight data lands.' },
-      { title: 'Risers and fallers', body: 'See who is climbing or dropping based on recent performance.' },
-      { title: 'Opponent-adjusted scoring', body: 'Wins over higher-ranked opponents weight more than padding records.' },
-      { title: 'Profile drill-down', body: 'Click any fighter to open a full statistical breakdown.' },
-    ]}
-    whatYouWillSee={[
-      'Top-ranked fighters per division with score and movement',
-      'A pound-for-pound view across all weight classes',
-      'Recent fight results that drove the latest movement',
-      'Direct links into each fighter\'s profile',
-    ]}
-  />
+  <article class="fp-rank-page">
+    <header class="fp-rank-header">
+      <a class="fp-rank-breadcrumb" href="/">← Fight Prophet</a>
+      <h1>MMA Fighter Rankings</h1>
+      <p class="fp-rank-intro">
+        Live ranking cards across every active division — {totalRanked} ranked fighters in {divisions.length} weight classes. Click any card to open the fighter profile.
+      </p>
+      <div class="fp-rank-controls">
+        <label class="fp-rank-search-label" for="fp-rank-search">Find fighter</label>
+        <input
+          id="fp-rank-search"
+          class="fp-rank-search"
+          type="search"
+          placeholder="Search by name, country, division…"
+          autocomplete="off"
+        />
+      </div>
+    </header>
+
+    {divisions.length === 0 ? (
+      <div class="fp-rank-empty">
+        <strong>Ranking cards are loading from the live Fight Prophet data source.</strong>
+        <span>If they are missing here, the Astro server still needs the same Azure parquet settings the Streamlit app uses.</span>
+        <a class="fp-btn fp-btn-primary" href={rankingsAppUrl} target="_blank" rel="noopener noreferrer">Open live rankings in app</a>
+      </div>
+    ) : (
+      <>
+        <nav class="fp-division-jump" aria-label="Jump to division">
+          {divisions.map((g) => (
+            <a class="fp-division-pill" href={`#${divisionAnchor(g.weight_class)}`}>
+              {g.weight_class}
+              <span class="fp-division-pill-count">{g.fighters.length}</span>
+            </a>
+          ))}
+        </nav>
+
+        {divisions.map((group) => (
+          <section
+            class="fp-division-block"
+            id={divisionAnchor(group.weight_class)}
+            data-division={group.weight_class}
+          >
+            <div class="fp-division-header">
+              <h2 class="fp-division-title">{group.weight_class}</h2>
+              <span class="fp-division-count">{group.fighters.length} ranked</span>
+            </div>
+            <div class="fp-champ-grid">
+              {group.fighters.map((c) => (
+                <div
+                  class="fp-rank-card-wrap"
+                  data-rank={c.rank ?? ''}
+                  data-fighter-name={c.name.toLowerCase()}
+                  data-fighter-country={(c.country ?? '').toLowerCase()}
+                  data-fighter-division={(c.weight_class ?? '').toLowerCase()}
+                >
+                  {c.rank != null && <span class="fp-rank-badge">#{c.rank}</span>}
+                  <FighterCard
+                    name={c.name}
+                    fighterId={c.fighter_id}
+                    country={c.country}
+                    weightClass={c.weight_class}
+                    isChampion={c.is_champion ?? false}
+                    finishRate={c.finish_rate ?? null}
+                    subRate={c.sub_rate ?? null}
+                    winStreak={c.win_streak ?? null}
+                    lossStreak={c.loss_streak ?? null}
+                    wins={c.wins ?? null}
+                    losses={c.losses ?? null}
+                    appUrl={appUrl}
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </>
+    )}
+
+    <footer class="fp-rank-footer">
+      <a class="fp-btn fp-btn-primary" href={rankingsAppUrl} target="_blank" rel="noopener noreferrer">Open live rankings in app</a>
+    </footer>
+  </article>
+
+  <script>
+    const search = document.getElementById('fp-rank-search') as HTMLInputElement | null;
+    if (search) {
+      const cards = Array.from(document.querySelectorAll<HTMLElement>('.fp-rank-card-wrap'));
+      const blocks = Array.from(document.querySelectorAll<HTMLElement>('.fp-division-block'));
+      search.addEventListener('input', () => {
+        const term = search.value.trim().toLowerCase();
+        cards.forEach((card) => {
+          if (!term) {
+            card.style.display = '';
+            return;
+          }
+          const name = card.dataset.fighterName ?? '';
+          const country = card.dataset.fighterCountry ?? '';
+          const division = card.dataset.fighterDivision ?? '';
+          const matches = name.includes(term) || country.includes(term) || division.includes(term);
+          card.style.display = matches ? '' : 'none';
+        });
+        blocks.forEach((block) => {
+          const visible = block.querySelectorAll<HTMLElement>('.fp-rank-card-wrap').length > 0
+            && Array.from(block.querySelectorAll<HTMLElement>('.fp-rank-card-wrap'))
+              .some((c) => c.style.display !== 'none');
+          block.style.display = visible ? '' : 'none';
+        });
+      });
+    }
+  </script>
+
+  <style>
+  .fp-rank-page {
+    display: grid;
+    gap: 1rem;
+  }
+  .fp-rank-header {
+    background: linear-gradient(155deg, rgba(20, 20, 22, 0.96) 0%, rgba(40, 20, 20, 0.84) 100%);
+    border: 1px solid rgba(220, 38, 38, 0.28);
+    border-radius: 1.05rem;
+    padding: 1.4rem 1.2rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 26px rgba(0, 0, 0, 0.28), 0 0 22px rgba(220, 38, 38, 0.12);
+  }
+  .fp-rank-breadcrumb {
+    display: inline-block;
+    color: #fca5a5;
+    text-decoration: none;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 0.45rem;
+  }
+  .fp-rank-breadcrumb:hover {
+    color: #fef2f2;
+  }
+  .fp-rank-header h1 {
+    margin: 0 0 0.4rem;
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    color: #fef2f2;
+    text-shadow: 0 0 12px rgba(220, 38, 38, 0.32);
+  }
+  .fp-rank-intro {
+    margin: 0 0 0.8rem;
+    color: #e4e4e7;
+    line-height: 1.55;
+    max-width: 70ch;
+  }
+  .fp-rank-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.32rem;
+    max-width: 480px;
+  }
+  .fp-rank-search-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    color: #fca5a5;
+  }
+  .fp-rank-search {
+    background: rgba(15, 15, 18, 0.85);
+    border: 1px solid rgba(113, 113, 122, 0.55);
+    border-radius: 0.6rem;
+    padding: 0.5rem 0.7rem;
+    color: #f4f4f5;
+    font-size: 0.95rem;
+  }
+  .fp-rank-search:focus {
+    outline: 2px solid rgba(248, 113, 113, 0.55);
+    outline-offset: 1px;
+  }
+  .fp-division-jump {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.32rem;
+    margin: 0;
+  }
+  .fp-division-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    background: rgba(22, 22, 26, 0.88);
+    border: 1px solid rgba(220, 38, 38, 0.28);
+    color: #fef2f2;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.28rem 0.55rem;
+    border-radius: 9999px;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+  }
+  .fp-division-pill:hover {
+    background: linear-gradient(160deg, rgba(127, 29, 29, 0.65), rgba(22, 22, 26, 0.85));
+  }
+  .fp-division-pill-count {
+    background: rgba(220, 38, 38, 0.22);
+    color: #fee2e2;
+    font-size: 0.66rem;
+    font-weight: 800;
+    padding: 0.08rem 0.36rem;
+    border-radius: 9999px;
+  }
+  .fp-division-block {
+    margin: 0.4rem 0 0.6rem;
+    scroll-margin-top: 0.6rem;
+  }
+  .fp-division-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin: 0 0 0.55rem;
+    padding: 0.4rem 0.55rem;
+    border-left: 3px solid rgba(220, 38, 38, 0.55);
+    background: linear-gradient(90deg, rgba(127, 29, 29, 0.28), rgba(22, 22, 26, 0));
+    border-radius: 0.4rem;
+  }
+  .fp-division-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #fef2f2;
+    letter-spacing: 0.02em;
+  }
+  .fp-division-count {
+    font-size: 0.7rem;
+    color: #a1a1aa;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .fp-champ-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+    gap: 0.6rem;
+  }
+  .fp-rank-card-wrap {
+    position: relative;
+  }
+  .fp-rank-badge {
+    position: absolute;
+    top: 0.38rem;
+    left: 0.4rem;
+    z-index: 3;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fef2f2;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    padding: 0.16rem 0.32rem;
+    border-radius: 0.4rem;
+    border: 1px solid rgba(248, 113, 113, 0.4);
+  }
+  .fp-rank-empty {
+    display: grid;
+    gap: 0.6rem;
+    background: linear-gradient(150deg, rgba(22, 22, 26, 0.92), rgba(36, 36, 42, 0.78));
+    border: 1px solid rgba(113, 113, 122, 0.42);
+    border-radius: 0.9rem;
+    padding: 1rem 1.05rem;
+    color: #d4d4d8;
+    line-height: 1.55;
+  }
+  .fp-rank-empty strong {
+    color: #fef2f2;
+  }
+  .fp-rank-footer {
+    display: flex;
+    justify-content: center;
+    padding: 0.5rem 0 1rem;
+  }
+  .fp-btn {
+    border: 1px solid rgba(220, 38, 38, 0.45);
+    border-radius: 0.65rem;
+    padding: 0.6rem 0.95rem;
+    text-decoration: none;
+    color: #f4f4f5;
+    background: linear-gradient(160deg, rgba(45, 24, 24, 0.65), rgba(39, 39, 42, 0.45));
+    font-weight: 650;
+    font-size: 0.95rem;
+  }
+  .fp-btn-primary {
+    background: linear-gradient(160deg, #ef4444, #dc2626);
+    color: #ffffff;
+    border-color: rgba(248, 113, 113, 0.65);
+    box-shadow: 0 0 14px rgba(239, 68, 68, 0.35);
+  }
+</style>
 </BaseLayout>

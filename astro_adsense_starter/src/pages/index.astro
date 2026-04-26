@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import AdSlot from '../components/AdSlot.astro';
 import FighterCard from '../components/FighterCard.astro';
 import { runtimeEnvFromLocals } from '../lib/country-master';
-import { getChampionRecords, getRankedFighterCards } from '../lib/champions';
+import { getChampionRecords, getAllRankedFighterCards, groupRankedFightersByDivision } from '../lib/champions';
 
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
 const subscribeEndpoint = import.meta.env.PUBLIC_SUBSCRIBE_ENDPOINT || '';
@@ -13,7 +13,9 @@ const beltHoldersAppUrl = withPage('belt-holders');
 const rankingsAppUrl = withPage('rankings');
 
 const champions = await getChampionRecords(runtimeEnvFromLocals(Astro.locals));
-const rankedFighters = await getRankedFighterCards(runtimeEnvFromLocals(Astro.locals));
+const allRankedFighters = await getAllRankedFighterCards(runtimeEnvFromLocals(Astro.locals));
+const rankedDivisions = groupRankedFightersByDivision(allRankedFighters);
+const totalRankedFighters = allRankedFighters.length;
 interface NewsItem {
   id: string;
   title: string;
@@ -185,35 +187,51 @@ const newsStructuredData = newsItems.map((item) => ({
     </div>
   </section>
 
-  {rankedFighters.length > 0 && (
+  {rankedDivisions.length > 0 && (
     <section>
       <div class="fp-section-head">
         <div>
-          <p class="fp-section-label">Top Ranked Fighters</p>
+          <p class="fp-section-label">Ranked Fighters Wall</p>
           <p class="fp-section-intro fp-section-intro-tight">
-            A homepage wall of live ranking cards so the landing page feels closer to the product, not just a marketing shell.
+            Live ranking cards for every active fighter across {rankedDivisions.length} divisions ({totalRankedFighters} cards). Pick any division to jump straight to the cards — open one to see the full profile.
           </p>
         </div>
         <a class="fp-btn fp-btn-secondary" href="/rankings/">Full rankings</a>
       </div>
-      <div class="fp-champ-grid">
-        {rankedFighters.map((c) => (
-          <FighterCard
-            name={c.name}
-            fighterId={c.fighter_id}
-            country={c.country}
-            weightClass={c.weight_class}
-            isChampion={c.is_champion ?? false}
-            finishRate={c.finish_rate ?? null}
-            subRate={c.sub_rate ?? null}
-            winStreak={c.win_streak ?? null}
-            lossStreak={c.loss_streak ?? null}
-            wins={c.wins ?? null}
-            losses={c.losses ?? null}
-            appUrl={appUrl}
-          />
+      <nav class="fp-division-jump" aria-label="Jump to division">
+        {rankedDivisions.map((g) => (
+          <a class="fp-division-pill" href={`#division-${g.weight_class.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}`}>
+            {g.weight_class}
+            <span class="fp-division-pill-count">{g.fighters.length}</span>
+          </a>
         ))}
-      </div>
+      </nav>
+      {rankedDivisions.map((group) => (
+        <div class="fp-division-block" id={`division-${group.weight_class.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}`}>
+          <div class="fp-division-header">
+            <h3 class="fp-division-title">{group.weight_class}</h3>
+            <span class="fp-division-count">{group.fighters.length} ranked</span>
+          </div>
+          <div class="fp-champ-grid">
+            {group.fighters.map((c) => (
+              <FighterCard
+                name={c.name}
+                fighterId={c.fighter_id}
+                country={c.country}
+                weightClass={c.weight_class}
+                isChampion={c.is_champion ?? false}
+                finishRate={c.finish_rate ?? null}
+                subRate={c.sub_rate ?? null}
+                winStreak={c.win_streak ?? null}
+                lossStreak={c.loss_streak ?? null}
+                wins={c.wins ?? null}
+                losses={c.losses ?? null}
+                appUrl={appUrl}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
       <div class="fp-section-actions">
         <a class="fp-btn fp-btn-primary" href={rankingsAppUrl} target="_blank" rel="noopener noreferrer">Open live rankings in app</a>
       </div>
@@ -1013,6 +1031,66 @@ const newsStructuredData = newsItems.map((item) => ({
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
       gap: 0.6rem;
+    }
+    .fp-division-jump {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.32rem;
+      margin: 0 0 0.85rem;
+    }
+    .fp-division-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.32rem;
+      background: rgba(22, 22, 26, 0.88);
+      border: 1px solid rgba(220, 38, 38, 0.28);
+      color: #fef2f2;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 0.28rem 0.55rem;
+      border-radius: 9999px;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+    .fp-division-pill:hover {
+      background: linear-gradient(160deg, rgba(127, 29, 29, 0.65), rgba(22, 22, 26, 0.85));
+    }
+    .fp-division-pill-count {
+      background: rgba(220, 38, 38, 0.22);
+      color: #fee2e2;
+      font-size: 0.66rem;
+      font-weight: 800;
+      padding: 0.08rem 0.36rem;
+      border-radius: 9999px;
+    }
+    .fp-division-block {
+      margin: 0.4rem 0 1.1rem;
+      scroll-margin-top: 0.6rem;
+    }
+    .fp-division-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.6rem;
+      margin: 0 0 0.42rem;
+      padding: 0.32rem 0.5rem;
+      border-left: 3px solid rgba(220, 38, 38, 0.55);
+      background: linear-gradient(90deg, rgba(127, 29, 29, 0.28), rgba(22, 22, 26, 0));
+      border-radius: 0.4rem;
+    }
+    .fp-division-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #fef2f2;
+      letter-spacing: 0.02em;
+    }
+    .fp-division-count {
+      font-size: 0.7rem;
+      color: #a1a1aa;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 700;
     }
     .fp-cta-card {
       display: flex;
