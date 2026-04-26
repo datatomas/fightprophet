@@ -3558,12 +3558,13 @@ _FIGHTER_CARD_CSS = """
 .fp-card.is-default .fp-card-country{color:rgba(255,255,255,0.82);}
 .fp-card-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.22rem 0.32rem;background:linear-gradient(180deg,rgba(0,0,0,0.26),rgba(0,0,0,0.42)),repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 7px,transparent 7px 14px);border-radius:0.72rem;padding:0.38rem 0.46rem;position:relative;z-index:2;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06);}
 .fp-card.is-champ .fp-card-stats{background:rgba(31,19,0,0.28);}
-.fp-card-stat{display:flex;align-items:center;justify-content:space-between;gap:0.25rem;line-height:1;}
-.fp-card-stat-label{font-size:0.58rem;font-weight:700;letter-spacing:0.06em;}
+.fp-card-stat{display:flex;align-items:center;justify-content:space-between;gap:0.25rem;line-height:1;padding:0.14rem 0.18rem;border-radius:0.42rem;background:rgba(255,255,255,0.05);}
+.fp-card.is-champ .fp-card-stat{background:rgba(31,19,0,0.16);}
+.fp-card-stat-label{font-size:0.56rem;font-weight:800;letter-spacing:0.08em;}
 .fp-card.is-champ .fp-card-stat-label{color:rgba(31,19,0,0.72);}
 .fp-card.is-default .fp-card-stat-label{color:rgba(255,255,255,0.72);}
-.fp-card-stat-val{font-size:0.78rem;font-weight:800;}
-.fp-card.is-champ .fp-card-stat-val{color:rgba(31,19,0,0.96);}
+.fp-card-stat-val{display:inline-flex;align-items:center;justify-content:center;min-width:2.2rem;padding:0.16rem 0.28rem;border-radius:999px;font-size:0.82rem;font-weight:900;letter-spacing:0.01em;background:rgba(7,10,16,0.34);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.08);}
+.fp-card.is-champ .fp-card-stat-val{color:rgba(31,19,0,0.96);background:rgba(255,248,220,0.28);box-shadow:inset 0 0 0 1px rgba(77,50,0,0.12);}
 .fp-card.is-default .fp-card-stat-val{color:rgba(255,255,255,0.96);}
 @media (max-width:640px){.fp-card-country-full{display:none;}.fp-card-country-short{display:inline;}}
 </style>
