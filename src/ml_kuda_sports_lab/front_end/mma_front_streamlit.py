@@ -568,6 +568,13 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(_PROJECT_ROOT / "src"))
 _STATIC_DIR = _PROJECT_ROOT / "static"
 
+from ml_kuda_sports_lab.front_end.country_master import (
+    canonical_country_name as _canonical_country_name,
+    country_flag as _shared_country_flag,
+    country_iso2 as _shared_country_iso2,
+    country_short_label as _shared_country_short_label,
+)
+
 try:
     from ml_kuda_sports_lab.envloader import load_env
     load_env()
@@ -1223,7 +1230,7 @@ def _resolve_fighter_country(
 ) -> str:
     country_val = "" if country is None else str(country).strip()
     if country_val:
-        return country_val
+        return _canonical_country_name(country_val)
 
     maps = _fighter_country_maps(ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
     fid = "" if fighter_id is None else str(fighter_id).strip()
@@ -1252,7 +1259,7 @@ def _resolve_fighter_country(
         for candidate in variants:
             found = maps["by_name"].get(candidate, "")
             if found:
-                return found
+                return _canonical_country_name(found)
     return ""
 
 
@@ -1343,151 +1350,11 @@ def _iso2_to_flag(code: str) -> str:
 
 
 def _country_to_iso2(country: object) -> str:
-    if country is None:
-        return ""
-    raw = str(country).strip()
-    if not raw:
-        return ""
-
-    raw_upper = raw.upper()
-    if len(raw_upper) == 2 and raw_upper.isalpha():
-        return raw_upper
-
-    aliases = {
-        "USA": "US",
-        "UNITED STATES": "US",
-        "UNITED STATES OF AMERICA": "US",
-        "US": "US",
-        "AMERICAN SAMOA": "AS",
-        "ANGOLA": "AO",
-        "AFGHANISTAN": "AF",
-        "ALBANIA": "AL",
-        "ALGERIA": "DZ",
-        "ARUBA": "AW",
-        "AUSTRIA": "AT",
-        "AZERBAIJAN": "AZ",
-        "BAHRAIN": "BH",
-        "BELARUS": "BY",
-        "BELGIUM": "BE",
-        "BOLIVIA": "BO",
-        "BOSNIA AND HERZEGOVINA": "BA",
-        "BRAZIL": "BR",
-        "BRASIL": "BR",
-        "BULGARIA": "BG",
-        "RUSSIA": "RU",
-        "UNITED KINGDOM": "GB",
-        "UK": "GB",
-        "ENGLAND": "GB",
-        "SCOTLAND": "GB",
-        "WALES": "GB",
-        "NORTHERN IRELAND": "GB",
-        "IRELAND": "IE",
-        "CAPE VERDE": "CV",
-        "MEXICO": "MX",
-        "CANADA": "CA",
-        "AUSTRALIA": "AU",
-        "NEW ZEALAND": "NZ",
-        "COSTA RICA": "CR",
-        "CROATIA": "HR",
-        "CUBA": "CU",
-        "CYPRUS": "CY",
-        "CONGO": "CG",
-        "CONGO, THE DEMOCRATIC REPUBLIC OF THE": "CD",
-        "DOMINICAN REPUBLIC": "DO",
-        "ESTONIA": "EE",
-        "EL SALVADOR": "SV",
-        "FRANCE": "FR",
-        "FINLAND": "FI",
-        "FINNLAND": "FI",
-        "SPAIN": "ES",
-        "GERMANY": "DE",
-        "GHANA": "GH",
-        "GREECE": "GR",
-        "GUAM": "GU",
-        "GUATEMALA": "GT",
-        "GUYANA": "GY",
-        "HONG KONG": "HK",
-        "HUNGARY": "HU",
-        "ICELAND": "IS",
-        "IRAN": "IR",
-        "IRAQ": "IQ",
-        "ISRAEL": "IL",
-        "CZECH REPUBLIC": "CZ",
-        "CZECHIA": "CZ",
-        "JAMAICA": "JM",
-        "JORDAN": "JO",
-        "SLOVAKIA": "SK",
-        "LEBANON": "LB",
-        "LATVIA": "LV",
-        "LIBERIA": "LR",
-        "LITHUANIA": "LT",
-        "LUXEMBOURG": "LU",
-        "NETHERLANDS": "NL",
-        "MACEDONIA": "MK",
-        "MOLDOVA": "MD",
-        "MONGOLIA": "MN",
-        "MYANMAR": "MM",
-        "NICARAGUA": "NI",
-        "SWEDEN": "SE",
-        "NORWAY": "NO",
-        "DENMARK": "DK",
-        "ITALY": "IT",
-        "POLAND": "PL",
-        "PORTUGAL": "PT",
-        "PANAMA": "PA",
-        "PARAGUAY": "PY",
-        "PUERTO RICO": "PR",
-        "ROMANIA": "RO",
-        "SERBIA": "RS",
-        "SAMOA": "WS",
-        "SINGAPORE": "SG",
-        "SURINAME": "SR",
-        "SWITZERLAND": "CH",
-        "SENEGAL": "SN",
-        "SYRIA": "SY",
-        "UKRAINE": "UA",
-        "GEORGIA": "GE",
-        "ARMENIA": "AM",
-        "KAZAKHSTAN": "KZ",
-        "TAIWAN": "TW",
-        "TAJIKISTAN": "TJ",
-        "TAJIKSTAN": "TJ",
-        "TUNISIA": "TN",
-        "TURKEY": "TR",
-        "UNITED ARAB EMIRATES": "AE",
-        "UAE": "AE",
-        "UZBEKISTAN": "UZ",
-        "KYRGYZSTAN": "KG",
-        "CHINA": "CN",
-        "JAPAN": "JP",
-        "KOREA": "KR",
-        "SOUTH KOREA": "KR",
-        "PHILIPPINES": "PH",
-        "THAILAND": "TH",
-        "INDONESIA": "ID",
-        "INDIA": "IN",
-        "NIGERIA": "NG",
-        "CAMEROON": "CM",
-        "MOROCCO": "MA",
-        "SOUTH AFRICA": "ZA",
-        "ARGENTINA": "AR",
-        "CHILE": "CL",
-        "COLOMBIA": "CO",
-        "PERU": "PE",
-        "PERO": "PE",
-        "ECUADOR": "EC",
-        "VENEZUELA": "VE",
-        "URUGUAY": "UY",
-        "VIETNAM": "VN",
-        "VIRGIN ISLANDS, U.S.": "VI",
-        "ZIMBABWE": "ZW",
-    }
-    return aliases.get(raw_upper, "")
+    return _shared_country_iso2(country)
 
 
 def _country_to_flag(country: object) -> str:
-    code = _country_to_iso2(country)
-    return _iso2_to_flag(code) if code else ""
+    return _shared_country_flag(country)
 
 
 def _country_flag_mode() -> str:
@@ -1518,7 +1385,7 @@ def _country_inline_html(
     prefer_cdn: bool = True,
     include_label: bool = False,
 ) -> str:
-    raw_country = "" if country is None else str(country).strip()
+    raw_country = _canonical_country_name(country)
     if not raw_country:
         if include_label:
             return (
@@ -1559,7 +1426,7 @@ def _country_display_html(
     width: int = 18,
     prefer_cdn: bool = False,
 ) -> str:
-    raw_country = "" if country is None else str(country).strip()
+    raw_country = _canonical_country_name(country)
     if not raw_country:
         return f"<span style='color:#a1a1aa;'>Country: {escape(na_text)}</span>"
 
@@ -1596,7 +1463,7 @@ def _fighter_country_maps(base: str, prefix: str = "") -> dict[str, dict[str, st
     name_cols = [c for c in ["fighter_name_display", "fighter_name", "fighter_name_plain"] if c in df.columns]
 
     for _, row in df.iterrows():
-        country = str(row.get("country", "") or "").strip()
+        country = _canonical_country_name(row.get("country"))
         if not country:
             continue
         if id_col:
@@ -3587,27 +3454,6 @@ _FIGHTER_CARD_DIVISION_ABBREV = {
     "women's featherweight": "WFW",
 }
 
-_FIGHTER_CARD_FLAG_MAP = {
-    "usa": "🇺🇸", "united states": "🇺🇸", "us": "🇺🇸", "united states of america": "🇺🇸",
-    "brazil": "🇧🇷", "br": "🇧🇷",
-    "russia": "🇷🇺", "russian federation": "🇷🇺",
-    "mexico": "🇲🇽", "canada": "🇨🇦", "ireland": "🇮🇪",
-    "australia": "🇦🇺", "new zealand": "🇳🇿",
-    "china": "🇨🇳", "japan": "🇯🇵", "south korea": "🇰🇷", "korea": "🇰🇷",
-    "england": "🇬🇧", "united kingdom": "🇬🇧", "uk": "🇬🇧", "great britain": "🇬🇧",
-    "france": "🇫🇷", "germany": "🇩🇪", "spain": "🇪🇸", "italy": "🇮🇹",
-    "poland": "🇵🇱", "netherlands": "🇳🇱", "sweden": "🇸🇪", "norway": "🇳🇴",
-    "kazakhstan": "🇰🇿", "kyrgyzstan": "🇰🇬", "georgia": "🇬🇪", "azerbaijan": "🇦🇿",
-    "nigeria": "🇳🇬", "south africa": "🇿🇦", "cameroon": "🇨🇲",
-    "ecuador": "🇪🇨", "peru": "🇵🇪", "argentina": "🇦🇷", "colombia": "🇨🇴", "chile": "🇨🇱",
-    "philippines": "🇵🇭", "thailand": "🇹🇭", "indonesia": "🇮🇩",
-    "czech republic": "🇨🇿", "czechia": "🇨🇿", "moldova": "🇲🇩", "romania": "🇷🇴",
-    "iceland": "🇮🇸", "finland": "🇫🇮", "denmark": "🇩🇰",
-    "austria": "🇦🇹", "belgium": "🇧🇪", "portugal": "🇵🇹",
-    "saudi arabia": "🇸🇦", "iran": "🇮🇷", "cuba": "🇨🇺", "dominican republic": "🇩🇴",
-    "suriname": "🇸🇷",
-}
-
 _FIGHTER_CARD_CSS = """
 <style>
 .fp-card{position:relative;display:flex;flex-direction:column;width:100%;max-width:220px;aspect-ratio:5/7;min-height:260px;border-radius:0.85rem;padding:0.55rem 0.55rem 0.65rem;overflow:hidden;isolation:isolate;color:#fef2f2;font-family:Inter,system-ui,sans-serif;}
@@ -3664,9 +3510,7 @@ def _fighter_card_division_abbrev(weight_class: str) -> str:
 
 
 def _fighter_card_flag(country: str) -> str:
-    if not country:
-        return ""
-    return _FIGHTER_CARD_FLAG_MAP.get(country.strip().lower(), "")
+    return _country_to_flag(country)
 
 
 def _fighter_card_initials(name: str) -> str:
@@ -3696,13 +3540,7 @@ def _fighter_card_fmt_int(value: object) -> str:
 
 
 def _fighter_card_country_short(country: str) -> str:
-    txt = (country or "").strip()
-    if not txt:
-        return ""
-    code = _country_to_iso2(txt)
-    if code:
-        return code.upper()
-    return "".join(part[0] for part in txt.split() if part)[:3].upper()
+    return _shared_country_short_label(country)
 
 
 def _render_fighter_card_html(
@@ -6179,7 +6017,7 @@ def page_fighter_profile() -> None:
     if sub_rate_card_value is None or pd.isna(sub_rate_card_value):
         sub_rate_card_value = p.get("sub_rate")
 
-    country_header = str(p.get("country", "") or "").strip()
+    country_header = _canonical_country_name(p.get("country", ""))
     header_meta_parts = [part for part in [fighter_weight_class] if part]
     header_meta = " • ".join(header_meta_parts)
 
@@ -6345,7 +6183,7 @@ def page_fighter_profile() -> None:
 
     st.markdown("<div style='height: 1cm;'></div>", unsafe_allow_html=True)
 
-    country_raw = str(p.get("country", "") or "").strip()
+    country_raw = _canonical_country_name(p.get("country", ""))
     country_text = "—"
     country_html_labels: set[str] = set()
     if country_raw:
