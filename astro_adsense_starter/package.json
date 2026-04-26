@@ -11,6 +11,7 @@
   "dependencies": {
     "@astrojs/cloudflare": "^12.6.0",
     "@astrojs/sitemap": "^3.7.2",
-    "astro": "^5.2.0"
+    "astro": "^5.2.0",
+    "hyparquet": "^1.25.6"
   }
 }

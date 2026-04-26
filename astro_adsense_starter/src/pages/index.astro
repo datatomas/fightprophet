@@ -2,31 +2,15 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import AdSlot from '../components/AdSlot.astro';
 import FighterCard from '../components/FighterCard.astro';
-import championsData from '../data/champions.json';
+import { runtimeEnvFromLocals } from '../lib/country-master';
+import { getChampionRecords } from '../lib/champions';
 
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
 const subscribeEndpoint = import.meta.env.PUBLIC_SUBSCRIBE_ENDPOINT || '';
 const withPage = (slug: string) => `${appUrl}${appUrl.includes('?') ? '&' : '?'}page=${encodeURIComponent(slug)}`;
 const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'https://fightprophet.com').replace(/\/$/, '');
 
-interface ChampionRecord {
-  fighter_id?: string;
-  name: string;
-  country?: string;
-  weight_class?: string;
-  is_champion?: boolean;
-  title_defenses?: number;
-  wins?: number;
-  losses?: number;
-  draws?: number;
-  win_streak?: number;
-  loss_streak?: number;
-  finish_rate?: number | null;
-  sub_rate?: number | null;
-  ko_rate?: number | null;
-}
-
-const champions: ChampionRecord[] = (championsData as { champions?: ChampionRecord[] })?.champions ?? [];
+const champions = await getChampionRecords(runtimeEnvFromLocals(Astro.locals));
 interface NewsItem {
   id: string;
   title: string;
