@@ -3633,6 +3633,12 @@ _FIGHTER_CARD_CSS = """
 .fp-card-name{font-size:0.86rem;font-weight:800;letter-spacing:0.01em;text-align:center;line-height:1.15;margin-bottom:0.4rem;word-break:break-word;}
 .fp-card.is-champ .fp-card-name{color:#1f1300;}
 .fp-card.is-default .fp-card-name{color:#fef2f2;}
+.fp-card-country{display:flex;align-items:center;justify-content:center;gap:0.28rem;margin:-0.05rem 0 0.38rem;font-size:0.68rem;font-weight:700;line-height:1.05;min-height:0.9rem;}
+.fp-card-country-flag{font-size:0.9rem;line-height:1;}
+.fp-card-country-full,.fp-card-country-short{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fp-card-country-short{display:none;letter-spacing:0.05em;text-transform:uppercase;}
+.fp-card.is-champ .fp-card-country{color:rgba(31,19,0,0.84);}
+.fp-card.is-default .fp-card-country{color:rgba(255,255,255,0.82);}
 .fp-card-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.18rem 0.28rem;background:rgba(0,0,0,0.32);border-radius:0.55rem;padding:0.32rem 0.4rem;}
 .fp-card.is-champ .fp-card-stats{background:rgba(31,19,0,0.28);}
 .fp-card-stat{display:flex;align-items:center;justify-content:space-between;gap:0.25rem;line-height:1;}
@@ -3642,6 +3648,7 @@ _FIGHTER_CARD_CSS = """
 .fp-card-stat-val{font-size:0.78rem;font-weight:800;}
 .fp-card.is-champ .fp-card-stat-val{color:rgba(31,19,0,0.96);}
 .fp-card.is-default .fp-card-stat-val{color:rgba(255,255,255,0.96);}
+@media (max-width:640px){.fp-card-country-full{display:none;}.fp-card-country-short{display:inline;}}
 </style>
 """
 
@@ -3688,6 +3695,16 @@ def _fighter_card_fmt_int(value: object) -> str:
         return "—"
 
 
+def _fighter_card_country_short(country: str) -> str:
+    txt = (country or "").strip()
+    if not txt:
+        return ""
+    code = _country_to_iso2(txt)
+    if code:
+        return code.upper()
+    return "".join(part[0] for part in txt.split() if part)[:3].upper()
+
+
 def _render_fighter_card_html(
     *,
     name: str,
@@ -3705,6 +3722,7 @@ def _render_fighter_card_html(
     initials = _fighter_card_initials(name)
     wc_abbr = _fighter_card_division_abbrev(weight_class)
     flag = _fighter_card_flag(country)
+    country_short = _fighter_card_country_short(country)
     wins_txt = _fighter_card_fmt_int(wins)
     losses_txt = _fighter_card_fmt_int(losses)
     record_label = (
@@ -3718,6 +3736,15 @@ def _render_fighter_card_html(
         f"<span class='fp-card-flag' title='{escape(country)}'>{flag}</span>" if flag else ""
     )
     pos_html = f"<span class='fp-card-rating-pos'>{escape(wc_abbr)}</span>" if wc_abbr else ""
+    country_html = (
+        "<div class='fp-card-country'>"
+        + (f"<span class='fp-card-country-flag' aria-hidden='true'>{flag}</span>" if flag else "")
+        + f"<span class='fp-card-country-full'>{escape(country)}</span>"
+        + f"<span class='fp-card-country-short'>{escape(country_short)}</span>"
+        + "</div>"
+        if country
+        else ""
+    )
 
     body = (
         f"<div class='fp-card {css_class}'>"
@@ -3731,6 +3758,7 @@ def _render_fighter_card_html(
         f"<span class='fp-card-initials'>{escape(initials)}</span>"
         "</div>"
         f"<div class='fp-card-name'>{escape(name)}</div>"
+        f"{country_html}"
         "<div class='fp-card-stats'>"
         f"<div class='fp-card-stat'><span class='fp-card-stat-label'>FIN</span><span class='fp-card-stat-val'>{_fighter_card_fmt_pct(finish_rate)}</span></div>"
         f"<div class='fp-card-stat'><span class='fp-card-stat-label'>SUB</span><span class='fp-card-stat-val'>{_fighter_card_fmt_pct(sub_rate)}</span></div>"
@@ -6152,7 +6180,7 @@ def page_fighter_profile() -> None:
         sub_rate_card_value = p.get("sub_rate")
 
     country_header = str(p.get("country", "") or "").strip()
-    header_meta_parts = [part for part in [fighter_weight_class, country_header] if part]
+    header_meta_parts = [part for part in [fighter_weight_class] if part]
     header_meta = " • ".join(header_meta_parts)
 
     title_card, title_info, title_metrics = st.columns([1.35, 2.0, 3.15])
