@@ -6030,12 +6030,46 @@ def page_fighter_profile() -> None:
         ("Method Sample", str(int(p.get("wins_method_known_count", 0) or 0))),
     ]
 
+    _bonuses_won = str(int(p.get("bonuses_won_count", 0) or 0))
+    _longest_win = str(int(p.get("longest_win_streak", 0) or 0))
+    _longest_loss = str(int(p.get("longest_loss_streak", 0) or 0))
+
+    st.markdown("<div style='height: 0.45rem;'></div>", unsafe_allow_html=True)
+    s1, s2, s3 = st.columns(3)
+    with s1:
+        _render_fighter_meta_card("Bonuses Won", _bonuses_won, icon="🎖️", accent="#f59e0b")
+    with s2:
+        _render_fighter_meta_card("Longest Win Streak", _longest_win, icon="📈", accent="#22c55e")
+    with s3:
+        _render_fighter_meta_card("Longest Loss Streak", _longest_loss, icon="📉", accent="#ef4444")
+
+    st.markdown("<div style='height: 0.6rem;'></div>", unsafe_allow_html=True)
+
     metrics_view = st.radio(
         "Profile metrics view",
         ["🧠 Bayesian", "🥊 Striking", "🤼 Grappling"],
         horizontal=True,
         key="fighter_profile_metrics_view",
     )
+
+    def _fmt_float(value: object, decimals: int = 2) -> str:
+        if value is None or (isinstance(value, float) and pd.isna(value)):
+            return "—"
+        try:
+            return f"{float(value):.{decimals}f}"
+        except Exception:
+            return "—"
+
+    def _fmt_pct(value: object) -> str:
+        if value is None or (isinstance(value, float) and pd.isna(value)):
+            return "—"
+        try:
+            pct = float(value)
+            if pct <= 1.0:
+                pct *= 100.0
+            return f"{pct:.0f}%"
+        except Exception:
+            return "—"
 
     if metrics_view == "🧠 Bayesian":
         _render_fighter_overview_card(bayes_metrics, title="Bayesian Method Metrics")
@@ -6049,19 +6083,26 @@ def page_fighter_profile() -> None:
             "`sudo -E docker compose --env-file \"$PIPELINE_ENV_FILE\" --profile sunday run --rm --no-deps mma_manual_fighter_countries_sync` "
             "then `mma_parquets_dashboard`."
         )
-
-    _bonuses_won = str(int(p.get("bonuses_won_count", 0) or 0))
-    _longest_win = str(int(p.get("longest_win_streak", 0) or 0))
-    _longest_loss = str(int(p.get("longest_loss_streak", 0) or 0))
-
-    st.markdown("<div style='height: 0.45rem;'></div>", unsafe_allow_html=True)
-    s1, s2, s3 = st.columns(3)
-    with s1:
-        _render_fighter_meta_card("Bonuses Won", _bonuses_won, icon="🎖️", accent="#f59e0b")
-    with s2:
-        _render_fighter_meta_card("Longest Win Streak", _longest_win, icon="📈", accent="#22c55e")
-    with s3:
-        _render_fighter_meta_card("Longest Loss Streak", _longest_loss, icon="📉", accent="#ef4444")
+    elif metrics_view == "🥊 Striking":
+        _render_fighter_overview_card(
+            [
+                ("🥊 SLpM", _fmt_float(p.get("slpm"), 2)),
+                ("📉 SApM", _fmt_float(p.get("sapm"), 2)),
+                ("🎯 Str Acc", _fmt_pct(p.get("str_acc"))),
+                ("🛡️ Str Def", _fmt_pct(p.get("str_def"))),
+            ],
+            title="Striking Metrics",
+        )
+    elif metrics_view == "🤼 Grappling":
+        _render_fighter_overview_card(
+            [
+                ("🤼 TD Avg", _fmt_float(p.get("td_avg"), 2)),
+                ("🎯 TD Acc", _fmt_pct(p.get("td_acc"))),
+                ("🛡️ TD Def", _fmt_pct(p.get("td_def"))),
+                ("🧩 Sub Avg", _fmt_float(p.get("sub_avg"), 2)),
+            ],
+            title="Grappling Metrics",
+        )
 
     st.markdown("<div style='height: 1cm;'></div>", unsafe_allow_html=True)
 
@@ -6092,47 +6133,6 @@ def page_fighter_profile() -> None:
         ("Status", str(p.get("fighter_status", "—") or "—")),
     ]
     _render_fighter_overview_card(meta_specs, html_value_labels=country_html_labels)
-
-    def _fmt_float(value: object, decimals: int = 2) -> str:
-        if value is None or (isinstance(value, float) and pd.isna(value)):
-            return "—"
-        try:
-            return f"{float(value):.{decimals}f}"
-        except Exception:
-            return "—"
-
-    def _fmt_pct(value: object) -> str:
-        if value is None or (isinstance(value, float) and pd.isna(value)):
-            return "—"
-        try:
-            pct = float(value)
-            if pct <= 1.0:
-                pct *= 100.0
-            return f"{pct:.0f}%"
-        except Exception:
-            return "—"
-
-    if metrics_view == "🥊 Striking":
-        _render_fighter_overview_card(
-            [
-                ("🥊 SLpM", _fmt_float(p.get("slpm"), 2)),
-                ("📉 SApM", _fmt_float(p.get("sapm"), 2)),
-                ("🎯 Str Acc", _fmt_pct(p.get("str_acc"))),
-                ("🛡️ Str Def", _fmt_pct(p.get("str_def"))),
-            ],
-            title="Striking Metrics",
-        )
-
-    if metrics_view == "🤼 Grappling":
-        _render_fighter_overview_card(
-            [
-                ("🤼 TD Avg", _fmt_float(p.get("td_avg"), 2)),
-                ("🎯 TD Acc", _fmt_pct(p.get("td_acc"))),
-                ("🛡️ TD Def", _fmt_pct(p.get("td_def"))),
-                ("🧩 Sub Avg", _fmt_float(p.get("sub_avg"), 2)),
-            ],
-            title="Grappling Metrics",
-        )
 
     st.divider()
     st.subheader("Full Fight History")
