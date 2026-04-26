@@ -14,6 +14,7 @@ const rankingsAppUrl = withPage('rankings');
 const allRankedFighters = await getAllRankedFighterCards(runtimeEnvFromLocals(Astro.locals));
 const rankedDivisions = groupRankedFightersByDivision(allRankedFighters);
 const totalRankedFighters = allRankedFighters.length;
+const homePreviewLimit = 10;
 const divisionSlug = (value: string) => value.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
 const defaultDivision =
   rankedDivisions.find((group) => group.weight_class.trim().toLowerCase() === 'heavyweight')?.weight_class
@@ -198,7 +199,7 @@ const newsStructuredData = newsItems.map((item) => ({
       <div>
         <p class="fp-section-label">Ranked Fighters Wall</p>
         <p class="fp-section-intro fp-section-intro-tight">
-          Live ranking cards for every active fighter across {rankedDivisions.length || 0} divisions{totalRankedFighters ? ` (${totalRankedFighters} cards)` : ''}. Start with {defaultDivision}, then switch divisions without crowding the page.
+          A homepage preview of the live rankings across {rankedDivisions.length || 0} divisions{totalRankedFighters ? ` (${totalRankedFighters} fighters tracked)` : ''}. Start with {defaultDivision}, browse the top cards here, then open the full rankings when you want the complete table.
         </p>
       </div>
       <a class="fp-btn fp-btn-secondary" href="/rankings/">Full rankings</a>
@@ -236,10 +237,12 @@ const newsStructuredData = newsItems.map((item) => ({
           >
             <div class="fp-division-header">
               <h3 class="fp-division-title">{group.weight_class}</h3>
-              <span class="fp-division-count">{group.fighters.length} ranked</span>
+              <span class="fp-division-count">
+                showing {Math.min(group.fighters.length, homePreviewLimit)} of {group.fighters.length}
+              </span>
             </div>
             <div class="fp-champ-grid">
-              {group.fighters.map((c) => (
+              {group.fighters.slice(0, homePreviewLimit).map((c) => (
                 <FighterCard
                   name={c.name}
                   fighterId={c.fighter_id}
@@ -256,6 +259,14 @@ const newsStructuredData = newsItems.map((item) => ({
                 />
               ))}
             </div>
+            {group.fighters.length > homePreviewLimit && (
+              <div class="fp-division-footer">
+                <span class="fp-division-footer-copy">
+                  The full {group.weight_class} rankings continue on the rankings page and in the live app.
+                </span>
+                <a class="fp-btn fp-btn-secondary fp-division-footer-btn" href="/rankings/">See full rankings</a>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -1191,6 +1202,25 @@ const newsStructuredData = newsItems.map((item) => ({
       text-transform: uppercase;
       font-weight: 700;
     }
+    .fp-division-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem;
+      margin-top: 0.85rem;
+      padding: 0.72rem 0.8rem;
+      border: 1px solid rgba(113, 113, 122, 0.28);
+      border-radius: 0.82rem;
+      background: linear-gradient(160deg, rgba(22, 22, 26, 0.84), rgba(36, 36, 42, 0.58));
+    }
+    .fp-division-footer-copy {
+      color: #a1a1aa;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+    .fp-division-footer-btn {
+      flex-shrink: 0;
+    }
     .fp-cta-card {
       display: flex;
       flex-direction: column;
@@ -1424,6 +1454,10 @@ const newsStructuredData = newsItems.map((item) => ({
       }
       .fp-news-shell {
         grid-template-columns: 1fr;
+      }
+      .fp-division-footer {
+        flex-direction: column;
+        align-items: flex-start;
       }
       .fp-news-menu {
         max-height: 280px;
