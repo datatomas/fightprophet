@@ -6040,7 +6040,7 @@ def page_fighter_profile() -> None:
         sub_rate_card_value = p.get("sub_rate")
 
     country_header = _canonical_country_name(p.get("country", ""))
-    title_card, title_info, title_metrics = st.columns([1.6, 1.5, 3.0])
+    title_card, title_side = st.columns([1.6, 4.4])
     with title_card:
         _render_fighter_card_html(
             name=str(selected_fighter),
@@ -6054,8 +6054,8 @@ def page_fighter_profile() -> None:
             wins=p.get("wins"),
             losses=p.get("losses"),
         )
-    with title_info:
-        st.markdown("<div style='height: 0.9rem;'></div>", unsafe_allow_html=True)
+    with title_side:
+        st.markdown("<div style='height: 0.45rem;'></div>", unsafe_allow_html=True)
         if is_belt_holder:
             st.markdown(
                 (
@@ -6069,8 +6069,7 @@ def page_fighter_profile() -> None:
                 ),
                 unsafe_allow_html=True,
             )
-    with title_metrics:
-        st.markdown("<div style='height: 0.6rem;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 0.35rem;'></div>", unsafe_allow_html=True)
         _r1, _r2, _r3 = st.columns(3)
         with _r1:
             _render_fighter_meta_card("Str Def", _fmt_pct_compact(p.get("str_def")), icon="🛡️", accent="#22c55e")
@@ -6078,8 +6077,6 @@ def page_fighter_profile() -> None:
             _render_fighter_meta_card("TD Def", _fmt_pct_compact(p.get("td_def")), icon="🤼", accent="#eab308")
         with _r3:
             _render_fighter_meta_card("SApM", _fmt_float_compact(p.get("sapm"), 2), icon="📉", accent="#ef4444")
-
-    st.markdown("<div style='height: 0.35rem;'></div>", unsafe_allow_html=True)
 
     dob_val = p.get("dob")
     dob_text = "—"
@@ -6089,21 +6086,38 @@ def page_fighter_profile() -> None:
         except Exception:
             dob_text = str(dob_val)
 
-    c1, c2, c3, c4 = st.columns(4)
     _record = f"{int(p.get('wins', 0))}-{int(p.get('losses', 0))}-{int(p.get('draws', 0))}"
     _total_fights = f"{int(p.get('total_fights', 0))}"
     win_rate = p.get("win_rate")
     _win_rate = f"{float(win_rate):.1%}" if pd.notna(win_rate) else "—"
     finish_rate = p.get("finish_rate")
     _finish_rate = f"{float(finish_rate):.1%}" if pd.notna(finish_rate) else "—"
-    with c1:
-        _render_fighter_stat_card("Record", _record)
-    with c2:
-        _render_fighter_stat_card("Total Fights", _total_fights)
-    with c3:
-        _render_fighter_stat_card("UFC Win Rate", _win_rate)
-    with c4:
-        _render_fighter_stat_card("UFC Finish Rate", _finish_rate)
+    _bonuses_won = str(int(p.get("bonuses_won_count", 0) or 0))
+    _longest_win = str(int(p.get("longest_win_streak", 0) or 0))
+    _longest_loss = str(int(p.get("longest_loss_streak", 0) or 0))
+
+    with title_side:
+        st.markdown("<div style='height: 0.35rem;'></div>", unsafe_allow_html=True)
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            _render_fighter_stat_card("Record", _record)
+        with c2:
+            _render_fighter_stat_card("Total Fights", _total_fights)
+        with c3:
+            _render_fighter_stat_card("UFC Win Rate", _win_rate)
+        with c4:
+            _render_fighter_stat_card("UFC Finish Rate", _finish_rate)
+
+        st.markdown("<div style='height: 0.3rem;'></div>", unsafe_allow_html=True)
+        s1, s2, s3 = st.columns(3)
+        with s1:
+            _render_fighter_meta_card("Bonuses Won", _bonuses_won, icon="🎖️", accent="#f59e0b")
+        with s2:
+            _render_fighter_meta_card("Longest Win Streak", _longest_win, icon="📈", accent="#22c55e")
+        with s3:
+            _render_fighter_meta_card("Longest Loss Streak", _longest_loss, icon="📉", accent="#ef4444")
+
+    st.markdown("<div style='height: 0.55rem;'></div>", unsafe_allow_html=True)
 
     def _fmt_pct_card(value: object) -> str:
         if value is None or (isinstance(value, float) and pd.isna(value)):
@@ -6122,27 +6136,17 @@ def page_fighter_profile() -> None:
         ("Bayes Finish", _fmt_pct_card(p.get("finish_rate_win_shrunk"))),
         ("Method Sample", str(int(p.get("wins_method_known_count", 0) or 0))),
     ]
-
-    _bonuses_won = str(int(p.get("bonuses_won_count", 0) or 0))
-    _longest_win = str(int(p.get("longest_win_streak", 0) or 0))
-    _longest_loss = str(int(p.get("longest_loss_streak", 0) or 0))
-
-    st.markdown("<div style='height: 0.45rem;'></div>", unsafe_allow_html=True)
-    s1, s2, s3 = st.columns(3)
-    with s1:
-        _render_fighter_meta_card("Bonuses Won", _bonuses_won, icon="🎖️", accent="#f59e0b")
-    with s2:
-        _render_fighter_meta_card("Longest Win Streak", _longest_win, icon="📈", accent="#22c55e")
-    with s3:
-        _render_fighter_meta_card("Longest Loss Streak", _longest_loss, icon="📉", accent="#ef4444")
-
-    st.markdown("<div style='height: 0.6rem;'></div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div style='font-size:1.08rem;font-weight:700;letter-spacing:0.01em;margin:0 0 0.4rem 0;'>Profile Metrics View</div>",
+        unsafe_allow_html=True,
+    )
 
     metrics_view = st.radio(
         "Profile metrics view",
         ["🧠 Bayesian", "🥊 Striking", "🤼 Grappling"],
         horizontal=True,
         key="fighter_profile_metrics_view",
+        label_visibility="collapsed",
     )
 
     def _fmt_float(value: object, decimals: int = 2) -> str:
