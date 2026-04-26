@@ -1,4 +1,6 @@
 ---
+import type { CountryEntry, CountryMasterIndex } from '../lib/country-master';
+
 interface Props {
   name: string;
   fighterId?: string;
@@ -30,6 +32,11 @@ const {
 } = Astro.props as Props;
 
 const profileUrl = `${appUrl}${appUrl.includes('?') ? '&' : '?'}page=fighter-profile&fighter=${encodeURIComponent(name)}`;
+const countryIndex = ((Astro.locals.countryMaster as CountryMasterIndex | undefined)?.byAlias ?? {});
+
+function normalizeCountryKey(value: string): string {
+  return value.trim().toUpperCase();
+}
 
 function initials(n: string): string {
   return n
@@ -74,98 +81,39 @@ function divisionAbbrev(wc: string): string {
   return wc.split(/\s+/).map((p) => p[0]).join('').toUpperCase().slice(0, 4);
 }
 
-function flagFor(c: string): string {
-  if (!c) return '';
-  const map: Record<string, string> = {
-    usa: '🇺🇸',
-    'united states': '🇺🇸',
-    us: '🇺🇸',
-    'united states of america': '🇺🇸',
-    brazil: '🇧🇷',
-    br: '🇧🇷',
-    russia: '🇷🇺',
-    'russian federation': '🇷🇺',
-    mexico: '🇲🇽',
-    canada: '🇨🇦',
-    ireland: '🇮🇪',
-    australia: '🇦🇺',
-    'new zealand': '🇳🇿',
-    china: '🇨🇳',
-    japan: '🇯🇵',
-    'south korea': '🇰🇷',
-    korea: '🇰🇷',
-    england: '🇬🇧',
-    'united kingdom': '🇬🇧',
-    uk: '🇬🇧',
-    'great britain': '🇬🇧',
-    france: '🇫🇷',
-    germany: '🇩🇪',
-    spain: '🇪🇸',
-    italy: '🇮🇹',
-    poland: '🇵🇱',
-    netherlands: '🇳🇱',
-    sweden: '🇸🇪',
-    norway: '🇳🇴',
-    kazakhstan: '🇰🇿',
-    kyrgyzstan: '🇰🇬',
-    georgia: '🇬🇪',
-    azerbaijan: '🇦🇿',
-    nigeria: '🇳🇬',
-    'south africa': '🇿🇦',
-    cameroon: '🇨🇲',
-    ecuador: '🇪🇨',
-    peru: '🇵🇪',
-    argentina: '🇦🇷',
-    colombia: '🇨🇴',
-    chile: '🇨🇱',
-    philippines: '🇵🇭',
-    thailand: '🇹🇭',
-    indonesia: '🇮🇩',
-    'czech republic': '🇨🇿',
-    czechia: '🇨🇿',
-    moldova: '🇲🇩',
-    romania: '🇷🇴',
-    suriname: '🇸🇷',
-    cuba: '🇨🇺',
-    'dominican republic': '🇩🇴',
-    iceland: '🇮🇸',
-    finland: '🇫🇮',
-    denmark: '🇩🇰',
-    austria: '🇦🇹',
-    belgium: '🇧🇪',
-    portugal: '🇵🇹',
-    'saudi arabia': '🇸🇦',
-    iran: '🇮🇷',
-  };
-  return map[c.toLowerCase().trim()] || '';
+function countryRecord(value: string): CountryEntry | undefined {
+  const key = normalizeCountryKey(value);
+  if (!key) return undefined;
+  return countryIndex[key];
 }
 
-function countryShort(c: string): string {
-  if (!c) return '';
-  const map: Record<string, string> = {
-    usa: 'US',
-    us: 'US',
-    'united states': 'US',
-    'united states of america': 'US',
-    uk: 'UK',
-    england: 'UK',
-    'united kingdom': 'UK',
-    'great britain': 'UK',
-    'south korea': 'KR',
-    korea: 'KR',
-    'new zealand': 'NZ',
-    'saudi arabia': 'SA',
-    'czech republic': 'CZ',
-    czechia: 'CZ',
-    'dominican republic': 'DO',
-    'south africa': 'ZA',
-    'russian federation': 'RU',
-  };
-  const key = c.toLowerCase().trim();
-  if (key in map) return map[key];
-  return c.split(/\s+/).map((p) => p[0]).filter(Boolean).join('').slice(0, 3).toUpperCase();
+function canonicalCountry(value: string): string {
+  const record = countryRecord(value);
+  if (record) return record.canonical_name;
+  return value.trim();
 }
 
+function countryShort(value: string): string {
+  const record = countryRecord(value);
+  if (record?.iso2) return record.iso2;
+  const canonical = canonicalCountry(value);
+  if (!canonical) return '';
+  return canonical
+    .split(/\s+/)
+    .map((p) => p[0])
+    .filter(Boolean)
+    .join('')
+    .slice(0, 3)
+    .toUpperCase();
+}
+
+function flagFor(value: string): string {
+  const code = countryRecord(value)?.iso2 ?? value.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(code)) return '';
+  return String.fromCodePoint(...[...code].map((ch) => ch.charCodeAt(0) + 127397));
+}
+
+const canonicalCountryValue = canonicalCountry(country);
 const flag = flagFor(country);
 const countryCompact = countryShort(country);
 const init = initials(name);
@@ -180,17 +128,17 @@ const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(l
       <span class="fp-card-rating-num">{recordLabel || fmtInt(wins)}</span>
       {wcAbbr && <span class="fp-card-rating-pos">{wcAbbr}</span>}
     </div>
-    {flag && <span class="fp-card-flag" title={country}>{flag}</span>}
+    {flag && <span class="fp-card-flag" title={canonicalCountryValue}>{flag}</span>}
   </div>
   <div class="fp-card-portrait" aria-hidden="true">
     <span class="fp-card-portrait-silhouette">👤</span>
     <span class="fp-card-initials">{init}</span>
   </div>
   <div class="fp-card-name">{name}</div>
-  {country && (
+  {canonicalCountryValue && (
     <div class="fp-card-country">
       {flag && <span class="fp-card-country-flag" aria-hidden="true">{flag}</span>}
-      <span class="fp-card-country-full">{country}</span>
+      <span class="fp-card-country-full">{canonicalCountryValue}</span>
       <span class="fp-card-country-short">{countryCompact}</span>
     </div>
   )}
