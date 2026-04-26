@@ -3510,7 +3510,7 @@ _FIGHTER_CARD_DIVISION_ABBREV = {
 
 _FIGHTER_CARD_CSS = """
 <style>
-.fp-card{position:relative;display:flex;flex-direction:column;width:100%;max-width:252px;aspect-ratio:5/7;min-height:292px;border-radius:1.1rem;padding:0.7rem 0.7rem 0.78rem;overflow:hidden;isolation:isolate;color:#fef2f2;font-family:Inter,system-ui,sans-serif;clip-path:polygon(11% 0,89% 0,100% 7%,100% 93%,89% 100%,11% 100%,0 93%,0 7%);}
+.fp-card{position:relative;display:flex;flex-direction:column;width:100%;max-width:252px;margin-inline:auto;aspect-ratio:5/7;min-height:292px;border-radius:1.1rem;padding:0.7rem 0.7rem 0.78rem;overflow:hidden;isolation:isolate;color:#fef2f2;font-family:Inter,system-ui,sans-serif;clip-path:polygon(11% 0,89% 0,100% 7%,100% 93%,89% 100%,11% 100%,0 93%,0 7%);}
 .fp-card::before{content:'';position:absolute;inset:0;border-radius:inherit;z-index:-1;}
 .fp-card::after{content:'';position:absolute;inset:0.32rem;border-radius:0.9rem;border:1px solid transparent;pointer-events:none;z-index:0;clip-path:polygon(9% 0,91% 0,100% 8%,100% 92%,91% 100%,9% 100%,0 92%,0 8%);}
 .fp-card.is-champ::before{background:radial-gradient(120% 80% at 50% 0%,rgba(255,239,170,0.58),transparent 58%),radial-gradient(90% 64% at 50% 40%,rgba(255,248,220,0.14),transparent 70%),linear-gradient(160deg,#f8de76 0%,#c69218 35%,#765105 68%,#312000 100%);box-shadow:inset 0 0 0 1.5px rgba(255,235,150,0.55),0 0 18px rgba(245,158,11,0.32);}
