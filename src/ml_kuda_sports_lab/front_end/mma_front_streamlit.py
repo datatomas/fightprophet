@@ -2926,6 +2926,11 @@ st.markdown(
         padding: 0.9rem 1rem;
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 6px 16px rgba(0,0,0,0.18), 0 0 12px var(--fp-red-glow-soft);
     }
+    .fighter-overview-card--summary {
+        padding: 0.95rem 1rem 1rem;
+        background: linear-gradient(145deg, rgba(28, 28, 32, 0.9), rgba(39, 39, 42, 0.72));
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 18px rgba(0,0,0,0.2), 0 0 14px var(--fp-red-glow-soft);
+    }
     .fighter-overview-title {
         color: #f4f4f5;
         font-size: 0.84rem;
@@ -2934,10 +2939,18 @@ st.markdown(
         text-transform: uppercase;
         margin-bottom: 0.6rem;
     }
+    .fighter-overview-title--summary {
+        font-size: 0.78rem;
+        color: #d4d4d8;
+        margin-bottom: 0.72rem;
+    }
     .fighter-overview-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.55rem;
+    }
+    .fighter-overview-grid--summary {
+        gap: 0.65rem;
     }
     .fighter-overview-item {
         background: rgba(39, 39, 42, 0.68);
@@ -2945,6 +2958,13 @@ st.markdown(
         border-radius: 0.7rem;
         padding: 0.48rem 0.58rem;
         min-height: 58px;
+    }
+    .fighter-overview-item--summary {
+        min-height: 104px;
+        padding: 0.72rem 0.78rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
     .fighter-overview-label {
         color: #a1a1aa;
@@ -2959,6 +2979,12 @@ st.markdown(
         font-size: 0.92rem;
         font-weight: 700;
         line-height: 1.15;
+    }
+    .fighter-overview-value--summary {
+        font-size: 1.6rem;
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
     }
 
     /* Larger reading copy for static content pages */
@@ -3147,6 +3173,13 @@ st.markdown(
         .fighter-overview-item {
             min-height: 48px !important;
             padding: 0.38rem 0.45rem !important;
+        }
+        .fighter-overview-item--summary {
+            min-height: 90px !important;
+            padding: 0.56rem 0.62rem !important;
+        }
+        .fighter-overview-value--summary {
+            font-size: 1.2rem !important;
         }
         .fighter-stat-card {
             min-height: 80px !important;
@@ -3749,25 +3782,31 @@ def _render_fighter_overview_card(
     items: list[tuple[str, str]],
     title: str = "Fighter Vitals",
     html_value_labels: set[str] | None = None,
+    emphasized: bool = False,
 ) -> None:
     html_labels = html_value_labels or set()
     cells_parts: list[str] = []
+    item_class = "fighter-overview-item fighter-overview-item--summary" if emphasized else "fighter-overview-item"
+    value_class = "fighter-overview-value fighter-overview-value--summary" if emphasized else "fighter-overview-value"
+    card_class = "fighter-overview-card fighter-overview-card--summary" if emphasized else "fighter-overview-card"
+    title_class = "fighter-overview-title fighter-overview-title--summary" if emphasized else "fighter-overview-title"
+    grid_class = "fighter-overview-grid fighter-overview-grid--summary" if emphasized else "fighter-overview-grid"
     for label, value in items:
         label_txt = escape(str(label))
         value_txt = "" if value is None else str(value)
         value_rendered = value_txt if str(label) in html_labels else escape(value_txt)
         cells_parts.append(
-            '<div class="fighter-overview-item">'
+            f'<div class="{item_class}">'
             f'<div class="fighter-overview-label">{label_txt}</div>'
-            f'<div class="fighter-overview-value">{value_rendered}</div>'
+            f'<div class="{value_class}">{value_rendered}</div>'
             "</div>"
         )
     cells = "".join(cells_parts)
     st.markdown(
         (
-            '<div class="fighter-overview-card">'
-            f'<div class="fighter-overview-title">{escape(title)}</div>'
-            f'<div class="fighter-overview-grid">{cells}</div>'
+            f'<div class="{card_class}">'
+            f'<div class="{title_class}">{escape(title)}</div>'
+            f'<div class="{grid_class}">{cells}</div>'
             "</div>"
         ),
         unsafe_allow_html=True,
@@ -6040,6 +6079,20 @@ def page_fighter_profile() -> None:
         sub_rate_card_value = p.get("sub_rate")
 
     country_header = _canonical_country_name(p.get("country", ""))
+    if is_belt_holder:
+        st.markdown(
+            (
+                '<div style="display:inline-flex;align-items:center;gap:0.45rem;'
+                'padding:0.30rem 0.62rem;border-radius:999px;'
+                'border:1px solid rgba(113,113,122,0.55);background:rgba(39,39,42,0.65);'
+                'margin:0.05rem 0 0.45rem;">'
+                f'<span style="font-size:0.95rem;">{belt_icons}</span>'
+                '<span style="font-size:0.82rem;color:#d4d4d8;text-transform:uppercase;letter-spacing:0.05em;">Belt Holder</span>'
+                f'<span style="font-size:0.90rem;font-weight:700;color:#f4f4f5;">{escape(belt_label)}</span>'
+                '</div>'
+            ),
+            unsafe_allow_html=True,
+        )
     title_card, title_side = st.columns([1.6, 4.4])
     with title_card:
         _render_fighter_card_html(
@@ -6055,21 +6108,6 @@ def page_fighter_profile() -> None:
             losses=p.get("losses"),
         )
     with title_side:
-        st.markdown("<div style='height: 0.45rem;'></div>", unsafe_allow_html=True)
-        if is_belt_holder:
-            st.markdown(
-                (
-                    '<div style="display:inline-flex;align-items:center;gap:0.45rem;'
-                    'padding:0.30rem 0.62rem;border-radius:999px;'
-                    'border:1px solid rgba(113,113,122,0.55);background:rgba(39,39,42,0.65);margin:0.2rem 0 0.15rem;">'
-                    f'<span style="font-size:0.95rem;">{belt_icons}</span>'
-                    '<span style="font-size:0.82rem;color:#d4d4d8;text-transform:uppercase;letter-spacing:0.05em;">Belt Holder</span>'
-                    f'<span style="font-size:0.90rem;font-weight:700;color:#f4f4f5;">{escape(belt_label)}</span>'
-                    '</div>'
-                ),
-                unsafe_allow_html=True,
-            )
-        st.markdown("<div style='height: 0.35rem;'></div>", unsafe_allow_html=True)
         _r1, _r2, _r3 = st.columns(3)
         with _r1:
             _render_fighter_meta_card("Str Def", _fmt_pct_compact(p.get("str_def")), icon="🛡️", accent="#22c55e")
@@ -6098,15 +6136,16 @@ def page_fighter_profile() -> None:
 
     with title_side:
         st.markdown("<div style='height: 0.35rem;'></div>", unsafe_allow_html=True)
-        c1, c2, c3, c4 = st.columns(4)
-        with c1:
-            _render_fighter_stat_card("Record", _record)
-        with c2:
-            _render_fighter_stat_card("Total Fights", _total_fights)
-        with c3:
-            _render_fighter_stat_card("UFC Win Rate", _win_rate)
-        with c4:
-            _render_fighter_stat_card("UFC Finish Rate", _finish_rate)
+        _render_fighter_overview_card(
+            [
+                ("Record", _record),
+                ("Total Fights", _total_fights),
+                ("UFC Win Rate", _win_rate),
+                ("UFC Finish Rate", _finish_rate),
+            ],
+            title="Career Snapshot",
+            emphasized=True,
+        )
 
         st.markdown("<div style='height: 0.3rem;'></div>", unsafe_allow_html=True)
         s1, s2, s3 = st.columns(3)
