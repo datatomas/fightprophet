@@ -53,7 +53,8 @@ _CANONICAL_BY_SLUG = {
     "events-history": f"{_MARKETING_SITE_ORIGIN}/events-history/",
     "rankings": f"{_MARKETING_SITE_ORIGIN}/rankings/",
     "belt-holders": f"{_MARKETING_SITE_ORIGIN}/belt-holders/",
-    "fighter-profile": f"{_MARKETING_SITE_ORIGIN}/fighter-profile/",
+    "fighter-profile": f"{_MARKETING_SITE_ORIGIN}/fighter-card/",
+    "fighter-card": f"{_MARKETING_SITE_ORIGIN}/fighter-card/",
     "terms": f"{_MARKETING_SITE_ORIGIN}/terms/",
 }
 
@@ -97,6 +98,10 @@ except Exception:
     GridOptionsBuilder = None
 
 logger = logging.getLogger(__name__)
+
+_PAGE_SLUG_ALIASES = {
+    "fighter-profile": "fighter-card",
+}
 
 # ---------------------------------------------------------------------------
 # News widget (RSS, sidebar + upcoming page)
@@ -3313,11 +3318,11 @@ with st.sidebar:
         "events-history": f"📅 {t('nav.events_history')}",
         "rankings": f"🐐 {t('nav.rankings')}",
         "belt-holders": f"👑 {t('nav.belt_holders')}",
-        "fighter-profile": f"👤 {t('nav.fighter_profile')}",
+        "fighter-card": f"👤 {t('nav.fighter_profile')}",
         "terms": f"📄 {t('nav.terms')}",
     }
-    _requested_slug = str(st.query_params.get("page", "")).strip().lower()
-    _cookie_page_slug = _cookie_get(_COOKIE_PAGE_SLUG, "").strip().lower()
+    _requested_slug = _PAGE_SLUG_ALIASES.get(str(st.query_params.get("page", "")).strip().lower(), str(st.query_params.get("page", "")).strip().lower())
+    _cookie_page_slug = _PAGE_SLUG_ALIASES.get(_cookie_get(_COOKIE_PAGE_SLUG, "").strip().lower(), _cookie_get(_COOKIE_PAGE_SLUG, "").strip().lower())
     _initial_slug = _requested_slug or _cookie_page_slug
     _active_page_slug = _initial_slug if _initial_slug in _page_slug_to_label else "predictions"
 
@@ -3401,14 +3406,14 @@ def _fighter_profile_link(name: object) -> str:
     txt = "" if name is None else str(name).strip()
     if not txt or txt in {"Draw", "No Contest", "—"}:
         return escape(txt or "")
-    return f'<a href="?page=fighter-profile&fighter={quote_plus(txt)}">{escape(txt)}</a>'
+    return f'<a href="?page=fighter-card&fighter={quote_plus(txt)}">{escape(txt)}</a>'
 
 
 def _open_fighter_profile(fighter_name: str) -> None:
     if not fighter_name:
         return
     st.session_state["selected_fighter_profile"] = fighter_name
-    st.query_params["page"] = "fighter-profile"
+    st.query_params["page"] = "fighter-card"
     st.query_params["fighter"] = str(fighter_name)
     st.rerun()
 
@@ -5839,7 +5844,7 @@ def page_rankings() -> None:
         if "Fighter" in tbl.columns:
             tbl["Fighter"] = tbl["Fighter"].apply(
                 lambda name: (
-                    f'<a href="?page=fighter-profile&fighter={quote_plus(str(name))}">{escape(str(name))}</a>'
+                    f'<a href="?page=fighter-card&fighter={quote_plus(str(name))}">{escape(str(name))}</a>'
                     if pd.notna(name)
                     else ""
                 )
@@ -6317,7 +6322,7 @@ def page_fighter_profile() -> None:
     if "Opponent" in df_show.columns:
         df_show["Opponent"] = df_show["Opponent"].apply(
             lambda name: (
-                f'<a href="?page=fighter-profile&fighter={quote_plus(str(name))}">{escape(str(name))}</a>'
+                f'<a href="?page=fighter-card&fighter={quote_plus(str(name))}">{escape(str(name))}</a>'
                 if pd.notna(name) and str(name).strip()
                 else ""
             )
@@ -6342,5 +6347,5 @@ elif _active_page_slug == "rankings":
     page_rankings()
 elif _active_page_slug == "belt-holders":
     page_belt_holders()
-elif _active_page_slug == "fighter-profile":
+elif _active_page_slug in {"fighter-card", "fighter-profile"}:
     page_fighter_profile()
