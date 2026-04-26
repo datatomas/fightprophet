@@ -3461,7 +3461,7 @@ _FIGHTER_CARD_DIVISION_ABBREV = {
 
 _FIGHTER_CARD_CSS = """
 <style>
-.fp-card{position:relative;display:flex;flex-direction:column;width:100%;max-width:220px;aspect-ratio:5/7;min-height:260px;border-radius:0.85rem;padding:0.55rem 0.55rem 0.65rem;overflow:hidden;isolation:isolate;color:#fef2f2;font-family:Inter,system-ui,sans-serif;}
+.fp-card{position:relative;display:flex;flex-direction:column;width:100%;max-width:248px;aspect-ratio:5/7;min-height:292px;border-radius:0.85rem;padding:0.62rem 0.62rem 0.72rem;overflow:hidden;isolation:isolate;color:#fef2f2;font-family:Inter,system-ui,sans-serif;}
 .fp-card::before{content:'';position:absolute;inset:0;border-radius:inherit;z-index:-1;}
 .fp-card.is-champ::before{background:radial-gradient(120% 80% at 50% 0%,rgba(255,215,0,0.45),transparent 65%),linear-gradient(160deg,#f7d046 0%,#b8860b 38%,#6b4e00 100%);box-shadow:inset 0 0 0 1.5px rgba(255,235,150,0.55),0 0 18px rgba(245,158,11,0.32);}
 .fp-card.is-default::before{background:radial-gradient(120% 80% at 50% 0%,rgba(160,174,192,0.35),transparent 65%),linear-gradient(160deg,#2a2f38 0%,#161a20 70%,#0c0d10 100%);box-shadow:inset 0 0 0 1px rgba(220,38,38,0.32),0 0 12px rgba(220,38,38,0.16);}
@@ -3481,7 +3481,7 @@ _FIGHTER_CARD_CSS = """
 .fp-card-initials{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:800;letter-spacing:0.05em;text-shadow:0 2px 6px rgba(0,0,0,0.7);}
 .fp-card.is-champ .fp-card-initials{color:rgba(31,19,0,0.92);}
 .fp-card.is-default .fp-card-initials{color:rgba(255,255,255,0.92);}
-.fp-card-name{font-size:0.86rem;font-weight:800;letter-spacing:0.01em;text-align:center;line-height:1.15;margin-bottom:0.4rem;word-break:break-word;}
+.fp-card-name{font-size:0.98rem;font-weight:800;letter-spacing:0.01em;text-align:center;line-height:1.12;margin-bottom:0.44rem;word-break:break-word;}
 .fp-card.is-champ .fp-card-name{color:#1f1300;}
 .fp-card.is-default .fp-card-name{color:#fef2f2;}
 .fp-card-meta{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0.28rem 0.36rem;margin:-0.08rem 0 0.34rem;min-height:1rem;}
@@ -6043,7 +6043,7 @@ def page_fighter_profile() -> None:
     header_meta_parts = [part for part in [fighter_weight_class] if part]
     header_meta = " • ".join(header_meta_parts)
 
-    title_card, title_info, title_metrics = st.columns([1.35, 2.0, 3.15])
+    title_card, title_info, title_metrics = st.columns([1.6, 1.5, 3.0])
     with title_card:
         _render_fighter_card_html(
             name=str(selected_fighter),
@@ -6058,8 +6058,7 @@ def page_fighter_profile() -> None:
             losses=p.get("losses"),
         )
     with title_info:
-        st.markdown("<div style='height: 0.6rem;'></div>", unsafe_allow_html=True)
-        st.markdown(f"<h2 style='margin:0 0 0.2rem 0;'>{escape(str(selected_fighter))}</h2>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 0.9rem;'></div>", unsafe_allow_html=True)
         if header_meta:
             st.caption(header_meta)
         if is_belt_holder:
