@@ -31,7 +31,7 @@ const {
   appUrl = 'https://app.fightprophet.com',
 } = Astro.props as Props;
 
-const profileUrl = `${appUrl}${appUrl.includes('?') ? '&' : '?'}page=fighter-profile&fighter=${encodeURIComponent(name)}`;
+const profileUrl = `${appUrl}${appUrl.includes('?') ? '&' : '?'}page=fighter-card&fighter=${encodeURIComponent(name)}`;
 const countryIndex = ((Astro.locals.countryMaster as CountryMasterIndex | undefined)?.byAlias ?? {});
 
 function normalizeCountryKey(value: string): string {
