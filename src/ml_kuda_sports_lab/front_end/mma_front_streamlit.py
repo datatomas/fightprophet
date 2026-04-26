@@ -2622,6 +2622,15 @@ st.set_page_config(
     initial_sidebar_state="auto",
 )
 
+# Block search-engine indexing of the Streamlit app shell. The marketing site
+# at fightprophet.com is the canonical indexable surface; the app subdomain
+# serves a query-param SPA whose pre-hydration HTML is empty and trips
+# AdSense's "low value content" policy.
+st.markdown(
+    '<meta name="robots" content="noindex, nofollow">',
+    unsafe_allow_html=True,
+)
+
 _inject_theme_aware_favicon()
 
 # Minimal custom CSS for dark theme polish
