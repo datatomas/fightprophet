@@ -174,7 +174,7 @@ STRINGS = {
     "nav.historical": "Fight Lab",
     "nav.rankings": "Fighter Rankings",
     "nav.events_history": "Events History",
-    "nav.fighter_profile": "Fighter Profile",
+    "nav.fighter_profile": "Fighter Cards",
     "nav.belt_holders": "Belt Holders",
     "sidebar.data_source_mode": "Data source mode",
     "sidebar.data_source_help": "auto = detect from env, azure = force blob, local = force disk",
@@ -206,7 +206,7 @@ Use the sidebar to navigate:
 - Upcoming Predictions
 - Fight Lab (historical picks + model diagnostics)
 - Fighter Rankings
-- Fighter Profile
+- Fighter Cards
 """,
     "common.contact": "Contact",
     "page.terms.title": "Terms & Conditions",
@@ -283,7 +283,7 @@ STATIC_TRANSLATIONS = {
         "nav.historical": "Fight Lab",
         "nav.rankings": "Rankings de Peleadores",
         "nav.events_history": "Historial de Eventos",
-        "nav.fighter_profile": "Perfil del Peleador",
+        "nav.fighter_profile": "Tarjetas de Peleadores",
         "nav.belt_holders": "Poseedores del Cinturón",
         "sidebar.data_source_mode": "Modo de fuente de datos",
         "sidebar.data_source_help": "auto = detectar desde entorno, azure = forzar blob, local = forzar disco",
@@ -314,7 +314,7 @@ Usa la barra lateral para navegar:
 - Rendimiento del Modelo
 - Picks Históricos
 - Rankings de Peleadores
-- Perfil del Peleador
+- Tarjetas de Peleadores
 """,
         "common.contact": "Contacto",
         "page.terms.title": "Términos y Condiciones",
@@ -363,7 +363,7 @@ Usa la barra lateral para navegar:
         "nav.historical": "Fight Lab",
         "nav.rankings": "Rankings de Lutadores",
         "nav.events_history": "Histórico de Eventos",
-        "nav.fighter_profile": "Perfil do Lutador",
+        "nav.fighter_profile": "Cards de Lutadores",
         "nav.belt_holders": "Detentores do Cinturão",
         "sidebar.data_source_mode": "Modo da fonte de dados",
         "sidebar.data_source_help": "auto = detectar pelo ambiente, azure = forçar blob, local = forçar disco",
@@ -394,7 +394,7 @@ Use a barra lateral para navegar:
 - Desempenho do Modelo
 - Picks Históricos
 - Rankings de Lutadores
-- Perfil do Lutador
+- Cards de Lutadores
 """,
         "common.contact": "Contato",
         "page.terms.title": "Termos e Condições",
@@ -3623,7 +3623,7 @@ _FIGHTER_CARD_CSS = """
 .fp-card-rating-pos{font-size:0.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;}
 .fp-card.is-champ .fp-card-rating-pos{color:rgba(31,19,0,0.8);}
 .fp-card.is-default .fp-card-rating-pos{color:rgba(255,255,255,0.78);}
-.fp-card-flag{font-size:1rem;line-height:1;background:rgba(0,0,0,0.32);border-radius:0.4rem;padding:0.18rem 0.32rem;}
+.fp-card-flag{font-size:1.22rem;line-height:1;background:rgba(0,0,0,0.32);border-radius:0.4rem;padding:0.2rem 0.34rem;}
 .fp-card-portrait{position:relative;display:flex;align-items:center;justify-content:center;flex:1;margin:0.25rem 0 0.35rem;}
 .fp-card-portrait-silhouette{font-size:3.6rem;opacity:0.18;line-height:1;}
 .fp-card.is-champ .fp-card-portrait-silhouette{opacity:0.22;}
@@ -4202,14 +4202,14 @@ def _ui_copy_pack() -> dict[str, object]:
     packs: dict[str, dict[str, object]] = {
         "en": {
             "hero_title": "Fight Prophet",
-            "hero_sub": "Fight Prophet makes MMA analytics easy to read: upcoming picks, model diagnostics, rankings, belt holders, and fighter profiles in one place.",
+        "hero_sub": "Fight Prophet makes MMA analytics easy to read: upcoming picks, model diagnostics, rankings, belt holders, and fighter cards in one place.",
             "hero_badge": "For information and education only — never financial advice.",
             "tabs": ["How to use", "Model engine", "Risk controls"],
             "how_intro": "Simple workflow for new users:",
             "how_steps": [
                 "Start in **Upcoming Predictions** to compare model probability vs market probability.",
                 "Open **Fight Lab** to review historical outcomes plus metrics like accuracy, F1, AUC, Brier, and log loss.",
-                "Use **Fighter Rankings** and **Fighter Profile** to understand matchup context.",
+                "Use **Fighter Rankings** and **Fighter Cards** to understand matchup context.",
                 "Use **Belt Holders** to track champions, title-fight history, and manual vacate overrides.",
             ],
             "engine_intro": "Fight Prophet serves three ML views for decision support:",
@@ -4236,14 +4236,14 @@ def _ui_copy_pack() -> dict[str, object]:
         },
         "es": {
             "hero_title": "Fight Prophet",
-            "hero_sub": "Fight Prophet facilita la analítica de MMA: picks próximos, diagnóstico de modelos, rankings, cinturones y perfiles en un solo lugar.",
+            "hero_sub": "Fight Prophet facilita la analítica de MMA: picks próximos, diagnóstico de modelos, rankings, cinturones y tarjetas de peleadores en un solo lugar.",
             "hero_badge": "Solo para información y educación — nunca asesoría financiera.",
             "tabs": ["Cómo usar", "Motor del modelo", "Controles de riesgo"],
             "how_intro": "Flujo simple para nuevos usuarios:",
             "how_steps": [
                 "Ve a **Próximas Predicciones** y compara probabilidad del modelo vs probabilidad de mercado.",
                 "Abre **Fight Lab** para revisar histórico y métricas (accuracy, F1, AUC, Brier y log loss).",
-                "Usa **Rankings** y **Perfil del Peleador** para contexto del combate.",
+                "Usa **Rankings** y **Tarjetas de Peleadores** para contexto del combate.",
                 "Usa **Poseedores del Cinturón** para campeones, historial titular y vacantes manuales.",
             ],
             "engine_intro": "Fight Prophet muestra tres vistas de ML para soporte de decisiones:",
@@ -4270,14 +4270,14 @@ def _ui_copy_pack() -> dict[str, object]:
         },
         "pt": {
             "hero_title": "Fight Prophet",
-            "hero_sub": "Fight Prophet deixa a análise de MMA fácil de entender: previsões, diagnóstico de modelo, rankings, cinturões e perfis em um só lugar.",
+            "hero_sub": "Fight Prophet deixa a análise de MMA fácil de entender: previsões, diagnóstico de modelo, rankings, cinturões e cards de lutadores em um só lugar.",
             "hero_badge": "Somente para informação e educação — nunca aconselhamento financeiro.",
             "tabs": ["Como usar", "Motor do modelo", "Controles de risco"],
             "how_intro": "Fluxo simples para novos usuários:",
             "how_steps": [
                 "Vá em **Próximas Previsões** e compare probabilidade do modelo vs mercado.",
                 "Abra o **Fight Lab** para histórico + métricas (acurácia, F1, AUC, Brier e log loss).",
-                "Use **Rankings** e **Perfil do Lutador** para contexto da luta.",
+                "Use **Rankings** e **Cards de Lutadores** para contexto da luta.",
                 "Use **Detentores do Cinturão** para campeões, histórico de lutas por título e vacâncias manuais.",
             ],
             "engine_intro": "Fight Prophet oferece três visões de ML para suporte à decisão:",
@@ -4472,7 +4472,7 @@ def page_home() -> None:
             <p>
                 <strong>The fight data already knows who's getting smashed. We just highlight it.</strong><br /><br />
                 Fight Prophet makes MMA analytics easy to read: upcoming picks, model diagnostics,
-                rankings, belt holders, and fighter profiles in one place.
+                rankings, belt holders, and fighter cards in one place.
                 <br /><br />
                 The home page has moved to
                 <a href="https://fightprophet.com" target="_blank" rel="noopener noreferrer">fightprophet.com</a>.
@@ -5967,14 +5967,14 @@ def page_rankings() -> None:
 def page_fighter_profile() -> None:
     df_profiles = _read_parquet(FOLDER_FIGHTER_PROFILES, ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
     if df_profiles.empty:
-        st.header("Fighter Profile")
-        st.info("No fighter profile data available.")
+        st.header("Fighter Cards")
+        st.info("No fighter card data available.")
         return
 
     name_col = "fighter_name_display" if "fighter_name_display" in df_profiles.columns else "fighter_name"
     if name_col not in df_profiles.columns:
-        st.header("Fighter Profile")
-        st.info("Fighter profile data is incomplete.")
+        st.header("Fighter Cards")
+        st.info("Fighter card data is incomplete.")
         return
 
     profile_name_cols = [
@@ -5991,7 +5991,7 @@ def page_fighter_profile() -> None:
     )
     fighter_options = list(dict.fromkeys(fighter_options))
     if not fighter_options:
-        st.header("Fighter Profile")
+        st.header("Fighter Cards")
         st.info("No fighters found in profile dataset.")
         return
 
@@ -6035,7 +6035,7 @@ def page_fighter_profile() -> None:
         if not prof.empty:
             break
     if prof.empty:
-        st.header("Fighter Profile")
+        st.header("Fighter Cards")
         st.info("No profile row found for this fighter.")
         return
     p = prof.iloc[0]
@@ -6171,7 +6171,7 @@ def page_fighter_profile() -> None:
         )
     with title_info:
         st.markdown("<div style='height: 0.6rem;'></div>", unsafe_allow_html=True)
-        st.header("Fighter Profile")
+        st.markdown(f"<h2 style='margin:0 0 0.2rem 0;'>{escape(str(selected_fighter))}</h2>", unsafe_allow_html=True)
         if header_meta:
             st.caption(header_meta)
         if is_belt_holder:
