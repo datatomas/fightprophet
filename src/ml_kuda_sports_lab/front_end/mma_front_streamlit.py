@@ -2505,6 +2505,14 @@ st.markdown(
 
 _inject_theme_aware_favicon()
 
+_background_uri = _favicon_data_uri(_STATIC_DIR / "background.png")
+_app_shell_background = (
+    "linear-gradient(180deg, rgba(9, 9, 11, 0.88) 0%, rgba(9, 9, 11, 0.93) 36%, rgba(9, 9, 11, 0.98) 100%), "
+    f"url('{_background_uri}') center top / cover no-repeat fixed, #09090b"
+    if _background_uri
+    else "#09090b"
+)
+
 # Minimal custom CSS for dark theme polish
 st.markdown(
     """
@@ -2590,12 +2598,20 @@ st.markdown(
         font-family: "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
     }
 
-    /* Force dark app shell so white logos are always visible */
+    /* Force dark app shell so white logos are always visible, with a subtle
+       background texture behind the content. */
     .stApp,
     [data-testid="stAppViewContainer"],
-    [data-testid="stMain"],
+    [data-testid="stMain"] {
+        background: __FP_APP_SHELL_BACKGROUND__ !important;
+        background-attachment: fixed !important;
+        background-position: center top !important;
+        background-size: cover !important;
+        color: #f4f4f5 !important;
+    }
+
     [data-testid="stMainBlockContainer"] {
-        background: #09090b !important;
+        background: transparent !important;
         color: #f4f4f5 !important;
     }
 
@@ -3318,7 +3334,7 @@ st.markdown(
         }
     }
 </style>
-""",
+    """.replace("__FP_APP_SHELL_BACKGROUND__", _app_shell_background),
     unsafe_allow_html=True,
 )
 
