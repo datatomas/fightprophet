@@ -6040,9 +6040,6 @@ def page_fighter_profile() -> None:
         sub_rate_card_value = p.get("sub_rate")
 
     country_header = _canonical_country_name(p.get("country", ""))
-    header_meta_parts = [part for part in [fighter_weight_class] if part]
-    header_meta = " • ".join(header_meta_parts)
-
     title_card, title_info, title_metrics = st.columns([1.6, 1.5, 3.0])
     with title_card:
         _render_fighter_card_html(
@@ -6059,8 +6056,6 @@ def page_fighter_profile() -> None:
         )
     with title_info:
         st.markdown("<div style='height: 0.9rem;'></div>", unsafe_allow_html=True)
-        if header_meta:
-            st.caption(header_meta)
         if is_belt_holder:
             st.markdown(
                 (
