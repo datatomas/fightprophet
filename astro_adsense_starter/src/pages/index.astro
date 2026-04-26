@@ -1124,9 +1124,10 @@ const newsStructuredData = newsItems.map((item) => ({
     }
     .fp-champ-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(184px, 196px));
-      justify-content: center;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      justify-content: stretch;
       gap: 1.05rem;
+      align-items: start;
     }
     .fp-division-jump {
       display: flex;
@@ -1449,7 +1450,7 @@ const newsStructuredData = newsItems.map((item) => ({
         grid-template-columns: 1fr;
       }
       .fp-champ-grid {
-        grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.78rem;
       }
       .fp-news-shell {
