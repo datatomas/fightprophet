@@ -252,6 +252,15 @@ By using this dashboard, you acknowledge and agree to the following:
     "page.upcoming.events": "Events",
     "page.upcoming.strong_signals": "Strong Signals",
     "page.upcoming.recommended_bets": "Recommended Bets",
+    "page.upcoming.model_prediction_win": "Model prediction to win",
+    "page.upcoming.best_value_bet": "Best value bet",
+    "page.upcoming.underdog_value_angle": "Underdog value angle",
+    "page.upcoming.edge": "Edge",
+    "page.upcoming.market": "Market",
+    "page.upcoming.signal": "Signal",
+    "page.upcoming.threshold_passed": "Threshold passed",
+    "page.upcoming.model_probabilities": "Model probabilities",
+    "page.upcoming.value_signal_caption": "Value bet is a market-price signal, not a safe outcome prediction.",
     "page.events_history.title": "Events History",
     "page.events_history.no_data": "No events history available from exported datasets yet.",
     "page.belt_holders.title": "Belt Holders",
@@ -336,6 +345,15 @@ Usa la barra lateral para navegar:
         "page.upcoming.events": "Eventos",
         "page.upcoming.strong_signals": "Señales fuertes",
         "page.upcoming.recommended_bets": "Apuestas recomendadas",
+        "page.upcoming.model_prediction_win": "Predicción del modelo para ganar",
+        "page.upcoming.best_value_bet": "Mejor apuesta de valor",
+        "page.upcoming.underdog_value_angle": "Ángulo de valor del no favorito",
+        "page.upcoming.edge": "Ventaja",
+        "page.upcoming.market": "Mercado",
+        "page.upcoming.signal": "Señal",
+        "page.upcoming.threshold_passed": "Umbral superado",
+        "page.upcoming.model_probabilities": "Probabilidades del modelo",
+        "page.upcoming.value_signal_caption": "La apuesta de valor es una señal de precio de mercado, no una predicción segura del resultado.",
         "page.events_history.title": "Historial de Eventos",
         "page.events_history.no_data": "Aún no hay historial de eventos disponible en los datasets exportados.",
         "page.belt_holders.title": "Poseedores del Cinturón",
@@ -416,6 +434,15 @@ Use a barra lateral para navegar:
         "page.upcoming.events": "Eventos",
         "page.upcoming.strong_signals": "Sinais fortes",
         "page.upcoming.recommended_bets": "Apostas recomendadas",
+        "page.upcoming.model_prediction_win": "Previsão do modelo para vencer",
+        "page.upcoming.best_value_bet": "Melhor aposta de valor",
+        "page.upcoming.underdog_value_angle": "Ângulo de valor do azarão",
+        "page.upcoming.edge": "Vantagem",
+        "page.upcoming.market": "Mercado",
+        "page.upcoming.signal": "Sinal",
+        "page.upcoming.threshold_passed": "Limite atingido",
+        "page.upcoming.model_probabilities": "Probabilidades do modelo",
+        "page.upcoming.value_signal_caption": "A aposta de valor é um sinal de preço de mercado, não uma previsão segura do resultado.",
         "page.events_history.title": "Histórico de Eventos",
         "page.events_history.no_data": "Ainda não há histórico de eventos disponível nos datasets exportados.",
         "page.belt_holders.title": "Detentores do Cinturão",
@@ -1344,6 +1371,59 @@ def _fighter_identity_map(base: str, prefix: str = "") -> dict[str, dict[str, ob
                     "gender": gender_val,
                     "is_champion": champ_val,
                 }
+    return out
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def _fighter_card_stats_map(base: str, prefix: str = "") -> dict[str, dict[str, object]]:
+    """Card stat payloads keyed by normalized fighter names."""
+    df_profiles = _read_parquet(FOLDER_FIGHTER_PROFILES, base, prefix)
+    if df_profiles.empty:
+        return {}
+
+    name_cols = [
+        c for c in ["fighter_name_display", "fighter_name", "fighter_name_plain"]
+        if c in df_profiles.columns
+    ]
+    if not name_cols:
+        return {}
+
+    def _pick(row: pd.Series, candidates: list[str]) -> object | None:
+        return _value_from_candidates(row, candidates)
+
+    def _present(value: object) -> bool:
+        if value is None:
+            return False
+        if isinstance(value, float) and pd.isna(value):
+            return False
+        txt = str(value).strip()
+        return txt.lower() not in {"", "nan", "nat", "none"}
+
+    def _score(payload: dict[str, object]) -> int:
+        return sum(1 for value in payload.values() if _present(value))
+
+    out: dict[str, dict[str, object]] = {}
+    for _, row in df_profiles.iterrows():
+        payload = {
+            "country": _pick(row, ["country", "fighter_country", "country_name"]),
+            "weight_class": _pick(row, ["weight_class", "fighter_weight_class", "division"]),
+            "finish_rate": _pick(row, ["finish_rate_win_shrunk", "finish_rate"]),
+            "sub_rate": _pick(row, ["sub_rate_win_shrunk", "sub_rate"]),
+            "win_streak": _pick(row, ["win_streak", "fighter_win_streak"]),
+            "loss_streak": _pick(row, ["loss_streak", "fighter_loss_streak"]),
+            "wins": _pick(row, ["wins", "wins_count", "fighter_wins"]),
+            "losses": _pick(row, ["losses", "losses_count", "fighter_losses"]),
+        }
+        payload_score = _score(payload)
+        if payload_score == 0:
+            continue
+        for col in name_cols:
+            key = _normalize_fighter_name_key(row.get(col))
+            if not key:
+                continue
+            existing = out.get(key)
+            if existing is None or payload_score >= _score(existing):
+                out[key] = payload
     return out
 
 
@@ -3480,7 +3560,15 @@ def _fighter_profile_link(name: object) -> str:
     txt = "" if name is None else str(name).strip()
     if not txt or txt in {"Draw", "No Contest", "—"}:
         return escape(txt or "")
-    return f'<a href="?page=fighter-card&fighter={quote_plus(txt)}">{escape(txt)}</a>'
+    href = _fighter_profile_href(txt)
+    return f'<a href="{escape(href, quote=True)}">{escape(txt)}</a>' if href else escape(txt)
+
+
+def _fighter_profile_href(name: object) -> str:
+    txt = "" if name is None else str(name).strip()
+    if not txt or txt in {"Draw", "No Contest", "—"}:
+        return ""
+    return f"?page=fighter-card&fighter={quote_plus(txt)}"
 
 
 def _open_fighter_profile(fighter_name: str) -> None:
@@ -3535,13 +3623,21 @@ _FIGHTER_CARD_DIVISION_ABBREV = {
 
 _FIGHTER_CARD_CSS = """
 <style>
-.fp-card{position:relative;display:flex;flex-direction:column;width:100%;max-width:252px;margin-inline:auto;aspect-ratio:5/7;min-height:292px;border-radius:1.1rem;padding:0.7rem 0.7rem 0.78rem;overflow:hidden;isolation:isolate;color:#fef2f2;font-family:Inter,system-ui,sans-serif;clip-path:polygon(11% 0,89% 0,100% 7%,100% 93%,89% 100%,11% 100%,0 93%,0 7%);}
+.fp-card{position:relative;display:flex;flex-direction:column;width:100%;max-width:252px;margin-inline:auto;aspect-ratio:5/7;min-height:292px;border-radius:1.1rem;padding:0.7rem 0.7rem 0.78rem;overflow:hidden;isolation:isolate;color:#fef2f2;font-family:Inter,system-ui,sans-serif;text-decoration:none;clip-path:polygon(11% 0,89% 0,100% 7%,100% 93%,89% 100%,11% 100%,0 93%,0 7%);transition:transform 120ms ease,box-shadow 120ms ease;}
 .fp-card::before{content:'';position:absolute;inset:0;border-radius:inherit;z-index:-1;}
 .fp-card::after{content:'';position:absolute;inset:0.32rem;border-radius:0.9rem;border:1px solid transparent;pointer-events:none;z-index:0;clip-path:polygon(9% 0,91% 0,100% 8%,100% 92%,91% 100%,9% 100%,0 92%,0 8%);}
 .fp-card.is-champ::before{background:radial-gradient(120% 80% at 50% 0%,rgba(255,239,170,0.58),transparent 58%),radial-gradient(90% 64% at 50% 40%,rgba(255,248,220,0.14),transparent 70%),linear-gradient(160deg,#f8de76 0%,#c69218 35%,#765105 68%,#312000 100%);box-shadow:inset 0 0 0 1.5px rgba(255,235,150,0.55),0 0 18px rgba(245,158,11,0.32);}
 .fp-card.is-default::before{background:radial-gradient(120% 80% at 50% 0%,rgba(184,194,219,0.36),transparent 60%),radial-gradient(75% 56% at 50% 38%,rgba(255,255,255,0.08),transparent 72%),linear-gradient(160deg,#343b47 0%,#1b1f26 54%,#090b0f 100%);box-shadow:inset 0 0 0 1px rgba(220,38,38,0.32),0 0 12px rgba(220,38,38,0.16);}
 .fp-card.is-champ::after{border-color:rgba(255,244,180,0.56);box-shadow:inset 0 0 0 1px rgba(77,50,0,0.22),inset 0 0 18px rgba(255,238,160,0.2);}
 .fp-card.is-default::after{border-color:rgba(250,204,21,0.22);box-shadow:inset 0 0 0 1px rgba(248,113,113,0.1),inset 0 0 16px rgba(148,163,184,0.09);}
+.fp-card:hover{transform:translateY(-2px);}
+.fp-card--compact{max-width:220px;min-height:250px;padding:0.62rem 0.62rem 0.68rem;}
+.fp-card--compact .fp-card-portrait-silhouette{font-size:3.65rem;}
+.fp-card--compact .fp-card-initials{font-size:1.92rem;}
+.fp-card--compact .fp-card-name{font-size:0.92rem;margin:0 0 0.34rem;}
+.fp-card--compact .fp-card-country{font-size:0.64rem;}
+.fp-card--compact .fp-card-flag{font-size:1rem;padding:0.18rem 0.34rem;}
+.fp-card--compact .fp-card-stat-val{min-width:2rem;font-size:0.76rem;}
 .fp-card-crown{position:absolute;top:0.46rem;left:50%;transform:translateX(-50%);font-size:1rem;line-height:1;z-index:3;text-shadow:0 0 6px rgba(0,0,0,0.55);}
 .fp-card-chrome{position:absolute;inset:0;z-index:1;pointer-events:none;}
 .fp-card-corner{position:absolute;width:1.15rem;height:1.15rem;border:1px solid rgba(255,255,255,0.16);background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.2),transparent 70%);transform:rotate(45deg);box-shadow:inset 0 0 10px rgba(255,255,255,0.08);}
@@ -3595,6 +3691,69 @@ _FIGHTER_CARD_CSS = """
 </style>
 """
 
+_PREDICTION_MATCHUP_CSS = """
+<style>
+.fp-matchup-shell{position:relative;margin:0.85rem 0 1.15rem;padding:1rem 1rem 0.92rem;border-radius:1.45rem;overflow:hidden;background:linear-gradient(145deg,rgba(10,14,22,0.98) 0%,rgba(24,24,27,0.97) 50%,rgba(63,18,24,0.96) 100%);border:1px solid rgba(244,63,94,0.18);box-shadow:0 18px 40px rgba(0,0,0,0.28),inset 0 0 0 1px rgba(255,255,255,0.04);}
+.fp-matchup-shell::before{content:'';position:absolute;inset:-20% auto auto 12%;width:260px;height:220px;background:radial-gradient(circle,rgba(239,68,68,0.18),transparent 62%);pointer-events:none;}
+.fp-matchup-shell::after{content:'';position:absolute;inset:0;background:linear-gradient(130deg,rgba(255,255,255,0.03),transparent 18%,transparent 80%,rgba(248,113,113,0.06));pointer-events:none;}
+.fp-matchup-head{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.95rem;}
+.fp-matchup-head-copy{display:flex;flex-direction:column;gap:0.28rem;}
+.fp-matchup-eyebrow{display:inline-flex;align-items:center;gap:0.45rem;width:fit-content;padding:0.28rem 0.65rem;border-radius:999px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#e4e4e7;}
+.fp-matchup-subcopy{font-size:0.76rem;color:#a1a1aa;letter-spacing:0.04em;}
+.fp-matchup-signal{display:inline-flex;align-items:center;gap:0.42rem;padding:0.34rem 0.72rem;border-radius:999px;font-size:0.74rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);color:#e4e4e7;}
+.fp-matchup-signal--strong{color:#bbf7d0;border-color:rgba(34,197,94,0.24);background:rgba(34,197,94,0.12);}
+.fp-matchup-signal--medium{color:#fde68a;border-color:rgba(234,179,8,0.24);background:rgba(234,179,8,0.12);}
+.fp-matchup-signal--weak{color:#e4e4e7;border-color:rgba(161,161,170,0.22);background:rgba(113,113,122,0.1);}
+.fp-matchup-signal--neutral{color:#f4f4f5;}
+.fp-matchup-grid{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) 170px minmax(0,1fr);gap:0.95rem;align-items:center;}
+.fp-fighter-pane{display:flex;flex-direction:column;align-items:center;gap:0.55rem;}
+.fp-odds-chip{display:inline-flex;align-items:center;justify-content:center;gap:0.34rem;padding:0.28rem 0.7rem;border-radius:999px;background:rgba(0,0,0,0.34);border:1px solid rgba(255,255,255,0.08);font-size:0.74rem;font-weight:700;color:#f4f4f5;}
+.fp-odds-chip-label{color:#a1a1aa;text-transform:uppercase;letter-spacing:0.08em;font-size:0.62rem;}
+.fp-versus-core{display:flex;flex-direction:column;align-items:center;gap:0.72rem;padding:0.9rem 0.85rem;border-radius:1.1rem;background:linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.02);}
+.fp-versus-mark{display:flex;align-items:center;justify-content:center;width:4.2rem;height:4.2rem;border-radius:999px;background:radial-gradient(circle at 30% 30%,rgba(248,113,113,0.42),rgba(127,29,29,0.18) 55%,rgba(0,0,0,0.08) 100%);border:1px solid rgba(248,113,113,0.25);box-shadow:0 0 26px rgba(239,68,68,0.22);font-size:1.42rem;color:#fee2e2;}
+.fp-versus-title{font-size:0.68rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#d4d4d8;}
+.fp-prob-stack{width:100%;display:flex;flex-direction:column;gap:0.42rem;}
+.fp-prob-row{display:flex;flex-direction:column;gap:0.18rem;}
+.fp-prob-meta{display:flex;justify-content:space-between;gap:0.4rem;font-size:0.74rem;color:#e4e4e7;}
+.fp-prob-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fp-prob-value{font-family:ui-monospace,SFMono-Regular,monospace;color:#fecaca;}
+.fp-prob-track{height:0.4rem;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden;}
+.fp-prob-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,#f59e0b,#ef4444);}
+.fp-prob-fill--alt{background:linear-gradient(90deg,#93c5fd,#38bdf8);}
+.fp-pick-summary{position:relative;z-index:1;margin-top:1rem;padding:0.82rem 0.95rem;border-radius:1rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);}
+.fp-pick-winner{font-size:1.04rem;font-weight:800;color:#fafafa;text-align:center;line-height:1.32;}
+.fp-pick-winner strong{color:#fca5a5;text-transform:uppercase;letter-spacing:0.06em;font-size:0.7rem;margin-right:0.35rem;}
+.fp-pick-winner a{color:#fff1f2;text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.24);}
+.fp-pick-confidence{font-size:0.92rem;font-weight:500;color:#d4d4d8;}
+.fp-pick-value{margin-top:0.42rem;text-align:center;font-size:0.81rem;color:#a1a1aa;opacity:0.92;line-height:1.35;}
+.fp-pick-value b{color:#e4e4e7;}
+.fp-pick-value a{color:#f4f4f5;text-decoration:none;}
+.fp-pick-note{margin-top:0.28rem;text-align:center;font-size:0.72rem;color:#71717a;}
+@media (max-width:900px){.fp-matchup-grid{grid-template-columns:1fr;}.fp-versus-core{max-width:340px;margin:0 auto;}.fp-fighter-pane{max-width:260px;margin:0 auto;}}
+</style>
+"""
+
+_BETTING_GUIDE_CSS = """
+<style>
+.fp-guide-shell{position:relative;margin:0.8rem 0 1rem;padding:0.95rem 1rem 1rem;border-radius:1.15rem;background:linear-gradient(145deg,rgba(24,24,27,0.9),rgba(39,39,42,0.72));border:1px solid rgba(244,63,94,0.16);box-shadow:inset 0 1px 0 rgba(255,255,255,0.03),0 8px 20px rgba(0,0,0,0.18);}
+.fp-guide-header{display:flex;align-items:flex-end;justify-content:space-between;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.82rem;}
+.fp-guide-title{font-size:0.92rem;font-weight:800;letter-spacing:0.07em;text-transform:uppercase;color:#f4f4f5;}
+.fp-guide-subtitle{font-size:0.78rem;color:#a1a1aa;max-width:58ch;}
+.fp-guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.7rem;}
+.fp-guide-item{padding:0.78rem 0.82rem;border-radius:0.95rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);}
+.fp-guide-item--strong{border-color:rgba(34,197,94,0.24);background:rgba(34,197,94,0.08);}
+.fp-guide-item--medium{border-color:rgba(234,179,8,0.24);background:rgba(234,179,8,0.08);}
+.fp-guide-item--weak{border-color:rgba(161,161,170,0.2);background:rgba(113,113,122,0.08);}
+.fp-guide-item--recommended{border-color:rgba(139,92,246,0.24);background:rgba(139,92,246,0.08);}
+.fp-guide-item--check{grid-column:1/-1;}
+.fp-guide-label{display:flex;align-items:center;gap:0.45rem;margin-bottom:0.35rem;font-size:0.8rem;font-weight:800;color:#fafafa;letter-spacing:0.03em;}
+.fp-guide-copy{font-size:0.78rem;line-height:1.45;color:#d4d4d8;}
+.fp-guide-footer{margin-top:0.82rem;padding-top:0.75rem;border-top:1px solid rgba(255,255,255,0.06);font-size:0.74rem;line-height:1.45;color:#a1a1aa;}
+.fp-guide-footer a{color:#fca5a5;text-decoration:none;}
+@media (max-width:780px){.fp-guide-grid{grid-template-columns:1fr;}.fp-guide-item--check{grid-column:auto;}}
+</style>
+"""
+
 
 def _fighter_card_division_abbrev(weight_class: str) -> str:
     wc = (weight_class or "").strip()
@@ -3640,7 +3799,7 @@ def _fighter_card_country_short(country: str) -> str:
     return _shared_country_short_label(country)
 
 
-def _render_fighter_card_html(
+def _build_fighter_card_html(
     *,
     name: str,
     country: str = "",
@@ -3652,8 +3811,10 @@ def _render_fighter_card_html(
     loss_streak: object = None,
     wins: object = None,
     losses: object = None,
-) -> None:
-    """Render a FUTBIN-style fighter card matching FighterCard.astro."""
+    compact: bool = False,
+    href: str = "",
+) -> str:
+    """Build a FUTBIN-style fighter card matching FighterCard.astro."""
     initials = _fighter_card_initials(name)
     wc_abbr = _fighter_card_division_abbrev(weight_class)
     division_label = (weight_class or "").strip()
@@ -3666,7 +3827,9 @@ def _render_fighter_card_html(
         if wins_txt != "—" and losses_txt != "—"
         else wins_txt
     )
-    css_class = "is-champ" if is_champion else "is-default"
+    card_classes = ["fp-card", "is-champ" if is_champion else "is-default"]
+    if compact:
+        card_classes.append("fp-card--compact")
     crown_html = "<span class='fp-card-crown' aria-label='Current champion'>👑</span>" if is_champion else ""
     flag_html = (
         f"<span class='fp-card-flag' title='{escape(country)}'>{flag}</span>" if flag else ""
@@ -3689,10 +3852,19 @@ def _render_fighter_card_html(
         if country
         else ""
     )
+    tag = "a" if href else "div"
+    href_attr = f" href='{escape(href, quote=True)}'" if href else ""
+    rel_attr = " target='_self'" if href else ""
 
-    body = (
-        f"<div class='fp-card {css_class}'>"
+    return (
+        f"<{tag} class='{' '.join(card_classes)}'{href_attr}{rel_attr}>"
         f"{crown_html}"
+        "<div class='fp-card-chrome' aria-hidden='true'>"
+        "<span class='fp-card-corner fp-card-corner--tl'></span>"
+        "<span class='fp-card-corner fp-card-corner--tr'></span>"
+        "<span class='fp-card-corner fp-card-corner--bl'></span>"
+        "<span class='fp-card-corner fp-card-corner--br'></span>"
+        "</div>"
         "<div class='fp-card-top'>"
         f"<div class='fp-card-rating'><span class='fp-card-rating-num'>{escape(record_label)}</span>{pos_html}</div>"
         f"{flag_html}"
@@ -3710,9 +3882,40 @@ def _render_fighter_card_html(
         f"<div class='fp-card-stat'><span class='fp-card-stat-label'>W★</span><span class='fp-card-stat-val'>{_fighter_card_fmt_int(win_streak)}</span></div>"
         f"<div class='fp-card-stat'><span class='fp-card-stat-label'>L✗</span><span class='fp-card-stat-val'>{_fighter_card_fmt_int(loss_streak)}</span></div>"
         "</div>"
-        "</div>"
+        f"</{tag}>"
     )
 
+
+def _render_fighter_card_html(
+    *,
+    name: str,
+    country: str = "",
+    weight_class: str = "",
+    is_champion: bool = False,
+    finish_rate: object = None,
+    sub_rate: object = None,
+    win_streak: object = None,
+    loss_streak: object = None,
+    wins: object = None,
+    losses: object = None,
+    compact: bool = False,
+    href: str = "",
+) -> None:
+    """Render a FUTBIN-style fighter card matching FighterCard.astro."""
+    body = _build_fighter_card_html(
+        name=name,
+        country=country,
+        weight_class=weight_class,
+        is_champion=is_champion,
+        finish_rate=finish_rate,
+        sub_rate=sub_rate,
+        win_streak=win_streak,
+        loss_streak=loss_streak,
+        wins=wins,
+        losses=losses,
+        compact=compact,
+        href=href,
+    )
     st.markdown(_FIGHTER_CARD_CSS + body, unsafe_allow_html=True)
 
 
@@ -3733,6 +3936,51 @@ def _render_kpi_card(
             f'<div class="kpi-card-value">{escape(value)}</div>'
             "</div>"
         ),
+        unsafe_allow_html=True,
+    )
+
+
+def _render_betting_signals_guide() -> None:
+    guide_html = (
+        '<section class="fp-guide-shell">'
+        '<div class="fp-guide-header">'
+        '<div>'
+        '<div class="fp-guide-title">Betting Signals Guide</div>'
+        '<div class="fp-guide-subtitle">Read the card fast: confidence first, then price value.</div>'
+        '</div>'
+        '</div>'
+        '<div class="fp-guide-grid">'
+        '<div class="fp-guide-item fp-guide-item--strong">'
+        '<div class="fp-guide-label">🟢 STRONG</div>'
+        '<div class="fp-guide-copy">Higher-confidence signal based on model edge and agreement; shortlist first.</div>'
+        '</div>'
+        '<div class="fp-guide-item fp-guide-item--medium">'
+        '<div class="fp-guide-label">🟡 MEDIUM</div>'
+        '<div class="fp-guide-copy">Possible value, but needs extra checks like injuries, style matchup, and line movement.</div>'
+        '</div>'
+        '<div class="fp-guide-item fp-guide-item--weak">'
+        '<div class="fp-guide-label">⚪ WEAK</div>'
+        '<div class="fp-guide-copy">Low edge or noisy setup; usually a pass.</div>'
+        '</div>'
+        '<div class="fp-guide-item fp-guide-item--recommended">'
+        '<div class="fp-guide-label">✅ RECOMMENDED BET</div>'
+        '<div class="fp-guide-copy">Passed internal thresholds, but value bets are still high-variance and can lose often.</div>'
+        '</div>'
+        '<div class="fp-guide-item fp-guide-item--check">'
+        '<div class="fp-guide-label">Quick check</div>'
+        '<div class="fp-guide-copy">Model bars show win probability for each fighter. Best value bet only highlights the side that looks most mispriced versus the market.</div>'
+        '</div>'
+        '</div>'
+        '<div class="fp-guide-footer">'
+        'For education only. If you see data or logic that should improve, open a '
+        '<a href="https://github.com/datatomas/fight_prophet/issues" target="_blank" rel="noopener noreferrer">GitHub issue</a> '
+        'or comment on '
+        '<a href="https://www.linkedin.com/company/fight-prophet" target="_blank" rel="noopener noreferrer">LinkedIn</a>.'
+        '</div>'
+        '</section>'
+    )
+    st.markdown(
+        _BETTING_GUIDE_CSS + guide_html,
         unsafe_allow_html=True,
     )
 
@@ -4586,23 +4834,7 @@ def page_upcoming() -> None:
     with col4:
         _render_kpi_card(t("page.upcoming.recommended_bets"), str(int(recommended)), icon="✅", accent="#8b5cf6")
 
-    st.subheader("Betting Signals — Easy Guide")
-    st.markdown(
-        "\n".join(
-            [
-                "- **🟢 STRONG**: Higher-confidence signal based on model edge and agreement; shortlist first.",
-                "- **🟡 MEDIUM**: Possible value, but needs extra checks (injuries, style matchup, line movement).",
-                "- **⚪ WEAK**: Low edge/noisy setup; usually a pass.",
-                "- **✅ Recommended Bet**: Passed internal thresholds, but value bets are still high-variance and can lose often.",
-                "- **Quick check**: `Model` bars show win probability for each fighter. `Best Betting Value` is only the side that looks most mispriced versus the market.",
-            ]
-        )
-    )
-    st.info(
-        "For education only. If you see data or logic that should improve, open a GitHub issue "
-        "(https://github.com/datatomas/fight_prophet/issues) or comment on LinkedIn "
-        "(https://www.linkedin.com/company/fight-prophet)."
-    )
+    _render_betting_signals_guide()
 
     st.divider()
 
@@ -4629,6 +4861,8 @@ def page_upcoming() -> None:
 
 def _render_fight_card(row: pd.Series) -> None:
     """Render a single fight prediction card."""
+    profile_stats_map = _fighter_card_stats_map(ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
+    identity_map = _fighter_identity_map(ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
     signal = row.get("signal_strength", "")
     icon = _signal_icon(signal)
     bet_on = row.get("bet_on_name", "")
@@ -4639,112 +4873,209 @@ def _render_fight_card(row: pd.Series) -> None:
 
     fighter = row["fighter_name_display"]
     opponent = row["opponent_name_display"]
+    fighter_profile = profile_stats_map.get(_normalize_fighter_name_key(fighter), {})
+    opponent_profile = profile_stats_map.get(_normalize_fighter_name_key(opponent), {})
+    fighter_identity = identity_map.get(str(fighter).strip(), {})
+    opponent_identity = identity_map.get(str(opponent).strip(), {})
     fighter_country = _value_from_candidates(row, ["fighter_country", "country", "fighter_country_code"])
     opponent_country = _value_from_candidates(row, ["opponent_country", "country", "opponent_country_code"])
     fighter_id_val = _value_from_candidates(row, ["fighter_id", "fighter_fighter_id", "fighter_id_display"])
     opponent_id_val = _value_from_candidates(row, ["opponent_id", "opponent_fighter_id", "opponent_id_display"])
+    if fighter_country is None:
+        fighter_country = fighter_profile.get("country")
+    if opponent_country is None:
+        opponent_country = opponent_profile.get("country")
     fighter_country_name = _resolve_fighter_country(fighter, fighter_id=fighter_id_val, country=fighter_country)
     opponent_country_name = _resolve_fighter_country(opponent, fighter_id=opponent_id_val, country=opponent_country)
-    fighter_flag_facing = _country_to_flagcdn_img(fighter_country_name, width=46)
-    if not fighter_flag_facing:
-        fighter_emoji_facing = _country_to_flag(fighter_country_name)
-        fighter_flag_facing = f"<span style='font-size:1.9rem;line-height:1;'>{fighter_emoji_facing}</span>" if fighter_emoji_facing else "<span style='font-size:1.35rem;line-height:1;opacity:0.9;'>🏳️</span>"
-    opponent_flag_facing = _country_to_flagcdn_img(opponent_country_name, width=46)
-    if not opponent_flag_facing:
-        opponent_emoji_facing = _country_to_flag(opponent_country_name)
-        opponent_flag_facing = f"<span style='font-size:1.9rem;line-height:1;'>{opponent_emoji_facing}</span>" if opponent_emoji_facing else "<span style='font-size:1.35rem;line-height:1;opacity:0.9;'>🏳️</span>"
+    fighter_is_champ = _to_boolish(row.get("fighter_is_champion")) or _to_boolish(fighter_identity.get("is_champion"))
+    opponent_is_champ = _to_boolish(row.get("opponent_is_champion")) or _to_boolish(opponent_identity.get("is_champion"))
+    fighter_finish = _value_from_candidates(row, ["fighter_finish_rate", "finish_rate_win_shrunk", "finish_rate"])
+    if fighter_finish is None or pd.isna(fighter_finish):
+        fighter_finish = fighter_profile.get("finish_rate")
+    fighter_sub = _value_from_candidates(row, ["fighter_sub_rate", "sub_rate_win_shrunk", "sub_rate"])
+    if fighter_sub is None or pd.isna(fighter_sub):
+        fighter_sub = fighter_profile.get("sub_rate")
+    fighter_win_streak = _value_from_candidates(row, ["fighter_win_streak", "win_streak"])
+    if fighter_win_streak is None or pd.isna(fighter_win_streak):
+        fighter_win_streak = fighter_profile.get("win_streak")
+    fighter_loss_streak = _value_from_candidates(row, ["fighter_loss_streak", "loss_streak"])
+    if fighter_loss_streak is None or pd.isna(fighter_loss_streak):
+        fighter_loss_streak = fighter_profile.get("loss_streak")
+    fighter_wins = _value_from_candidates(row, ["fighter_wins", "wins"])
+    if fighter_wins is None or pd.isna(fighter_wins):
+        fighter_wins = fighter_profile.get("wins")
+    fighter_losses = _value_from_candidates(row, ["fighter_losses", "losses"])
+    if fighter_losses is None or pd.isna(fighter_losses):
+        fighter_losses = fighter_profile.get("losses")
+    fighter_weight = (
+        _value_from_candidates(row, ["fighter_weight_class", "weight_class"])
+        or fighter_profile.get("weight_class")
+    )
+    opponent_finish = _value_from_candidates(row, ["opponent_finish_rate", "opponent_finish_rate_win_shrunk"])
+    if opponent_finish is None or pd.isna(opponent_finish):
+        opponent_finish = opponent_profile.get("finish_rate")
+    opponent_sub = _value_from_candidates(row, ["opponent_sub_rate", "opponent_sub_rate_win_shrunk"])
+    if opponent_sub is None or pd.isna(opponent_sub):
+        opponent_sub = opponent_profile.get("sub_rate")
+    opponent_win_streak = _value_from_candidates(row, ["opponent_win_streak"])
+    if opponent_win_streak is None or pd.isna(opponent_win_streak):
+        opponent_win_streak = opponent_profile.get("win_streak")
+    opponent_loss_streak = _value_from_candidates(row, ["opponent_loss_streak"])
+    if opponent_loss_streak is None or pd.isna(opponent_loss_streak):
+        opponent_loss_streak = opponent_profile.get("loss_streak")
+    opponent_wins = _value_from_candidates(row, ["opponent_wins"])
+    if opponent_wins is None or pd.isna(opponent_wins):
+        opponent_wins = opponent_profile.get("wins")
+    opponent_losses = _value_from_candidates(row, ["opponent_losses"])
+    if opponent_losses is None or pd.isna(opponent_losses):
+        opponent_losses = opponent_profile.get("losses")
+    opponent_weight = (
+        _value_from_candidates(row, ["opponent_weight_class", "weight_class"])
+        or opponent_profile.get("weight_class")
+    )
+    fighter_name = "" if fighter is None else str(fighter).strip()
+    opponent_name = "" if opponent is None else str(opponent).strip()
+    bet_on_name = "" if bet_on is None else str(bet_on).strip()
+    bet_on_fighter_side = bet_on_name == fighter_name
+    likely_winner_name = fighter_name
+    likely_winner_prob = model_prob
+    if model_prob is not None and not pd.isna(model_prob) and float(model_prob) < 0.5:
+        likely_winner_name = opponent_name
+        likely_winner_prob = 1.0 - float(model_prob)
 
-    # Card container
-    border_color = "#ef4444" if signal == "STRONG" else "#3f3f46"
-    with st.container():
-        c1, c2, c3 = st.columns([3, 1, 3])
+    fighter_prob = model_prob if model_prob is not None and not pd.isna(model_prob) else None
+    opponent_prob = (1.0 - float(model_prob)) if fighter_prob is not None else None
+    market_prob_bet_side = market_prob
+    if market_prob is not None and not pd.isna(market_prob) and not bet_on_fighter_side:
+        market_prob_bet_side = 1.0 - float(market_prob)
 
-        with c1:
-            st.markdown(
-                f"<div style='font-size:1.15rem; font-weight:700; line-height:1.25; word-break:break-word; overflow-wrap:break-word; overflow:visible; white-space:normal;'>{_fighter_profile_link(fighter)}</div>",
-                unsafe_allow_html=True,
-            )
-            st.caption(f"Odds: {_odds_display(row.get('fighter_odds'))}")
-            if model_prob is not None and not pd.isna(model_prob):
-                st.progress(
-                    float(model_prob),
-                    text=f"Model: {model_prob:.1%}",
-                )
+    fighter_href = _fighter_profile_href(fighter_name)
+    opponent_href = _fighter_profile_href(opponent_name)
+    likely_winner_label = _fighter_profile_link(likely_winner_name) if likely_winner_name else ""
+    bet_on_label = _fighter_profile_link(bet_on_name) if bet_on_name else ""
+    likely_winner_str = (
+        f"{float(likely_winner_prob):.1%}"
+        if likely_winner_prob is not None and not pd.isna(likely_winner_prob)
+        else "—"
+    )
+    fighter_prob_str = f"{float(fighter_prob):.1%}" if fighter_prob is not None else "—"
+    opponent_prob_str = f"{float(opponent_prob):.1%}" if opponent_prob is not None else "—"
+    fighter_prob_width = max(0.0, min(float(fighter_prob or 0.0) * 100.0, 100.0))
+    opponent_prob_width = max(0.0, min(float(opponent_prob or 0.0) * 100.0, 100.0))
+    edge_pct = f"{edge:+.1%}" if edge is not None and not pd.isna(edge) else "—"
+    market_str = (
+        f"{float(market_prob_bet_side):.1%}"
+        if market_prob_bet_side is not None and not pd.isna(market_prob_bet_side)
+        else "—"
+    )
+    bet_side_odds = row.get("fighter_odds") if bet_on_fighter_side else row.get("opponent_odds")
+    bet_side_market_prob = market_prob_bet_side if market_prob_bet_side is not None and not pd.isna(market_prob_bet_side) else None
+    bet_on_is_underdog = False
+    if bet_side_odds is not None and not pd.isna(bet_side_odds):
+        try:
+            bet_on_is_underdog = float(bet_side_odds) > 0
+        except Exception:
+            bet_on_is_underdog = False
+    elif bet_side_market_prob is not None:
+        bet_on_is_underdog = float(bet_side_market_prob) < 0.5
 
-        with c2:
-            st.markdown(
-                "<div style='text-align:center; padding-top:0.5rem;'>"
-                "<div style='display:inline-flex;align-items:center;gap:0.45rem;margin-bottom:0.25rem;'>"
-                f"<span>{fighter_flag_facing}</span>"
-                "<span style='font-size:0.78rem;color:#a1a1aa;'>VS</span>"
-                f"<span>{opponent_flag_facing}</span>"
-                "</div><br>"
-                "<span style='color:#71717a; font-size:1.5rem;'>⚔️</span>"
-                "</div>",
-                unsafe_allow_html=True,
-            )
+    signal_key = str(signal or "").strip().lower()
+    signal_class = {
+        "strong": "fp-matchup-signal--strong",
+        "medium": "fp-matchup-signal--medium",
+        "weak": "fp-matchup-signal--weak",
+    }.get(signal_key, "fp-matchup-signal--neutral")
+    signal_label = str(signal or "Signal").upper()
+    recommended_chip = f" • {t('page.upcoming.threshold_passed')}" if recommended else ""
+    value_label = (
+        t("page.upcoming.underdog_value_angle")
+        if bet_on_is_underdog
+        else t("page.upcoming.best_value_bet")
+    )
+    matchup_label = str(row.get("weight_class") or fighter_weight or opponent_weight or "Fight matchup").strip()
 
-        with c3:
-            st.markdown(
-                f"<div style='font-size:1.15rem; font-weight:700; line-height:1.25; word-break:break-word; overflow-wrap:break-word; overflow:visible; white-space:normal;'>{_fighter_profile_link(opponent)}</div>",
-                unsafe_allow_html=True,
-            )
-            st.caption(f"Odds: {_odds_display(row.get('opponent_odds'))}")
-            opp_prob = 1.0 - model_prob if model_prob is not None and not pd.isna(model_prob) else None
-            if opp_prob is not None:
-                st.progress(
-                    float(opp_prob),
-                    text=f"Model: {opp_prob:.1%}",
-                )
+    fighter_card_html = _build_fighter_card_html(
+        name=fighter,
+        country=fighter_country_name,
+        weight_class=fighter_weight,
+        is_champion=fighter_is_champ,
+        finish_rate=fighter_finish,
+        sub_rate=fighter_sub,
+        win_streak=fighter_win_streak,
+        loss_streak=fighter_loss_streak,
+        wins=fighter_wins,
+        losses=fighter_losses,
+        compact=True,
+        href=fighter_href,
+    )
+    opponent_card_html = _build_fighter_card_html(
+        name=opponent,
+        country=opponent_country_name,
+        weight_class=opponent_weight,
+        is_champion=opponent_is_champ,
+        finish_rate=opponent_finish,
+        sub_rate=opponent_sub,
+        win_streak=opponent_win_streak,
+        loss_streak=opponent_loss_streak,
+        wins=opponent_wins,
+        losses=opponent_losses,
+        compact=True,
+        href=opponent_href,
+    )
+    value_html = ""
+    if bet_on_name:
+        value_html = (
+            f"<div class='fp-pick-value'>{escape(icon)} <b>{escape(value_label)}:</b> {bet_on_label}"
+            f" &nbsp;|&nbsp; {escape(t('page.upcoming.edge'))}: <span style='font-family:ui-monospace,SFMono-Regular,monospace;'>{escape(edge_pct)}</span>"
+            f" &nbsp;|&nbsp; {escape(t('page.upcoming.market'))}: <span style='font-family:ui-monospace,SFMono-Regular,monospace;'>{escape(market_str)}</span>"
+            f" &nbsp;|&nbsp; {escape(t('page.upcoming.signal'))}: <b>{escape(signal_label)}</b>{escape(recommended_chip)}"
+            "</div>"
+        )
 
-        # Prediction summary row
-        if bet_on:
-            fighter_name = "" if fighter is None else str(fighter).strip()
-            opponent_name = "" if opponent is None else str(opponent).strip()
-            bet_on_name = "" if bet_on is None else str(bet_on).strip()
-            bet_on_fighter_side = bet_on_name == fighter_name
-            likely_winner_name = fighter_name
-            likely_winner_prob = model_prob
-            if model_prob is not None and not pd.isna(model_prob) and float(model_prob) < 0.5:
-                likely_winner_name = opponent_name
-                likely_winner_prob = 1.0 - float(model_prob)
-
-            market_prob_bet_side = market_prob
-            if market_prob is not None and not pd.isna(market_prob) and not bet_on_fighter_side:
-                market_prob_bet_side = 1.0 - float(market_prob)
-
-            edge_pct = f"{edge:+.1%}" if edge is not None and not pd.isna(edge) else "—"
-            market_str = (
-                f"{float(market_prob_bet_side):.1%}"
-                if market_prob_bet_side is not None and not pd.isna(market_prob_bet_side)
-                else "—"
-            )
-
-            rec_badge = "✅ Threshold Passed" if recommended else ""
-            bet_on_label = _fighter_profile_link(bet_on) if bet_on else ""
-            likely_winner_label = _fighter_profile_link(likely_winner_name) if likely_winner_name else ""
-            likely_winner_str = (
-                f"{float(likely_winner_prob):.1%}"
-                if likely_winner_prob is not None and not pd.isna(likely_winner_prob)
-                else "—"
-            )
-            st.markdown(
-                f"**Most Likely Winner: {likely_winner_label}** "
-                f"({likely_winner_str})",
-                unsafe_allow_html=True,
-            )
-            st.markdown(
-                f"{icon} **Best Betting Value: {bet_on_label}** &nbsp;|&nbsp; "
-                f"Edge: `{edge_pct}` &nbsp;|&nbsp; "
-                f"Bet-Side Market: `{market_str}` &nbsp;|&nbsp; "
-                f"Signal: **{signal}** {rec_badge}"
-                ,
-                unsafe_allow_html=True,
-            )
-            st.caption(
-                "Best Betting Value is a market-price signal, not a safe outcome prediction."
-            )
-        st.markdown("---")
+    st.markdown(
+        _FIGHTER_CARD_CSS
+        + _PREDICTION_MATCHUP_CSS
+        + (
+            f"<section class='fp-matchup-shell'>"
+            "<div class='fp-matchup-head'>"
+            "<div class='fp-matchup-head-copy'>"
+            f"<div class='fp-matchup-eyebrow'>{escape(matchup_label)}</div>"
+            "</div>"
+            f"<div class='fp-matchup-signal {signal_class}'>{escape(icon)} {escape(signal_label)}</div>"
+            "</div>"
+            "<div class='fp-matchup-grid'>"
+            "<div class='fp-fighter-pane'>"
+            f"{fighter_card_html}"
+            f"<div class='fp-odds-chip'><span class='fp-odds-chip-label'>Odds</span>{escape(_odds_display(row.get('fighter_odds')))}</div>"
+            "</div>"
+            "<div class='fp-versus-core'>"
+            "<div class='fp-versus-mark'>⚔️</div>"
+            f"<div class='fp-versus-title'>{escape(t('page.upcoming.model_probabilities'))}</div>"
+            "<div class='fp-prob-stack'>"
+            "<div class='fp-prob-row'>"
+            f"<div class='fp-prob-meta'><span class='fp-prob-name'>{escape(fighter_name or 'Fighter')}</span><span class='fp-prob-value'>{escape(fighter_prob_str)}</span></div>"
+            f"<div class='fp-prob-track'><div class='fp-prob-fill' style='width:{fighter_prob_width:.1f}%;'></div></div>"
+            "</div>"
+            "<div class='fp-prob-row'>"
+            f"<div class='fp-prob-meta'><span class='fp-prob-name'>{escape(opponent_name or 'Opponent')}</span><span class='fp-prob-value'>{escape(opponent_prob_str)}</span></div>"
+            f"<div class='fp-prob-track'><div class='fp-prob-fill fp-prob-fill--alt' style='width:{opponent_prob_width:.1f}%;'></div></div>"
+            "</div>"
+            "</div>"
+            "</div>"
+            "<div class='fp-fighter-pane'>"
+            f"{opponent_card_html}"
+            f"<div class='fp-odds-chip'><span class='fp-odds-chip-label'>Odds</span>{escape(_odds_display(row.get('opponent_odds')))}</div>"
+            "</div>"
+            "</div>"
+            "<div class='fp-pick-summary'>"
+            f"<div class='fp-pick-winner'><strong>{escape(t('page.upcoming.model_prediction_win'))}</strong> {likely_winner_label} <span class='fp-pick-confidence'>({escape(likely_winner_str)})</span></div>"
+            f"{value_html}"
+            f"<div class='fp-pick-note'>{escape(t('page.upcoming.value_signal_caption'))}</div>"
+            "</div>"
+            "</section>"
+        ),
+        unsafe_allow_html=True,
+    )
 
 
 # ---------------------------------------------------------------------------
