@@ -16,6 +16,12 @@ const ogImageUrl = new URL('/branding/fightprophet_logo_white.png', siteUrl).toS
 
 const withPage = (slug: string) =>
   `${appUrl}${appUrl.includes('?') ? '&' : '?'}page=${encodeURIComponent(slug)}`;
+const predictionsEmojiUrl = '/branding/b91c1c-predictions-emoji-rail.png';
+const fighterCardsEmojiUrl = '/branding/b91c1c-fighterscard-emoji-rail.png';
+const beltEmojiUrl = '/branding/b91c1c-belt-emoji-rail.png';
+const eventsEmojiUrl = '/branding/b91c1c-events-emoji-rail.png';
+const rankingsEmojiUrl = '/branding/b91c1c-goat-emoji-rail.png';
+const labEmojiUrl = '/branding/b91c1c-lab-emoji-rail.png';
 
 const currentPath = Astro.url.pathname;
 const isActive = (href: string) => {
@@ -102,12 +108,12 @@ const isActive = (href: string) => {
 
         <!-- App nav — same order as Streamlit sidebar -->
         <nav class="fp-app-rail-nav" aria-label="App sections">
-          <a class="fp-app-rail-nav-link is-primary-nav" href={withPage('predictions')} target="_blank" rel="noopener noreferrer">📈 Predictions</a>
-          <a class="fp-app-rail-nav-link" href={withPage('fighter-card')} target="_blank" rel="noopener noreferrer">👤 Fighter Cards</a>
-          <a class="fp-app-rail-nav-link" href={withPage('belt-holders')} target="_blank" rel="noopener noreferrer">👑 Belt Holders</a>
-          <a class="fp-app-rail-nav-link" href={withPage('events-history')} target="_blank" rel="noopener noreferrer">📅 Events History</a>
-          <a class="fp-app-rail-nav-link" href={withPage('rankings')} target="_blank" rel="noopener noreferrer">🐐 Fighter Rankings</a>
-          <a class="fp-app-rail-nav-link" href={withPage('fight-lab')} target="_blank" rel="noopener noreferrer">🧪 Fight Lab</a>
+          <a class="fp-app-rail-nav-link is-primary-nav" href={withPage('predictions')} target="_blank" rel="noopener noreferrer"><span class="fp-app-rail-nav-copy"><img src={predictionsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Predictions</span></span></a>
+          <a class="fp-app-rail-nav-link" href={withPage('fighter-card')} target="_blank" rel="noopener noreferrer"><span class="fp-app-rail-nav-copy"><img src={fighterCardsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Fighter Cards</span></span></a>
+          <a class="fp-app-rail-nav-link" href={withPage('belt-holders')} target="_blank" rel="noopener noreferrer"><span class="fp-app-rail-nav-copy"><img src={beltEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Belt Holders</span></span></a>
+          <a class="fp-app-rail-nav-link" href={withPage('events-history')} target="_blank" rel="noopener noreferrer"><span class="fp-app-rail-nav-copy"><img src={eventsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Events History</span></span></a>
+          <a class="fp-app-rail-nav-link" href={withPage('rankings')} target="_blank" rel="noopener noreferrer"><span class="fp-app-rail-nav-copy"><img src={rankingsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Fighter Rankings</span></span></a>
+          <a class="fp-app-rail-nav-link" href={withPage('fight-lab')} target="_blank" rel="noopener noreferrer"><span class="fp-app-rail-nav-copy"><img src={labEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Fight Lab</span></span></a>
         </nav>
 
         <!-- Footer -->
@@ -418,6 +424,22 @@ const isActive = (href: string) => {
     display: grid;
     gap: 0.22rem;
   }
+  .fp-app-rail-nav-copy {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.9rem;
+    width: 100%;
+  }
+  .fp-app-rail-nav-icon {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    justify-self: center;
+    opacity: 0.95;
+    filter: brightness(1.45) saturate(1.45) contrast(1.18) drop-shadow(0 0 6px rgba(220, 38, 38, 0.26));
+    transition: filter 120ms ease, transform 120ms ease, opacity 120ms ease;
+  }
 
   .fp-app-rail-nav-link {
     display: flex;
@@ -436,11 +458,22 @@ const isActive = (href: string) => {
     border-color: rgba(220, 38, 38, 0.22);
     color: #fef2f2;
   }
+  .fp-app-rail-nav-link:hover .fp-app-rail-nav-icon {
+    opacity: 1;
+    transform: scale(1.04);
+    filter: brightness(1.68) saturate(1.65) contrast(1.22) drop-shadow(0 0 10px rgba(248, 113, 113, 0.42));
+  }
   .fp-app-rail-nav-link.is-active {
     background: rgba(220, 38, 38, 0.18);
     border-color: rgba(248, 113, 113, 0.38);
     color: #fef2f2;
     font-weight: 700;
+  }
+  .fp-app-rail-nav-link.is-active .fp-app-rail-nav-icon,
+  .fp-app-rail-nav-link.is-primary-nav .fp-app-rail-nav-icon {
+    opacity: 1;
+    transform: scale(1.05);
+    filter: brightness(1.82) saturate(1.75) contrast(1.24) drop-shadow(0 0 12px rgba(248, 113, 113, 0.48));
   }
   .fp-app-rail-nav-link.is-primary-nav {
     background: linear-gradient(160deg, rgba(127, 20, 20, 0.55), rgba(90, 20, 20, 0.45));
