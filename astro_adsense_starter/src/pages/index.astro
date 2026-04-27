@@ -6,7 +6,6 @@ import { runtimeEnvFromLocals } from '../lib/country-master';
 import { getAllRankedFighterCards, groupRankedFightersByDivision } from '../lib/champions';
 
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
-const subscribeEndpoint = import.meta.env.PUBLIC_SUBSCRIBE_ENDPOINT || '';
 const withPage = (slug: string) => `${appUrl}${appUrl.includes('?') ? '&' : '?'}page=${encodeURIComponent(slug)}`;
 const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'https://fightprophet.com').replace(/\/$/, '');
 const rankingsAppUrl = withPage('rankings');
@@ -355,8 +354,6 @@ const newsStructuredData = newsItems.map((item) => ({
     </div>
       </section>
 
-      <AdSlot slot="1234567890" />
-
       <section>
     <p class="fp-section-label" id="i18n-why-open-source">Why open source</p>
     <div class="fp-story">
@@ -365,75 +362,9 @@ const newsStructuredData = newsItems.map((item) => ({
     </div>
       </section>
 
-      <section class="fp-subscribe-wrap">
-    <div class="fp-subscribe-logo-wrap">
-      <img src="/branding/fightprophet_logo_white.png" alt="Fight Prophet" class="fp-subscribe-logo" loading="lazy" />
-    </div>
-    <div>
-      <h2 id="i18n-subscribe-title">Subscribe for updates</h2>
-      <p id="i18n-subscribe-copy">Get release notes, feature updates, and major model changes.</p>
-      <form id="subscribe-form" class="fp-subscribe-form">
-        <label for="subscribe-email" id="i18n-email-label">Email</label>
-        <div class="fp-subscribe-row">
-          <input id="subscribe-email" name="email" type="email" autocomplete="email" required />
-          <button type="submit" id="i18n-subscribe-btn">Subscribe</button>
-        </div>
-      </form>
-      <p id="subscribe-status" aria-live="polite"></p>
-    </div>
-      </section>
+      <AdSlot slot="1234567890" />
     </main>
   </div>
-
-  <script define:vars={{ subscribeEndpoint }}>
-    const form = document.getElementById('subscribe-form');
-    const status = document.getElementById('subscribe-status');
-
-    function getStatusText(key, fallback) {
-      const pack = window.__fpLangStatus || {};
-      return pack[key] || fallback;
-    }
-
-    if (form && status) {
-      form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-
-        const formData = new FormData(form);
-        const email = String(formData.get('email') || '').trim();
-
-        if (!email) {
-          status.textContent = getStatusText('invalid', 'Please enter a valid email.');
-          return;
-        }
-
-        if (!subscribeEndpoint) {
-          status.textContent = getStatusText('noEndpoint', 'Subscription endpoint is not configured yet.');
-          return;
-        }
-
-        status.textContent = getStatusText('submitting', 'Submitting...');
-
-        try {
-          const response = await fetch(subscribeEndpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email, source: 'fightprophet-astro' }),
-          });
-
-          if (!response.ok) {
-            throw new Error('Request failed');
-          }
-
-          form.reset();
-          status.textContent = getStatusText('success', 'Thanks. You are subscribed.');
-        } catch {
-          status.textContent = getStatusText('failed', 'Subscription failed. Please try again.');
-        }
-      });
-    }
-  </script>
 
   <script>
     const FP_LANG_KEY = 'fp_lang';
@@ -1456,9 +1387,10 @@ const newsStructuredData = newsItems.map((item) => ({
       gap: 0.6rem;
       margin-top: 0.05rem;
       align-items: start;
+      min-height: 280px;
     }
     .fp-news-menu {
-      max-height: 188px;
+      max-height: 280px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -1507,12 +1439,14 @@ const newsStructuredData = newsItems.map((item) => ({
       font-weight: 700;
     }
     .fp-news-detail {
+      display: flex;
+      flex-direction: column;
       background: linear-gradient(160deg, rgba(35, 20, 20, 0.55), rgba(22, 22, 26, 0.88));
       border: 1px solid rgba(220, 38, 38, 0.24);
       border-radius: 0.75rem;
       padding: 0.82rem;
       box-shadow: 0 0 12px rgba(220, 38, 38, 0.12);
-      min-height: 0;
+      min-height: 280px;
     }
     .fp-news-date {
       margin: 0 0 0.2rem;
@@ -1535,7 +1469,7 @@ const newsStructuredData = newsItems.map((item) => ({
       font-size: 0.85rem;
     }
     .fp-news-detail-link {
-      margin-top: 0.58rem;
+      margin-top: auto;
       display: inline-flex;
       text-decoration: none;
       color: #fef2f2;
@@ -1643,7 +1577,7 @@ const newsStructuredData = newsItems.map((item) => ({
         grid-template-columns: 1fr;
       }
       .fp-news-menu {
-        max-height: 220px;
+        max-height: 240px;
       }
       .fp-stats-strip {
         grid-template-columns: repeat(2, minmax(0, 1fr));
