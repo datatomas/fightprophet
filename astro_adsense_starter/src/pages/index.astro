@@ -177,7 +177,11 @@ const newsStructuredData = newsItems.map((item) => ({
     <aside class="fp-app-rail-shell" aria-label="Open live app">
       <div class="fp-app-rail">
         <img src="/branding/fightprophet_logo_white.png" alt="FightProphet.com" class="fp-app-rail-logo" loading="lazy" />
-        <p class="fp-app-rail-copy">Open the live app for fighter search, predictions, rankings, and model tools.</p>
+        <div class="fp-lang-switch fp-lang-switch-rail" aria-label="Language selector">
+          <button type="button" class="fp-lang-btn" data-lang="es" title="Español">🇨🇴</button>
+          <button type="button" class="fp-lang-btn" data-lang="pt" title="Português">🇧🇷</button>
+          <button type="button" class="fp-lang-btn" data-lang="en" title="English">🇺🇸</button>
+        </div>
         <div class="fp-app-rail-links">
           <a class="fp-app-rail-link is-primary" href={withPage('predictions')} target="_blank" rel="noopener noreferrer">Go to Predictions</a>
           <a class="fp-app-rail-link" href={withPage('fighter-card')} target="_blank" rel="noopener noreferrer">Open Fighter Cards</a>
@@ -201,19 +205,14 @@ const newsStructuredData = newsItems.map((item) => ({
       <section class="fp-hero">
         <div class="fp-hero-shell">
           <div class="fp-hero-top-controls">
-            <div class="fp-lang-switch" aria-label="Language selector">
-              <button type="button" class="fp-lang-btn" data-lang="es" title="Español">🇨🇴</button>
-              <button type="button" class="fp-lang-btn" data-lang="pt" title="Português">🇧🇷</button>
-              <button type="button" class="fp-lang-btn" data-lang="en" title="English">🇺🇸</button>
-            </div>
             <img class="fp-hero-mark" src="/branding/fightprophet_ear_white.png" alt="Fight Prophet mark" loading="lazy" />
           </div>
           <div class="fp-hero-content">
             <div class="fp-hero-brand">
-              <img src="/branding/fightprophet_logo_white.png" alt="FightProphet.com" class="fp-hero-logo" loading="lazy" />
               <p class="fp-hero-subtitle" id="i18n-topbar-subtitle">The fight data already knows who's getting smashed. We just highlight it.</p>
             </div>
             <div class="fp-hero-main">
+              <p class="fp-hero-lead" id="i18n-hero-lead">Fight Prophet is an MMA predictions and stats app for fans who want model picks, divisional rankings, fighter cards, and fight-lab diagnostics in one place.</p>
               <p class="fp-hero-note" id="i18n-hero-note">For information and education only — never financial advice.</p>
             </div>
           </div>
@@ -225,7 +224,7 @@ const newsStructuredData = newsItems.map((item) => ({
           <div>
             <p class="fp-section-label">Ranked Fighters Wall</p>
             <p class="fp-section-intro fp-section-intro-tight">
-              A homepage preview of the live rankings across {rankedDivisions.length || 0} divisions{totalRankedFighters ? ` (${totalRankedFighters} fighters tracked)` : ''}. Start with {defaultDivision}, browse the top 10 cards here, or switch to All Divisions for the full homepage wall.
+              Live rankings preview across {rankedDivisions.length || 0} divisions{totalRankedFighters ? ` (${totalRankedFighters} fighters tracked)` : ''}. Start with {defaultDivision} or switch to All Divisions.
             </p>
           </div>
         </div>
@@ -441,6 +440,7 @@ const newsStructuredData = newsItems.map((item) => ({
     const translations = {
       en: {
         topbarSubtitle: "The fight data already knows who's getting smashed. We just highlight it.",
+        heroLead: 'Fight Prophet is an MMA predictions and stats app for fans who want model picks, divisional rankings, fighter cards, and fight-lab diagnostics in one place.',
         topbarTagline: 'AI-powered MMA fight predictions',
         openAppTop: 'Open App',
         heroSub: 'Fight Prophet makes MMA analytics easy to read: upcoming picks, model diagnostics, rankings, belt holders, and fighter cards in one place.',
@@ -505,6 +505,7 @@ const newsStructuredData = newsItems.map((item) => ({
       },
       es: {
         topbarSubtitle: "Los datos ya saben quién va a caer. Nosotros solo lo resaltamos.",
+        heroLead: 'Fight Prophet es una app de predicciones y estadísticas de MMA para fans que quieren picks del modelo, rankings por división, tarjetas de peleadores y diagnósticos de Fight Lab en un solo lugar.',
         topbarTagline: 'Predicciones de peleas MMA impulsadas por IA',
         openAppTop: 'Abrir App',
         heroSub: 'Fight Prophet facilita la analítica de MMA: picks próximos, diagnóstico de modelos, rankings, campeones y tarjetas de peleadores en un solo lugar.',
@@ -569,6 +570,7 @@ const newsStructuredData = newsItems.map((item) => ({
       },
       pt: {
         topbarSubtitle: "Os dados já sabem quem vai apanhar. A gente só destaca isso.",
+        heroLead: 'Fight Prophet é um app de previsões e estatísticas de MMA para fãs que querem picks do modelo, rankings por divisão, cards de lutadores e diagnósticos do Fight Lab em um só lugar.',
         topbarTagline: 'Previsões de lutas de MMA com IA',
         openAppTop: 'Abrir App',
         heroSub: 'Fight Prophet facilita a análise de MMA: previsões próximas, diagnóstico de modelos, rankings, campeões e cards de lutadores em um só lugar.',
@@ -635,6 +637,7 @@ const newsStructuredData = newsItems.map((item) => ({
 
     const keyToId = {
       topbarSubtitle: 'i18n-topbar-subtitle',
+      heroLead: 'i18n-hero-lead',
       topbarTagline: 'i18n-topbar-tagline',
       openAppTop: 'i18n-open-app-top',
       heroSub: 'i18n-hero-sub',
@@ -866,24 +869,18 @@ const newsStructuredData = newsItems.map((item) => ({
     .fp-app-rail {
       position: sticky;
       top: 1.1rem;
-      display: grid;
-      gap: 0.95rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
       padding: 1.12rem 1rem;
-      align-content: start;
       min-height: calc(100vh - 2.2rem);
       background: linear-gradient(180deg, rgba(24, 24, 30, 0.18), rgba(48, 24, 24, 0.06));
       border-radius: 1rem;
     }
     .fp-app-rail-logo {
-      width: min(214px, 100%);
+      width: min(250px, 100%);
       height: auto;
       object-fit: contain;
-    }
-    .fp-app-rail-copy {
-      margin: 0;
-      font-size: 0.95rem;
-      line-height: 1.55;
-      color: #d4d4d8;
     }
     .fp-app-rail-search,
     .fp-app-rail-link {
@@ -922,7 +919,7 @@ const newsStructuredData = newsItems.map((item) => ({
     }
     .fp-app-rail-links {
       display: grid;
-      gap: 0.72rem;
+      gap: 0.9rem;
       width: 100%;
     }
     .fp-app-rail-link.is-primary {
@@ -943,8 +940,9 @@ const newsStructuredData = newsItems.map((item) => ({
     .fp-app-rail-footer {
       margin-top: auto;
       display: grid;
-      gap: 0.85rem;
+      gap: 1rem;
       align-content: end;
+      padding-top: clamp(1.75rem, 10vh, 5rem);
     }
     .fp-app-rail-mini-mark {
       width: 42px;
@@ -978,15 +976,20 @@ const newsStructuredData = newsItems.map((item) => ({
       border-radius: 9999px;
       padding: 0.2rem;
     }
+    .fp-lang-switch-rail {
+      align-self: center;
+      justify-self: center;
+      margin-top: -0.05rem;
+    }
     .fp-lang-btn {
       border: 0;
       background: transparent;
       color: #f4f4f5;
       border-radius: 9999px;
-      width: 2.35rem;
-      height: 2.35rem;
+      width: 2.72rem;
+      height: 2.72rem;
       cursor: pointer;
-      font-size: 1.18rem;
+      font-size: 1.34rem;
       line-height: 1;
     }
     .fp-lang-btn.is-active {
@@ -995,11 +998,13 @@ const newsStructuredData = newsItems.map((item) => ({
     }
     .fp-hero-subtitle {
       margin: 0.1rem 0 0;
-      font-size: 1.34rem;
+      font-size: 1.84rem;
       color: #d4d4d8;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 0.01em;
-      line-height: 1.4;
+      line-height: 1.28;
+      max-width: 22ch;
+      text-wrap: balance;
     }
     .fp-hero {
       position: relative;
@@ -1017,11 +1022,12 @@ const newsStructuredData = newsItems.map((item) => ({
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 26px rgba(0, 0, 0, 0.28), 0 0 22px rgba(220, 38, 38, 0.12);
     }
     .fp-hero-top-controls {
+      position: absolute;
+      right: 1rem;
+      bottom: 0.95rem;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      width: 100%;
-      margin-bottom: 0.8rem;
+      z-index: 1;
     }
     .fp-hero-shell::after {
       content: '';
@@ -1037,15 +1043,16 @@ const newsStructuredData = newsItems.map((item) => ({
       z-index: 1;
       display: grid;
       grid-template-columns: minmax(0, 1fr);
-      gap: 0.7rem;
+      gap: 0.82rem;
       align-items: center;
+      padding-right: clamp(4.5rem, 12vw, 8.25rem);
     }
     .fp-hero-brand {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
       justify-content: center;
-      gap: 1rem;
+      gap: 0.55rem;
       min-width: 0;
     }
     .fp-hero-logo {
@@ -1073,11 +1080,18 @@ const newsStructuredData = newsItems.map((item) => ({
       font-weight: 800;
     }
     .fp-hero-mark {
-      width: 78px;
-      height: 78px;
+      width: 84px;
+      height: 84px;
       object-fit: contain;
-      opacity: 0.94;
-      filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.2));
+      opacity: 0.82;
+      filter: drop-shadow(0 0 10px rgba(220, 38, 38, 0.24));
+    }
+    .fp-hero-lead {
+      margin: 0;
+      max-width: 62ch;
+      color: #e4e4e7;
+      font-size: 1.02rem;
+      line-height: 1.62;
     }
     .fp-hero-sub {
       line-height: 1.55;
@@ -1100,7 +1114,7 @@ const newsStructuredData = newsItems.map((item) => ({
     .fp-hero-note {
       color: #a1a1aa;
       font-size: 0.88rem;
-      margin: 0.15rem 0 0;
+      margin: 0.05rem 0 0;
       position: relative;
       z-index: 1;
     }
@@ -1583,7 +1597,12 @@ const newsStructuredData = newsItems.map((item) => ({
         padding-inline: 0.8rem;
       }
       .fp-app-rail-logo {
-        width: min(170px, 100%);
+        width: min(188px, 100%);
+      }
+      .fp-lang-btn {
+        width: 2.38rem;
+        height: 2.38rem;
+        font-size: 1.16rem;
       }
       .fp-app-rail-copy {
         font-size: 0.88rem;
@@ -1639,15 +1658,17 @@ const newsStructuredData = newsItems.map((item) => ({
       .fp-subscribe-logo {
         max-width: 180px;
       }
-      .fp-hero-logo {
-        width: min(72vw, 240px);
-      }
       .fp-hero-mark {
-        width: 58px;
-        height: 58px;
+        width: 72px;
+        height: 72px;
       }
       .fp-hero-subtitle {
-        font-size: 0.98rem;
+        font-size: 1.24rem;
+        max-width: 20ch;
+      }
+      .fp-hero-lead {
+        font-size: 0.92rem;
+        line-height: 1.55;
       }
       .fp-lang-btn {
         width: 2.18rem;
