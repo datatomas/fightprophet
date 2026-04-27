@@ -100,23 +100,15 @@ const isActive = (href: string) => {
           <button type="button" class="fp-lang-btn" data-lang="en" title="English">🇺🇸</button>
         </div>
 
-        <!-- Site pages nav -->
-        <nav class="fp-app-rail-nav" aria-label="Site pages">
-          <a class={`fp-app-rail-nav-link${isActive('/') ? ' is-active' : ''}`} href="/">Home</a>
-          <a class={`fp-app-rail-nav-link${isActive('/rankings/') ? ' is-active' : ''}`} href="/rankings/">Rankings</a>
-          <a class={`fp-app-rail-nav-link${isActive('/belt-holders/') ? ' is-active' : ''}`} href="/belt-holders/">Belt Holders</a>
-          <a class={`fp-app-rail-nav-link${isActive('/fighter-card/') ? ' is-active' : ''}`} href="/fighter-card/">Fighter Cards</a>
-          <a class={`fp-app-rail-nav-link${isActive('/events-history/') ? ' is-active' : ''}`} href="/events-history/">Events History</a>
-          <a class={`fp-app-rail-nav-link${isActive('/predictions/') ? ' is-active' : ''}`} href="/predictions/">Predictions</a>
-          <a class={`fp-app-rail-nav-link${isActive('/fight-lab/') ? ' is-active' : ''}`} href="/fight-lab/">Fight Lab</a>
+        <!-- App nav — all open the Streamlit app -->
+        <nav class="fp-app-rail-nav" aria-label="App sections">
+          <a class="fp-app-rail-nav-link is-primary-nav" href={withPage('predictions')} target="_blank" rel="noopener noreferrer">📈 Predictions</a>
+          <a class="fp-app-rail-nav-link" href={withPage('rankings')} target="_blank" rel="noopener noreferrer">🐐 Rankings</a>
+          <a class="fp-app-rail-nav-link" href={withPage('fighter-card')} target="_blank" rel="noopener noreferrer">👤 Fighter Cards</a>
+          <a class="fp-app-rail-nav-link" href={withPage('fight-lab')} target="_blank" rel="noopener noreferrer">🧪 Fight Lab</a>
+          <a class="fp-app-rail-nav-link" href={withPage('belt-holders')} target="_blank" rel="noopener noreferrer">👑 Belt Holders</a>
+          <a class="fp-app-rail-nav-link" href={withPage('events-history')} target="_blank" rel="noopener noreferrer">📅 Events History</a>
         </nav>
-
-        <!-- App quick links -->
-        <div class="fp-app-rail-links">
-          <a class="fp-app-rail-link is-primary" href={withPage('predictions')} target="_blank" rel="noopener noreferrer">Open Predictions App</a>
-          <a class="fp-app-rail-link" href={withPage('fighter-card')} target="_blank" rel="noopener noreferrer">Open Fighter Cards</a>
-          <a class="fp-app-rail-link" href={withPage('fight-lab')} target="_blank" rel="noopener noreferrer">Open Fight Lab</a>
-        </div>
 
         <!-- Footer -->
         <div class="fp-app-rail-footer">
@@ -439,6 +431,16 @@ const isActive = (href: string) => {
     border-color: rgba(248, 113, 113, 0.38);
     color: #fef2f2;
     font-weight: 700;
+  }
+  .fp-app-rail-nav-link.is-primary-nav {
+    background: linear-gradient(160deg, rgba(127, 20, 20, 0.55), rgba(90, 20, 20, 0.45));
+    border-color: rgba(248, 113, 113, 0.35);
+    color: #fef2f2;
+    font-weight: 700;
+  }
+  .fp-app-rail-nav-link.is-primary-nav:hover {
+    background: linear-gradient(160deg, rgba(220, 38, 38, 0.42), rgba(127, 20, 20, 0.55));
+    border-color: rgba(248, 113, 113, 0.55);
   }
 
   /* App links */

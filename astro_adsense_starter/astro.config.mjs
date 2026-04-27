@@ -6,5 +6,9 @@ export default defineConfig({
   output: 'server',
   adapter: cloudflare(),
   site: 'https://fightprophet.com',
-  integrations: [sitemap()],
+  integrations: [
+    sitemap({
+      filter: (page) => !page.includes('/fighter-profile/'),
+    }),
+  ],
 });

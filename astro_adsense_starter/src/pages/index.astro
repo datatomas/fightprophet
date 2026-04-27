@@ -173,29 +173,20 @@ const newsStructuredData = newsItems.map((item) => ({
 
 <BaseLayout title="Fight Prophet | Home" description="MMA AI and ML-powered fight analytics, predictions, fighter rankings, and model insights to help fight fans bet smarter.">
   <div class="fp-home-main">
-      <section class="fp-hero">
-        <div class="fp-hero-shell">
-          <div class="fp-hero-top-controls">
-            <img class="fp-hero-mark" src="/branding/fightprophet_ear_white.png" alt="Fight Prophet mark" loading="lazy" />
-          </div>
-          <div class="fp-hero-content">
-            <div class="fp-hero-brand">
-              <p class="fp-hero-subtitle" id="i18n-topbar-subtitle">The fight data already knows who's getting smashed. We just highlight it.</p>
-            </div>
-            <div class="fp-hero-main">
-              <p class="fp-hero-lead" id="i18n-hero-lead">Fight Prophet is an MMA predictions and stats app for fans who want model picks, divisional rankings, fighter cards, and fight-lab diagnostics in one place.</p>
-              <p class="fp-hero-note" id="i18n-hero-note">For information and education only — never financial advice.</p>
-            </div>
-          </div>
+      <header class="fp-home-header">
+        <div class="fp-home-header-brand">
+          <img src="/branding/fightprophet_logo_white.png" alt="Fight Prophet" class="fp-home-header-logo" loading="lazy" />
+          <p class="fp-home-header-sub" id="i18n-topbar-subtitle">The fight data already knows who's getting smashed. We just highlight it.</p>
         </div>
-      </section>
+        <p class="fp-home-header-note" id="i18n-hero-note">For information and education only — never financial advice.</p>
+      </header>
 
       <section>
         <div class="fp-section-head">
           <div>
-            <p class="fp-section-label">Ranked Fighters Wall</p>
+            <p class="fp-section-label">Fighter Rankings</p>
             <p class="fp-section-intro fp-section-intro-tight">
-              Live rankings preview across {rankedDivisions.length || 0} divisions{totalRankedFighters ? ` (${totalRankedFighters} fighters tracked)` : ''}. Start with {defaultDivision} or switch to All Divisions.
+              {totalRankedFighters ? `${totalRankedFighters} active ranked fighters across ${rankedDivisions.length} divisions.` : `Live ranking cards across ${rankedDivisions.length} divisions.`} Select a division or browse all.
             </p>
           </div>
         </div>
@@ -759,127 +750,42 @@ const newsStructuredData = newsItems.map((item) => ({
       white-space: nowrap;
       border: 0;
     }
-    .fp-hero-subtitle {
-      margin: 0.1rem 0 0;
-      font-size: 1.84rem;
-      color: #d4d4d8;
-      font-weight: 700;
-      letter-spacing: 0.01em;
-      line-height: 1.28;
-      max-width: 22ch;
-      text-wrap: balance;
-    }
-    .fp-hero {
-      position: relative;
-      display: grid;
-      gap: 0.62rem;
-      margin-bottom: 0.9rem;
-    }
-    .fp-hero-shell {
-      position: relative;
-      background: linear-gradient(155deg, rgba(20, 20, 22, 0.96) 0%, rgba(40, 20, 20, 0.84) 100%);
-      border: 1px solid rgba(220, 38, 38, 0.28);
-      border-radius: 1.05rem;
-      padding: 0.95rem 1rem 1rem;
-      overflow: hidden;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 26px rgba(0, 0, 0, 0.28), 0 0 22px rgba(220, 38, 38, 0.12);
-    }
-    .fp-hero-top-controls {
-      position: absolute;
-      right: 1rem;
-      bottom: 0.95rem;
-      display: flex;
-      align-items: center;
-      z-index: 1;
-    }
-    .fp-hero-shell::after {
-      content: '';
-      position: absolute;
-      inset: -10% -16% -18% -16%;
-      background: url('/branding/cageiconmma.png') center center / 92% auto no-repeat;
-      opacity: 0.13;
-      pointer-events: none;
-      z-index: 0;
-    }
-    .fp-hero-content {
-      position: relative;
-      z-index: 1;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 0.82rem;
-      align-items: center;
-      padding-right: clamp(4.5rem, 12vw, 8.25rem);
-    }
-    .fp-hero-brand {
+    .fp-home-header {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
-      justify-content: center;
-      gap: 0.55rem;
-      min-width: 0;
+      gap: 0.32rem;
+      padding: 0.7rem 0.85rem 0.75rem;
+      margin-bottom: 0.55rem;
+      background: linear-gradient(155deg, rgba(20, 20, 22, 0.92) 0%, rgba(40, 20, 20, 0.78) 100%);
+      border: 1px solid rgba(220, 38, 38, 0.24);
+      border-radius: 0.9rem;
+      box-shadow: 0 0 18px rgba(220, 38, 38, 0.08);
     }
-    .fp-hero-logo {
-      width: clamp(238px, 28vw, 360px);
+    .fp-home-header-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+    }
+    .fp-home-header-logo {
+      width: clamp(160px, 22vw, 240px);
       height: auto;
       object-fit: contain;
-      filter: drop-shadow(0 0 10px rgba(220, 38, 38, 0.28));
+      filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.22));
+      flex-shrink: 0;
     }
-    .fp-hero-brand-copy {
-      min-width: 0;
-    }
-    .fp-hero-site {
+    .fp-home-header-sub {
       margin: 0;
-      font-size: 1.35rem;
-      font-weight: 800;
-      letter-spacing: 0.02em;
-      color: #ffffff;
-      text-shadow: 0 0 12px rgba(220, 38, 38, 0.35);
+      font-size: clamp(0.88rem, 1.8vw, 1.05rem);
+      color: #d4d4d8;
+      font-weight: 600;
+      line-height: 1.4;
+      max-width: 46ch;
     }
-
-    .fp-hero-title {
+    .fp-home-header-note {
       margin: 0;
-      font-size: clamp(1.8rem, 5vw, 2.45rem);
-      line-height: 1.1;
-      font-weight: 800;
-    }
-    .fp-hero-mark {
-      width: 84px;
-      height: 84px;
-      object-fit: contain;
-      opacity: 0.82;
-      filter: drop-shadow(0 0 10px rgba(220, 38, 38, 0.24));
-    }
-    .fp-hero-lead {
-      margin: 0;
-      max-width: 62ch;
-      color: #e4e4e7;
-      font-size: 1.02rem;
-      line-height: 1.62;
-    }
-    .fp-hero-sub {
-      line-height: 1.55;
-      color: #e4e4e7;
-      max-width: 60ch;
-      margin: 0;
-      position: relative;
-      z-index: 1;
-      font-size: 1.05rem;
-    }
-    .fp-hero-datasci {
-      color: #a1a1aa;
-      font-size: 0.88rem;
-      margin: 0.35rem 0 0.1rem;
-      position: relative;
-      z-index: 1;
-      line-height: 1.5;
-      max-width: 72ch;
-    }
-    .fp-hero-note {
-      color: #a1a1aa;
-      font-size: 0.88rem;
-      margin: 0.05rem 0 0;
-      position: relative;
-      z-index: 1;
+      font-size: 0.78rem;
+      color: #71717a;
     }
     .fp-btn {
       border: 1px solid rgba(220, 38, 38, 0.45);
@@ -1317,12 +1223,11 @@ const newsStructuredData = newsItems.map((item) => ({
       .fp-cta-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
-      .fp-hero-top-controls {
-        gap: 0.5rem;
+      .fp-home-header-brand {
+        gap: 0.55rem;
       }
-      .fp-hero-content {
-        grid-template-columns: 1fr;
-        gap: 0.8rem;
+      .fp-home-header-logo {
+        width: clamp(130px, 40vw, 200px);
       }
       .fp-content-grid {
         grid-template-columns: 1fr;
@@ -1349,34 +1254,9 @@ const newsStructuredData = newsItems.map((item) => ({
       .fp-subscribe-logo {
         max-width: 180px;
       }
-      .fp-hero-mark {
-        width: 72px;
-        height: 72px;
-      }
-      .fp-hero-subtitle {
-        font-size: 1.24rem;
-        max-width: 20ch;
-      }
-      .fp-hero-lead {
-        font-size: 0.92rem;
-        line-height: 1.55;
-      }
       .fp-btn {
         font-size: 0.84rem;
         padding: 0.46rem 0.68rem;
-      }
-      .fp-btn-hero-primary {
-        min-width: min(100%, 16rem);
-        padding: 0.9rem 1.12rem;
-        font-size: 0.96rem;
-      }
-      .fp-btn-hero-secondary {
-        padding: 0.68rem 0.92rem;
-        font-size: 0.9rem;
-      }
-      .fp-hero-shell::after {
-        inset: -8% -12% -12% -12%;
-        background-size: 108% auto;
       }
     }
     @media (max-width: 620px) {
