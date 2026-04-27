@@ -121,3 +121,18 @@ Return HTTP `200`/`201` for success so the UI shows confirmation.
 
 cd /home/ares/Documents/gitrepos/ml_kuda_sports_lab/astro_adsense_starter
 npx wrangler pages deployment tail --project-name ml-kuda-sports-lab --environment production
+
+
+# test build
+cd /home/ares/Documents/gitrepos/ml_kuda_sports_lab/astro_adsense_starter
+npm run build
+
+
+# run local preview
+export AZURE_STORAGE_ACCOUNT=...
+export AZURE_STORAGE_KEY=...
+npx wrangler pages dev dist --compatibility-flag=nodejs_compat
+
+cd /home/ares/Documents/gitrepos/ml_kuda_sports_lab/astro_adsense_starter
+npm run build
+npx wrangler pages dev dist --compatibility-flag=nodejs_compat
