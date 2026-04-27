@@ -2506,8 +2506,9 @@ st.markdown(
 _inject_theme_aware_favicon()
 
 _background_uri = _favicon_data_uri(_STATIC_DIR / "background.png")
+_ear_overlay_uri = _favicon_data_uri(_STATIC_DIR / "fightprophet_ear_white.png")
 _app_shell_background = (
-    "linear-gradient(180deg, rgba(9, 9, 11, 0.88) 0%, rgba(9, 9, 11, 0.93) 36%, rgba(9, 9, 11, 0.98) 100%), "
+    "linear-gradient(180deg, rgba(9, 9, 11, 0.52) 0%, rgba(9, 9, 11, 0.68) 32%, rgba(9, 9, 11, 0.80) 100%), "
     f"url('{_background_uri}') center top / cover no-repeat fixed, #09090b"
     if _background_uri
     else "#09090b"
@@ -2608,6 +2609,26 @@ st.markdown(
         background-position: center top !important;
         background-size: cover !important;
         color: #f4f4f5 !important;
+    }
+
+    [data-testid="stAppViewContainer"] {
+        position: relative !important;
+        isolation: isolate !important;
+    }
+
+    [data-testid="stAppViewContainer"]::after {
+        content: "" !important;
+        position: fixed !important;
+        left: 50% !important;
+        top: 53% !important;
+        width: min(32vw, 420px) !important;
+        aspect-ratio: 1 / 1 !important;
+        transform: translate(-50%, -50%) !important;
+        background: url("__FP_EAR_OVERLAY_URI__") center center / contain no-repeat !important;
+        opacity: 0.12 !important;
+        filter: drop-shadow(0 0 22px rgba(220, 38, 38, 0.15)) !important;
+        pointer-events: none !important;
+        z-index: -1 !important;
     }
 
     [data-testid="stMainBlockContainer"] {
@@ -3334,7 +3355,9 @@ st.markdown(
         }
     }
 </style>
-    """.replace("__FP_APP_SHELL_BACKGROUND__", _app_shell_background),
+"""
+    .replace("__FP_APP_SHELL_BACKGROUND__", _app_shell_background)
+    .replace("__FP_EAR_OVERLAY_URI__", _ear_overlay_uri or ""),
     unsafe_allow_html=True,
 )
 
