@@ -608,7 +608,7 @@ def _render_mma_news(*, location: str = "sidebar", limit: int = 6) -> None:
     if not articles:
         return
     ctx = st.sidebar if location == "sidebar" else st
-    expander_label = f"📰 {t('news.latest')}" if location == "sidebar" else t("news.latest")
+    expander_label = t("news.latest")
     with ctx.expander(expander_label, expanded=False):
         for a in articles:
             st.markdown(f"[{a['title']}]({a['link']}) — {a['source']} · {a['date']}")
@@ -620,6 +620,16 @@ def _render_mma_news(*, location: str = "sidebar", limit: int = 6) -> None:
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(_PROJECT_ROOT / "src"))
 _STATIC_DIR = _PROJECT_ROOT / "static"
+_GOAT_EMOJI_PNG_PATH = _STATIC_DIR / "b91c1c-goat-emoji.png"
+_NAV_ICON_FILES = {
+    "predictions": "b91c1c-predictions-emoji-rail.png",
+    "fighter-card": "b91c1c-fighterscard-emoji-rail.png",
+    "belt-holders": "b91c1c-belt-emoji-rail.png",
+    "events-history": "b91c1c-events-emoji-rail.png",
+    "rankings": "b91c1c-goat-emoji-rail.png",
+    "fight-lab": "b91c1c-lab-emoji-rail.png",
+    "terms": "",
+}
 
 from ml_kuda_sports_lab.front_end.country_master import (
     canonical_country_name as _canonical_country_name,
@@ -1627,8 +1637,8 @@ def _fighter_badge(
             country_val = maps["by_name"].get(txt, "")
 
     flag = _country_to_flag(country_val)
-    belt = " 👑" if _to_boolish(is_champion) else ""
-    return f"{flag}{belt}" if flag else ("👑" if belt else "")
+    belt = _goat_icon_html(size=13, extra_class="fp-inline-goat--champ") if _to_boolish(is_champion) else ""
+    return f"{flag} {belt}".strip() if flag else belt
 
 
 def _fighter_badge_from_row(row: pd.Series, side: str) -> str:
@@ -1898,12 +1908,106 @@ def _favicon_data_uri(path: Path | None) -> str:
         ".jpeg": "image/jpeg",
         ".webp": "image/webp",
         ".ico": "image/x-icon",
+        ".svg": "image/svg+xml",
     }.get(ext, "image/png")
     try:
         payload = base64.b64encode(path.read_bytes()).decode("ascii")
     except Exception:
         return ""
     return f"data:{mime};base64,{payload}"
+
+
+def _get_goat_icon_path() -> Path | None:
+    if _GOAT_EMOJI_PNG_PATH.exists() and _GOAT_EMOJI_PNG_PATH.is_file():
+        return _GOAT_EMOJI_PNG_PATH
+    return None
+
+
+@st.cache_data(show_spinner=False)
+def _goat_icon_data_uri() -> str:
+    return _favicon_data_uri(_get_goat_icon_path())
+
+
+@st.cache_data(show_spinner=False)
+def _named_icon_data_uri(filename: str) -> str:
+    if not filename:
+        return ""
+    path = _STATIC_DIR / filename
+    return _favicon_data_uri(path if path.exists() and path.is_file() else None)
+
+
+def _png_icon_html(
+    filename: str,
+    *,
+    size: int = 16,
+    extra_class: str = "",
+    label: str = "",
+) -> str:
+    icon_uri = _named_icon_data_uri(filename)
+    classes = "fp-inline-goat"
+    if extra_class:
+        classes = f"{classes} {extra_class}"
+    if icon_uri:
+        safe_label = escape(label)
+        aria_hidden = "false" if label else "true"
+        aria_label_attr = f' aria-label="{safe_label}" role="img"' if label else ""
+        return (
+            f'<span aria-hidden="{aria_hidden}"{aria_label_attr} class="{classes}" '
+            f'style="width:{size}px;height:{size}px;'
+            f"background-image:url('{icon_uri}');"
+            'background-position:center;background-repeat:no-repeat;'
+            'background-size:contain;"></span>'
+        )
+    return ""
+
+
+def _goat_icon_html(*, size: int = 16, extra_class: str = "", label: str = "") -> str:
+    icon_html = _png_icon_html(
+        "b91c1c-goat-emoji-rail.png",
+        size=size,
+        extra_class=extra_class,
+        label=label,
+    )
+    if icon_html:
+        return icon_html
+    classes = "fp-inline-goat"
+    if extra_class:
+        classes = f"{classes} {extra_class}"
+    fallback = escape(label or "GOAT")
+    return (
+        f'<span class="{classes} fp-inline-goat--fallback" '
+        f'style="font-size:{size}px;line-height:1;">{fallback}</span>'
+    )
+
+
+def _nav_icon_html(slug: str, *, size: int = 16, label: str = "") -> str:
+    filename = _NAV_ICON_FILES.get((slug or "").strip().lower(), "b91c1c-goat-emoji.png")
+    icon_html = _png_icon_html(filename, size=size, label=label)
+    return icon_html or _goat_icon_html(size=size, label=label)
+
+
+def _nav_icon_class(slug: str) -> str:
+    normalized = re.sub(r"[^a-z0-9]+", "-", (slug or "").strip().lower()).strip("-")
+    return normalized or "default"
+
+
+def _icon_label_html(label: str, *, size: int = 16, wrapper_class: str = "fp-icon-label") -> str:
+    return (
+        f'<span class="{wrapper_class}">'
+        f"{_goat_icon_html(size=size)}"
+        f"<span>{escape(label)}</span>"
+        "</span>"
+    )
+
+
+def _icon_markup(value: str | None, *, default_size: int = 16) -> str:
+    if value is None:
+        return _goat_icon_html(size=default_size)
+    text = str(value)
+    stripped = text.strip()
+    if stripped.startswith("<") and stripped.endswith(">"):
+        return text
+    return escape(text)
 
 
 def _get_favicon_icon_paths() -> tuple[Path | None, Path | None]:
@@ -1932,11 +2036,14 @@ def _get_favicon_icon_paths() -> tuple[Path | None, Path | None]:
 
 def _get_default_page_icon() -> str:
     """Default favicon used by Streamlit page config before JS theme swap runs."""
+    goat_icon = _get_goat_icon_path()
+    if goat_icon is not None:
+        return str(goat_icon)
     light_icon, dark_icon = _get_favicon_icon_paths()
     chosen = light_icon or dark_icon
     if chosen is not None and chosen.exists():
         return str(chosen)
-    return "🧠"
+    return "Fight Prophet"
 
 
 def _inject_theme_aware_favicon() -> None:
@@ -2603,6 +2710,16 @@ _app_shell_background = (
     if _background_uri
     else "#09090b"
 )
+_sidebar_nav_icon_css = "\n".join(
+    (
+        f".fp-sidebar-nav-icon--{_nav_icon_class(slug)}"
+        "{background-image:url('"
+        f"{_named_icon_data_uri(filename)}"
+        "');}"
+    )
+    for slug, filename in _NAV_ICON_FILES.items()
+    if _named_icon_data_uri(filename)
+)
 
 # Minimal custom CSS for dark theme polish
 st.markdown(
@@ -2803,6 +2920,41 @@ st.markdown(
         gap: 0.22rem;
         margin: 0.35rem 0 0.95rem;
     }
+    .fp-sidebar-nav-copy,
+    .fp-icon-label {
+        display: grid;
+        grid-template-columns: 36px minmax(0, 1fr);
+        align-items: center;
+        column-gap: 0.9rem;
+        width: 100%;
+    }
+    .fp-sidebar-nav-icon {
+        display: inline-block;
+        width: 36px;
+        height: 36px;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: contain;
+        vertical-align: middle;
+        justify-self: center;
+        opacity: 0.95;
+        filter: brightness(1.45) saturate(1.45) contrast(1.18) drop-shadow(0 0 6px rgba(220, 38, 38, 0.26));
+        transition: filter 120ms ease, transform 120ms ease, opacity 120ms ease;
+    }
+    __FP_SIDEBAR_NAV_ICON_CSS__
+    .fp-inline-goat {
+        display: inline-block;
+        flex: 0 0 auto;
+        vertical-align: middle;
+        object-fit: contain;
+    }
+    .fp-inline-goat--signal {
+        filter: drop-shadow(0 0 8px rgba(248, 113, 113, 0.28));
+    }
+    .fp-inline-goat--champ {
+        margin-left: 0.16rem;
+        vertical-align: -2px;
+    }
     .fp-sidebar-nav-link {
         display: flex;
         align-items: center;
@@ -2829,11 +2981,32 @@ st.markdown(
         border-color: rgba(220, 38, 38, 0.22);
         color: #fef2f2 !important;
     }
+    .fp-sidebar-nav-link:hover .fp-sidebar-nav-icon {
+        opacity: 1;
+        transform: scale(1.04);
+        filter: brightness(1.68) saturate(1.65) contrast(1.22) drop-shadow(0 0 10px rgba(248, 113, 113, 0.42));
+    }
     .fp-sidebar-nav-link.is-active {
         background: rgba(220, 38, 38, 0.18);
         border-color: rgba(248, 113, 113, 0.38);
         color: #fef2f2 !important;
         font-weight: 700;
+    }
+    .fp-sidebar-nav-link.is-active .fp-sidebar-nav-icon {
+        opacity: 1;
+        transform: scale(1.05);
+        filter: brightness(1.82) saturate(1.75) contrast(1.24) drop-shadow(0 0 12px rgba(248, 113, 113, 0.48));
+    }
+    .fp-section-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.62rem;
+        margin: 0 0 1rem;
+        color: #f4f4f5;
+        font-size: 1.75rem;
+        font-weight: 700;
+        line-height: 1.2;
+        letter-spacing: -0.01em;
     }
 
     /* Sidebar controls should stay dark (language flags, selectors, actions) */
@@ -3040,7 +3213,10 @@ st.markdown(
         border-top: 3px solid var(--meta-accent, #ef4444);
     }
     .fighter-meta-icon {
-        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 16px;
         line-height: 1;
         margin-bottom: 0.15rem;
         filter: saturate(1.15);
@@ -3077,7 +3253,10 @@ st.markdown(
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 4px 14px rgba(0,0,0,0.16), 0 0 10px var(--fp-red-glow-soft);
     }
     .kpi-card-icon {
-        font-size: 0.88rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 16px;
         margin-bottom: 0.15rem;
         line-height: 1;
         color: #cbd5e1;
@@ -3535,7 +3714,8 @@ st.markdown(
 </style>
 """
     .replace("__FP_APP_SHELL_BACKGROUND__", _app_shell_background)
-    .replace("__FP_EAR_OVERLAY_URI__", _ear_overlay_uri or ""),
+    .replace("__FP_EAR_OVERLAY_URI__", _ear_overlay_uri or "")
+    .replace("__FP_SIDEBAR_NAV_ICON_CSS__", _sidebar_nav_icon_css),
     unsafe_allow_html=True,
 )
 
@@ -3551,8 +3731,11 @@ def _render_sidebar_nav(
     for slug, label in page_slug_to_label.items():
         classes = "fp-sidebar-nav-link is-active" if slug == active_slug else "fp-sidebar-nav-link"
         href = f"?page={quote_plus(slug)}&lang={quote_plus(safe_lang)}"
+        icon_class = _nav_icon_class(slug)
         links.append(
-            f'<a class="{classes}" href="{escape(href, quote=True)}">{escape(label)}</a>'
+            f'<a class="{classes}" href="{escape(href, quote=True)}">'
+            f'<span class="fp-sidebar-nav-copy"><span class="fp-sidebar-nav-icon fp-sidebar-nav-icon--{escape(icon_class)}" aria-hidden="true"></span><span>{escape(label)}</span></span>'
+            "</a>"
         )
     st.markdown(
         '<nav class="fp-sidebar-nav" aria-label="App sections">'
@@ -3633,7 +3816,7 @@ with st.sidebar:
                         _folders = sorted({b.split("/")[len(_pfx.split("/")) - 1] for b in _blobs if "/" in b[len(_pfx):]})
                         st.success(t("sidebar.azure_connected", container=_cont, prefix=_pfx))
                         for _f in _folders:
-                            st.caption(f"  📁 {_f}")
+                            st.caption(f"Folder: {_f}")
                         if not _folders:
                             st.warning(t("sidebar.no_folders", prefix=_pfx))
                 except Exception as _test_err:
@@ -3651,13 +3834,17 @@ ACTIVE_PREFIX = _prefix_input.strip("/")
 # Helper: signal badge
 # ---------------------------------------------------------------------------
 
-_SIGNAL_ICONS = {"STRONG": "🟢", "MEDIUM": "🟡", "WEAK": "⚪"}
+_SIGNAL_ICONS = {
+    "STRONG": _goat_icon_html(size=14, extra_class="fp-inline-goat--signal"),
+    "MEDIUM": _goat_icon_html(size=14, extra_class="fp-inline-goat--signal"),
+    "WEAK": _goat_icon_html(size=14, extra_class="fp-inline-goat--signal"),
+}
 
 
 def _signal_icon(sig: str | None) -> str:
     if sig is None:
-        return "⚪"
-    return _SIGNAL_ICONS.get(sig.upper(), "⚪")
+        return _goat_icon_html(size=14, extra_class="fp-inline-goat--signal")
+    return _SIGNAL_ICONS.get(sig.upper(), _goat_icon_html(size=14, extra_class="fp-inline-goat--signal"))
 
 
 def _odds_display(odds: float | None) -> str:
@@ -3707,7 +3894,7 @@ def _render_fighter_meta_card(label: str, value: str, icon: str, accent: str) ->
     st.markdown(
         (
             f'<div class="fighter-meta-card" style="--meta-accent: {escape(accent)};">'
-            f'<div class="fighter-meta-icon">{escape(icon)}</div>'
+            f'<div class="fighter-meta-icon">{_icon_markup(icon, default_size=14)}</div>'
             f'<div class="fighter-meta-label">{escape(label)}</div>'
             f'<div class="fighter-meta-value">{escape(value)}</div>'
             '</div>'
@@ -3743,13 +3930,13 @@ _FIGHTER_CARD_CSS = """
 .fp-card.is-default::after{border-color:rgba(250,204,21,0.22);box-shadow:inset 0 0 0 1px rgba(248,113,113,0.1),inset 0 0 16px rgba(148,163,184,0.09);}
 .fp-card:hover{transform:translateY(-2px);}
 .fp-card--compact{max-width:220px;min-height:250px;padding:0.62rem 0.62rem 0.68rem;}
-.fp-card--compact .fp-card-portrait-silhouette{font-size:3.65rem;}
+.fp-card--compact .fp-card-portrait-silhouette{width:3.65rem;height:3.65rem;}
 .fp-card--compact .fp-card-initials{font-size:1.92rem;}
 .fp-card--compact .fp-card-name{font-size:0.92rem;margin:0 0 0.34rem;}
 .fp-card--compact .fp-card-country{font-size:0.64rem;}
 .fp-card--compact .fp-card-flag{font-size:1rem;padding:0.18rem 0.34rem;}
 .fp-card--compact .fp-card-stat-val{min-width:2rem;font-size:0.76rem;}
-.fp-card-crown{position:absolute;top:0.46rem;left:50%;transform:translateX(-50%);font-size:1rem;line-height:1;z-index:3;text-shadow:0 0 6px rgba(0,0,0,0.55);}
+.fp-card-crown{position:absolute;top:0.46rem;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;justify-content:center;line-height:1;z-index:3;text-shadow:0 0 6px rgba(0,0,0,0.55);}
 .fp-card-chrome{position:absolute;inset:0;z-index:1;pointer-events:none;}
 .fp-card-corner{position:absolute;width:1.15rem;height:1.15rem;border:1px solid rgba(255,255,255,0.16);background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.2),transparent 70%);transform:rotate(45deg);box-shadow:inset 0 0 10px rgba(255,255,255,0.08);}
 .fp-card.is-champ .fp-card-corner{border-color:rgba(255,244,180,0.38);background:radial-gradient(circle at 30% 30%,rgba(255,244,180,0.24),transparent 72%);}
@@ -3767,7 +3954,7 @@ _FIGHTER_CARD_CSS = """
 .fp-card.is-default .fp-card-rating-pos{color:rgba(255,255,255,0.78);}
 .fp-card-flag{font-size:1.18rem;line-height:1;background:rgba(0,0,0,0.34);border-radius:999px;padding:0.22rem 0.38rem;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.08);}
 .fp-card-portrait{position:relative;display:flex;align-items:center;justify-content:center;flex:1;margin:0.42rem 0 0.42rem;border-radius:1rem 1rem 0.85rem 0.85rem;background:radial-gradient(circle at 50% 30%,rgba(255,255,255,0.16),transparent 52%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(0,0,0,0.04));box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06),inset 0 -18px 28px rgba(0,0,0,0.22);overflow:hidden;z-index:2;}
-.fp-card-portrait-silhouette{font-size:4.2rem;opacity:0.16;line-height:1;filter:blur(0.35px);}
+.fp-card-portrait-silhouette{display:inline-flex;align-items:center;justify-content:center;width:4.2rem;height:4.2rem;opacity:0.16;line-height:1;filter:blur(0.35px);}
 .fp-card.is-champ .fp-card-portrait-silhouette{opacity:0.22;}
 .fp-card-initials{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.15rem;font-weight:800;letter-spacing:0.07em;text-shadow:0 2px 10px rgba(0,0,0,0.75);}
 .fp-card.is-champ .fp-card-initials{color:rgba(31,19,0,0.92);}
@@ -3821,7 +4008,7 @@ _PREDICTION_MATCHUP_CSS = """
 .fp-odds-chip{display:inline-flex;align-items:center;justify-content:center;gap:0.34rem;padding:0.28rem 0.7rem;border-radius:999px;background:rgba(0,0,0,0.34);border:1px solid rgba(255,255,255,0.08);font-size:0.74rem;font-weight:700;color:#f4f4f5;}
 .fp-odds-chip-label{color:#a1a1aa;text-transform:uppercase;letter-spacing:0.08em;font-size:0.62rem;}
 .fp-versus-core{display:flex;flex-direction:column;align-items:center;gap:0.72rem;padding:0.9rem 0.85rem;border-radius:1.1rem;background:linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.02);}
-.fp-versus-mark{display:flex;align-items:center;justify-content:center;width:4.2rem;height:4.2rem;border-radius:999px;background:radial-gradient(circle at 30% 30%,rgba(248,113,113,0.42),rgba(127,29,29,0.18) 55%,rgba(0,0,0,0.08) 100%);border:1px solid rgba(248,113,113,0.25);box-shadow:0 0 26px rgba(239,68,68,0.22);font-size:1.42rem;color:#fee2e2;}
+.fp-versus-mark{display:flex;align-items:center;justify-content:center;width:4.2rem;height:4.2rem;border-radius:999px;background:radial-gradient(circle at 30% 30%,rgba(248,113,113,0.42),rgba(127,29,29,0.18) 55%,rgba(0,0,0,0.08) 100%);border:1px solid rgba(248,113,113,0.25);box-shadow:0 0 26px rgba(239,68,68,0.22);color:#fee2e2;}
 .fp-versus-title{font-size:0.68rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#d4d4d8;}
 .fp-prob-stack{width:100%;display:flex;flex-direction:column;gap:0.42rem;}
 .fp-prob-row{display:flex;flex-direction:column;gap:0.18rem;}
@@ -3837,6 +4024,7 @@ _PREDICTION_MATCHUP_CSS = """
 .fp-pick-winner a{color:#fff1f2;text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.24);}
 .fp-pick-confidence{font-size:0.92rem;font-weight:500;color:#d4d4d8;}
 .fp-pick-value{margin-top:0.42rem;text-align:center;font-size:0.81rem;color:#a1a1aa;opacity:0.92;line-height:1.35;}
+.fp-pick-value .fp-inline-goat{vertical-align:-3px;}
 .fp-pick-value b{color:#e4e4e7;}
 .fp-pick-value a{color:#f4f4f5;text-decoration:none;}
 .fp-pick-note{margin-top:0.28rem;text-align:center;font-size:0.72rem;color:#71717a;}
@@ -3941,7 +4129,11 @@ def _build_fighter_card_html(
     card_classes = ["fp-card", "is-champ" if is_champion else "is-default"]
     if compact:
         card_classes.append("fp-card--compact")
-    crown_html = "<span class='fp-card-crown' aria-label='Current champion'>👑</span>" if is_champion else ""
+    crown_html = (
+        f"<span class='fp-card-crown' aria-label='Current champion'>{_goat_icon_html(size=18, label='Current champion')}</span>"
+        if is_champion
+        else ""
+    )
     flag_html = (
         f"<span class='fp-card-flag' title='{escape(country)}'>{flag}</span>" if flag else ""
     )
@@ -3981,7 +4173,7 @@ def _build_fighter_card_html(
         f"{flag_html}"
         "</div>"
         "<div class='fp-card-portrait' aria-hidden='true'>"
-        "<span class='fp-card-portrait-silhouette'>👤</span>"
+        f"<span class='fp-card-portrait-silhouette'>{_goat_icon_html(size=28, label='Fighter card')}</span>"
         f"<span class='fp-card-initials'>{escape(initials)}</span>"
         "</div>"
         f"<div class='fp-card-name'>{escape(name)}</div>"
@@ -4033,16 +4225,17 @@ def _render_fighter_card_html(
 def _render_kpi_card(
     label: str,
     value: str,
-    icon: str = "📊",
+    icon: str | None = None,
     accent: str = "#38bdf8",
     compact: bool = False,
 ) -> None:
     card_class = "kpi-card kpi-card--compact" if compact else "kpi-card"
     label_class = "kpi-card-label kpi-card-label--large" if compact else "kpi-card-label"
+    icon_markup = _icon_markup(icon, default_size=14)
     st.markdown(
         (
             f'<div class="{card_class}" style="--kpi-accent: {escape(accent)};">'
-            f'<div class="kpi-card-icon">{escape(icon)}</div>'
+            f'<div class="kpi-card-icon">{icon_markup}</div>'
             f'<div class="{label_class}">{escape(label)}</div>'
             f'<div class="kpi-card-value">{escape(value)}</div>'
             "</div>"
@@ -4062,19 +4255,19 @@ def _render_betting_signals_guide() -> None:
         '</div>'
         '<div class="fp-guide-grid">'
         '<div class="fp-guide-item fp-guide-item--strong">'
-        '<div class="fp-guide-label">🟢 STRONG</div>'
+        f'<div class="fp-guide-label">{_goat_icon_html(size=14)} STRONG</div>'
         '<div class="fp-guide-copy">Higher-confidence signal based on model edge and agreement; shortlist first.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--medium">'
-        '<div class="fp-guide-label">🟡 MEDIUM</div>'
+        f'<div class="fp-guide-label">{_goat_icon_html(size=14)} MEDIUM</div>'
         '<div class="fp-guide-copy">Possible value, but needs extra checks like injuries, style matchup, and line movement.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--weak">'
-        '<div class="fp-guide-label">⚪ WEAK</div>'
+        f'<div class="fp-guide-label">{_goat_icon_html(size=14)} WEAK</div>'
         '<div class="fp-guide-copy">Low edge or noisy setup; usually a pass.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--recommended">'
-        '<div class="fp-guide-label">✅ RECOMMENDED BET</div>'
+        f'<div class="fp-guide-label">{_goat_icon_html(size=14)} RECOMMENDED BET</div>'
         '<div class="fp-guide-copy">Passed internal thresholds, but value bets are still high-variance and can lose often.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--check">'
@@ -4935,15 +5128,15 @@ def page_upcoming() -> None:
     # Quick stats
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        _render_kpi_card(t("page.upcoming.total_fights"), str(len(df_show)), icon="👥", accent="#ef4444")
+        _render_kpi_card(t("page.upcoming.total_fights"), str(len(df_show)), icon=_goat_icon_html(), accent="#ef4444")
     with col2:
-        _render_kpi_card(t("page.upcoming.events"), str(df_show["event_name"].nunique()), icon="🏟️", accent="#22c55e")
+        _render_kpi_card(t("page.upcoming.events"), str(df_show["event_name"].nunique()), icon=_goat_icon_html(), accent="#22c55e")
     strong = (df_show["signal_strength"] == "STRONG").sum() if "signal_strength" in df_show else 0
     with col3:
-        _render_kpi_card(t("page.upcoming.strong_signals"), str(int(strong)), icon="🎯", accent="#f59e0b")
+        _render_kpi_card(t("page.upcoming.strong_signals"), str(int(strong)), icon=_goat_icon_html(), accent="#f59e0b")
     recommended = df_show["recommended_bet"].sum() if "recommended_bet" in df_show else 0
     with col4:
-        _render_kpi_card(t("page.upcoming.recommended_bets"), str(int(recommended)), icon="✅", accent="#8b5cf6")
+        _render_kpi_card(t("page.upcoming.recommended_bets"), str(int(recommended)), icon=_goat_icon_html(), accent="#8b5cf6")
 
     _render_betting_signals_guide()
 
@@ -4957,10 +5150,8 @@ def page_upcoming() -> None:
             _event_date = pd.to_datetime(event_row["event_date"], errors="coerce")
             if pd.notna(_event_date):
                 event_date_text = _event_date.strftime("%Y-%m-%d")
-        st.subheader(f"🏟️ {event_name}")
-        st.caption(
-            f"📅 {event_date_text}  •  📍 {event_row.get('location', '—')}"
-        )
+        st.subheader(str(event_name))
+        st.caption(f"{event_date_text} • {event_row.get('location', '—')}")
 
         for _, row in event_df.iterrows():
             _render_fight_card(row)
@@ -5136,7 +5327,7 @@ def _render_fight_card(row: pd.Series) -> None:
     value_html = ""
     if bet_on_name:
         value_html = (
-            f"<div class='fp-pick-value'>{escape(icon)} <b>{escape(value_label)}:</b> {bet_on_label}"
+            f"<div class='fp-pick-value'>{icon} <b>{escape(value_label)}:</b> {bet_on_label}"
             f" &nbsp;|&nbsp; {escape(t('page.upcoming.edge'))}: <span style='font-family:ui-monospace,SFMono-Regular,monospace;'>{escape(edge_pct)}</span>"
             f" &nbsp;|&nbsp; {escape(t('page.upcoming.market'))}: <span style='font-family:ui-monospace,SFMono-Regular,monospace;'>{escape(market_str)}</span>"
             f" &nbsp;|&nbsp; {escape(t('page.upcoming.signal'))}: <b>{escape(signal_label)}</b>{escape(recommended_chip)}"
@@ -5152,7 +5343,7 @@ def _render_fight_card(row: pd.Series) -> None:
             "<div class='fp-matchup-head-copy'>"
             f"<div class='fp-matchup-eyebrow'>{escape(matchup_label)}</div>"
             "</div>"
-            f"<div class='fp-matchup-signal {signal_class}'>{escape(icon)} {escape(signal_label)}</div>"
+            f"<div class='fp-matchup-signal {signal_class}'>{icon} {escape(signal_label)}</div>"
             "</div>"
             "<div class='fp-matchup-grid'>"
             "<div class='fp-fighter-pane'>"
@@ -5160,7 +5351,7 @@ def _render_fight_card(row: pd.Series) -> None:
             f"<div class='fp-odds-chip'><span class='fp-odds-chip-label'>Odds</span>{escape(_odds_display(row.get('fighter_odds')))}</div>"
             "</div>"
             "<div class='fp-versus-core'>"
-            "<div class='fp-versus-mark'>⚔️</div>"
+            f"<div class='fp-versus-mark'>{_goat_icon_html(size=20)}</div>"
             f"<div class='fp-versus-title'>{escape(t('page.upcoming.model_probabilities'))}</div>"
             "<div class='fp-prob-stack'>"
             "<div class='fp-prob-row'>"
@@ -5252,11 +5443,11 @@ def page_historical() -> None:
         row = df_stats.iloc[0]
         m1, m2, m3 = st.columns(3, gap="medium")
         with m1:
-            _render_kpi_card("Overall Accuracy", f"{float(row.get('accuracy', 0)):.1%}", icon="📈", accent="#22c55e")
+            _render_kpi_card("Overall Accuracy", f"{float(row.get('accuracy', 0)):.1%}", icon=_goat_icon_html(), accent="#22c55e")
         with m2:
-            _render_kpi_card("Total Predictions", f"{int(float(row.get('total_fights', 0))):,}", icon="🧠", accent="#ef4444")
+            _render_kpi_card("Total Predictions", f"{int(float(row.get('total_fights', 0))):,}", icon=_goat_icon_html(), accent="#ef4444")
         with m3:
-            _render_kpi_card("Events Covered", f"{int(float(row.get('events_covered', 0)))}", icon="📅", accent="#3b82f6")
+            _render_kpi_card("Events Covered", f"{int(float(row.get('events_covered', 0)))}", icon=_goat_icon_html(), accent="#3b82f6")
 
     if "event_date" in df_hist.columns:
         df_hist["event_date"] = pd.to_datetime(df_hist["event_date"], errors="coerce")
@@ -5279,9 +5470,9 @@ def page_historical() -> None:
 
     c1, _, c2 = st.columns([1, 0.08, 1], gap="medium")
     with c1:
-        _render_kpi_card("Correct Picks", f"{int(top_correct)}", icon="✅", accent="#10b981", compact=False)
+        _render_kpi_card("Correct Picks", f"{int(top_correct)}", icon=_goat_icon_html(), accent="#10b981", compact=False)
     with c2:
-        _render_kpi_card("Wrong Picks", f"{int(top_total - top_correct)}", icon="❌", accent="#ef4444", compact=False)
+        _render_kpi_card("Wrong Picks", f"{int(top_total - top_correct)}", icon=_goat_icon_html(), accent="#ef4444", compact=False)
 
     st.markdown("<div style='height: 0.45rem;'></div>", unsafe_allow_html=True)
 
@@ -5506,7 +5697,12 @@ def page_historical() -> None:
     )
     df_display["Fighter Badge"] = df_display.apply(lambda r: _fighter_badge_from_row(r, "fighter"), axis=1)
     df_display["Opponent Badge"] = df_display.apply(lambda r: _fighter_badge_from_row(r, "opponent"), axis=1)
-    df_display["✅/❌"] = df_display["model_correct"].map({1: "✅", 0: "❌"})
+    df_display["Result"] = df_display["model_correct"].map(
+        {
+            1: "<span class='result-badge result-win'>Correct</span>",
+            0: "<span class='result-badge result-loss'>Wrong</span>",
+        }
+    )
     df_display["Model Prob"] = df_display["model_prob"].apply(
         lambda x: f"{x:.1%}" if pd.notna(x) else "—"
     )
@@ -5524,7 +5720,7 @@ def page_historical() -> None:
         "Opponent Country",
         "bet_on_name",
         "winner_name_display",
-        "✅/❌",
+        "Result",
         "Model Prob",
         "Edge",
         "signal_strength",
@@ -5991,28 +6187,28 @@ def page_belt_holders() -> None:
         _render_kpi_card(
             t("page.belt_holders.total_divisions"),
             str(total_divisions),
-            icon="👑",
+            icon=_goat_icon_html(),
             accent="#3b82f6",
         )
     with c2:
         _render_kpi_card(
             t("page.belt_holders.active_champions"),
             str(active_champs),
-            icon="🥇",
+            icon=_goat_icon_html(),
             accent="#f59e0b",
         )
     with c3:
         _render_kpi_card(
             t("page.belt_holders.total_title_fights"),
             str(total_title_fights),
-            icon="🥊",
+            icon=_goat_icon_html(),
             accent="#a855f7",
         )
     with c4:
         _render_kpi_card(
             t("page.belt_holders.title_changes"),
             str(title_changes),
-            icon="🔄",
+            icon=_goat_icon_html(),
             accent="#ef4444",
         )
 
@@ -6232,7 +6428,10 @@ def page_belt_holders() -> None:
 
 
 def page_rankings() -> None:
-    st.header("🐐 Fighter Rankings")
+    st.markdown(
+        f"<h2 class='fp-section-title'>{_goat_icon_html(size=24)}<span>Fighter Rankings</span></h2>",
+        unsafe_allow_html=True,
+    )
 
     df_rank = _read_parquet(FOLDER_RANKINGS, ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
 
@@ -6301,19 +6500,19 @@ def page_rankings() -> None:
     # Quick stats
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        _render_kpi_card("Ranked Entries", str(len(df_show)), icon="👥", accent="#a855f7")
+        _render_kpi_card("Ranked Entries", str(len(df_show)), icon=_goat_icon_html(), accent="#a855f7")
     with c2:
-        _render_kpi_card("Weight Classes", str(df_show["weight_class"].nunique()), icon="⚖️", accent="#3b82f6")
+        _render_kpi_card("Weight Classes", str(df_show["weight_class"].nunique()), icon=_goat_icon_html(), accent="#3b82f6")
     if champion_ids and "fighter_id" in df_show.columns:
         champs = df_show["fighter_id"].astype(str).str.strip().isin(champion_ids).sum()
     else:
         champs = (df_show["rank"] == 1).sum()
     with c3:
-        _render_kpi_card("Current Champs", str(int(champs)), icon="🥇", accent="#f59e0b")
+        _render_kpi_card("Current Champs", str(int(champs)), icon=_goat_icon_html(), accent="#f59e0b")
     avg_points = pd.to_numeric(df_show.get("points"), errors="coerce").mean() if "points" in df_show.columns else pd.NA
     avg_points_text = f"{float(avg_points):.1f}" if pd.notna(avg_points) else "—"
     with c4:
-        _render_kpi_card("Avg Points", avg_points_text, icon="🔥", accent="#ef4444")
+        _render_kpi_card("Avg Points", avg_points_text, icon=_goat_icon_html(), accent="#ef4444")
 
     st.divider()
 
@@ -6323,7 +6522,7 @@ def page_rankings() -> None:
         wc_champ_id = champion_ids_per_wc.get(wc, "")
         wc_champ_name = champion_names_per_wc.get(wc, "")
 
-        st.subheader(f"⚖️ {wc}")
+        st.subheader(str(wc))
 
         display_cols = [
             "rank", "fighter_id", "fighter_name", "country", "points", "fights_count",
@@ -6543,7 +6742,7 @@ def page_fighter_profile() -> None:
     else:
         belt_parts = [part.strip() for part in re.split(r"\s*,\s*|\s*/\s*|\s+and\s+", belt_label, flags=re.I) if part.strip()]
         belt_count = min(2, len(belt_parts)) if belt_parts else 1
-    belt_icons = "🥇" * max(1, belt_count)
+    belt_icons = "".join(_goat_icon_html(size=14) for _ in range(max(1, belt_count)))
 
     fighter_weight_class = ""
     for candidate in [
@@ -6582,7 +6781,7 @@ def page_fighter_profile() -> None:
             'border:1px solid rgba(113,113,122,0.42);background:rgba(24,24,27,0.74);'
             'box-shadow:inset 0 0 0 1px rgba(255,255,255,0.03);'
             'margin:0 0 0.48rem 0;">'
-            f'<span style="font-size:0.86rem;line-height:1;">{belt_icons}</span>'
+            f'<span style="display:inline-flex;align-items:center;gap:0.18rem;line-height:1;">{belt_icons}</span>'
             '<span style="font-size:0.72rem;color:#d4d4d8;text-transform:uppercase;letter-spacing:0.08em;font-weight:800;">Belt Holder</span>'
             f'<span style="font-size:0.84rem;font-weight:700;color:#f4f4f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{escape(belt_label)}</span>'
             '</div>'
@@ -6606,11 +6805,11 @@ def page_fighter_profile() -> None:
             st.markdown(belt_holder_html, unsafe_allow_html=True)
         _r1, _r2, _r3 = st.columns(3)
         with _r1:
-            _render_fighter_meta_card("Str Def", _fmt_pct_compact(p.get("str_def")), icon="🛡️", accent="#22c55e")
+            _render_fighter_meta_card("Str Def", _fmt_pct_compact(p.get("str_def")), icon=_goat_icon_html(), accent="#22c55e")
         with _r2:
-            _render_fighter_meta_card("TD Def", _fmt_pct_compact(p.get("td_def")), icon="🤼", accent="#eab308")
+            _render_fighter_meta_card("TD Def", _fmt_pct_compact(p.get("td_def")), icon=_goat_icon_html(), accent="#eab308")
         with _r3:
-            _render_fighter_meta_card("SApM", _fmt_float_compact(p.get("sapm"), 2), icon="📉", accent="#ef4444")
+            _render_fighter_meta_card("SApM", _fmt_float_compact(p.get("sapm"), 2), icon=_goat_icon_html(), accent="#ef4444")
 
     dob_val = p.get("dob")
     dob_text = "—"
@@ -6646,11 +6845,11 @@ def page_fighter_profile() -> None:
         st.markdown("<div style='height: 0.3rem;'></div>", unsafe_allow_html=True)
         s1, s2, s3 = st.columns(3)
         with s1:
-            _render_fighter_meta_card("Bonuses Won", _bonuses_won, icon="🎖️", accent="#f59e0b")
+            _render_fighter_meta_card("Bonuses Won", _bonuses_won, icon=_goat_icon_html(), accent="#f59e0b")
         with s2:
-            _render_fighter_meta_card("Longest Win Streak", _longest_win, icon="📈", accent="#22c55e")
+            _render_fighter_meta_card("Longest Win Streak", _longest_win, icon=_goat_icon_html(), accent="#22c55e")
         with s3:
-            _render_fighter_meta_card("Longest Loss Streak", _longest_loss, icon="📉", accent="#ef4444")
+            _render_fighter_meta_card("Longest Loss Streak", _longest_loss, icon=_goat_icon_html(), accent="#ef4444")
 
     st.markdown("<div style='height: 0.55rem;'></div>", unsafe_allow_html=True)
 
@@ -6678,7 +6877,7 @@ def page_fighter_profile() -> None:
 
     metrics_view = st.radio(
         "Profile metrics view",
-        ["🧠 Bayesian", "🥊 Striking", "🤼 Grappling"],
+        ["Bayesian", "Striking", "Grappling"],
         horizontal=True,
         key="fighter_profile_metrics_view",
         label_visibility="collapsed",
@@ -6703,7 +6902,7 @@ def page_fighter_profile() -> None:
         except Exception:
             return "—"
 
-    if metrics_view == "🧠 Bayesian":
+    if metrics_view == "Bayesian":
         _render_fighter_overview_card(bayes_metrics, title="Bayesian Method Metrics")
         st.caption(
             "Bayes Finish uses Bayesian shrinkage on finish methods from pre-fight history. "
@@ -6715,23 +6914,23 @@ def page_fighter_profile() -> None:
             "`sudo -E docker compose --env-file \"$PIPELINE_ENV_FILE\" --profile sunday run --rm --no-deps mma_manual_fighter_countries_sync` "
             "then `mma_parquets_dashboard`."
         )
-    elif metrics_view == "🥊 Striking":
+    elif metrics_view == "Striking":
         _render_fighter_overview_card(
             [
-                ("🥊 SLpM", _fmt_float(p.get("slpm"), 2)),
-                ("📉 SApM", _fmt_float(p.get("sapm"), 2)),
-                ("🎯 Str Acc", _fmt_pct(p.get("str_acc"))),
-                ("🛡️ Str Def", _fmt_pct(p.get("str_def"))),
+                ("SLpM", _fmt_float(p.get("slpm"), 2)),
+                ("SApM", _fmt_float(p.get("sapm"), 2)),
+                ("Str Acc", _fmt_pct(p.get("str_acc"))),
+                ("Str Def", _fmt_pct(p.get("str_def"))),
             ],
             title="Striking Metrics",
         )
-    elif metrics_view == "🤼 Grappling":
+    elif metrics_view == "Grappling":
         _render_fighter_overview_card(
             [
-                ("🤼 TD Avg", _fmt_float(p.get("td_avg"), 2)),
-                ("🎯 TD Acc", _fmt_pct(p.get("td_acc"))),
-                ("🛡️ TD Def", _fmt_pct(p.get("td_def"))),
-                ("🧩 Sub Avg", _fmt_float(p.get("sub_avg"), 2)),
+                ("TD Avg", _fmt_float(p.get("td_avg"), 2)),
+                ("TD Acc", _fmt_pct(p.get("td_acc"))),
+                ("TD Def", _fmt_pct(p.get("td_def"))),
+                ("Sub Avg", _fmt_float(p.get("sub_avg"), 2)),
             ],
             title="Grappling Metrics",
         )
