@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 96" fill="none">
+  <g stroke="#b91c1c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    
+    <!-- Strap -->
+    <path d="M8 40 H60 C70 40 70 56 60 56 H8 Z"></path>
+    <path d="M196 40 H248 C258 40 258 56 248 56 H196 Z"></path>
+
+    <!-- Side plates -->
+    <polygon points="60,32 76,32 84,40 84,56 76,64 60,64 52,56 52,40"></polygon>
+    <polygon points="196,32 180,32 172,40 172,56 180,64 196,64 204,56 204,40"></polygon>
+
+    <!-- Center plate (octagon) -->
+    <polygon points="96,16 160,16 176,32 176,64 160,80 96,80 80,64 80,32"></polygon>
+
+    <!-- Inner plate detail -->
+    <polygon points="104,24 152,24 168,36 168,60 152,72 104,72 88,60 88,36"></polygon>
+
+  </g>
+</svg>
