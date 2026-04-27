@@ -1955,15 +1955,7 @@ def _inject_theme_aware_favicon() -> None:
         if (!toggle) return;
         toggle.classList.add('fp-toggle-patched');
         toggle.setAttribute('aria-label', 'Toggle sidebar');
-        if (!toggle.querySelector('.fp-toggle-icon')) {{
-            const icon = document.createElement('span');
-            icon.className = 'fp-toggle-icon';
-            icon.textContent = '☰';
-            icon.style.fontSize = '1.05rem';
-            icon.style.lineHeight = '1';
-            icon.style.color = '#e4e4e7';
-            toggle.appendChild(icon);
-        }}
+        toggle.querySelectorAll('.fp-toggle-icon').forEach((icon) => icon.remove());
     }}
 
     function getOwnText(el) {{
@@ -1997,14 +1989,11 @@ def _inject_theme_aware_favicon() -> None:
         }});
 
         const toggleSelectors = [
-            '[data-testid="collapsedControl"]',
-            '[data-testid="stSidebarCollapseButton"]',
-            '[data-testid="stSidebarCollapsedControl"]',
-            '[data-testid="stExpandSidebarButton"]',
-            '[data-testid="baseButton-headerNoPadding"]',
-            '[data-testid="stBaseButton-headerNoPadding"]',
+            '[data-testid="collapsedControl"] button',
+            '[data-testid="stSidebarCollapseButton"] button',
+            '[data-testid="stSidebarCollapsedControl"] button',
+            '[data-testid="stExpandSidebarButton"] button',
             '[data-testid="stSidebarHeader"] button',
-            'button[kind="headerNoPadding"]',
         ];
         const toggleInsideSelector = toggleSelectors.join(', ');
 
@@ -2886,14 +2875,8 @@ st.markdown(
     [data-testid="stSidebarCollapsedControl"] *,
     [data-testid="stExpandSidebarButton"],
     [data-testid="stExpandSidebarButton"] *,
-    [data-testid="baseButton-headerNoPadding"],
-    [data-testid="baseButton-headerNoPadding"] *,
-    [data-testid="stBaseButton-headerNoPadding"],
-    [data-testid="stBaseButton-headerNoPadding"] *,
     [data-testid="stSidebarHeader"] button,
     [data-testid="stSidebarHeader"] button *,
-    button[kind="headerNoPadding"],
-    button[kind="headerNoPadding"] *,
     .fp-toggle-patched,
     .fp-toggle-patched * {
         color: transparent !important;
@@ -2901,14 +2884,11 @@ st.markdown(
         line-height: 0 !important;
         text-shadow: none !important;
     }
-    [data-testid="collapsedControl"],
-    [data-testid="stSidebarCollapseButton"],
-    [data-testid="stSidebarCollapsedControl"],
-    [data-testid="stExpandSidebarButton"],
-    [data-testid="baseButton-headerNoPadding"],
-    [data-testid="stBaseButton-headerNoPadding"],
+    [data-testid="collapsedControl"] button,
+    [data-testid="stSidebarCollapseButton"] button,
+    [data-testid="stSidebarCollapsedControl"] button,
+    [data-testid="stExpandSidebarButton"] button,
     [data-testid="stSidebarHeader"] button,
-    button[kind="headerNoPadding"],
     .fp-toggle-patched {
         display: inline-flex !important;
         align-items: center !important;
@@ -2916,13 +2896,10 @@ st.markdown(
         min-width: 2rem !important;
         min-height: 2rem !important;
     }
-    [data-testid="collapsedControl"]::before,
-    [data-testid="stSidebarCollapseButton"]::before,
-    [data-testid="stSidebarCollapsedControl"]::before,
-    [data-testid="stExpandSidebarButton"]::before,
-    [data-testid="baseButton-headerNoPadding"]::before,
-    [data-testid="stBaseButton-headerNoPadding"]::before,
-    button[kind="headerNoPadding"]::before,
+    [data-testid="collapsedControl"] button::before,
+    [data-testid="stSidebarCollapseButton"] button::before,
+    [data-testid="stSidebarCollapsedControl"] button::before,
+    [data-testid="stExpandSidebarButton"] button::before,
     [data-testid="stSidebarHeader"] button::before,
     .fp-toggle-patched::before {
         content: "☰";
@@ -2932,19 +2909,24 @@ st.markdown(
         display: inline-block;
         font-family: Inter, system-ui, sans-serif !important;
     }
-    [data-testid="collapsedControl"] .fp-toggle-icon,
-    [data-testid="stSidebarCollapseButton"] .fp-toggle-icon,
-    [data-testid="stSidebarCollapsedControl"] .fp-toggle-icon,
-    [data-testid="stExpandSidebarButton"] .fp-toggle-icon,
-    [data-testid="baseButton-headerNoPadding"] .fp-toggle-icon,
-    [data-testid="stBaseButton-headerNoPadding"] .fp-toggle-icon,
-    button[kind="headerNoPadding"] .fp-toggle-icon,
+    [data-testid="collapsedControl"] button .fp-toggle-icon,
+    [data-testid="stSidebarCollapseButton"] button .fp-toggle-icon,
+    [data-testid="stSidebarCollapsedControl"] button .fp-toggle-icon,
+    [data-testid="stExpandSidebarButton"] button .fp-toggle-icon,
     [data-testid="stSidebarHeader"] button .fp-toggle-icon {
-        display: inline-block;
-        font-size: 1.08rem !important;
-        line-height: 1 !important;
-        color: #e4e4e7 !important;
-        font-family: Inter, system-ui, sans-serif !important;
+        display: none !important;
+    }
+    [data-testid="collapsedControl"] button > span,
+    [data-testid="stSidebarCollapseButton"] button > span,
+    [data-testid="stSidebarCollapsedControl"] button > span,
+    [data-testid="stExpandSidebarButton"] button > span,
+    [data-testid="stSidebarHeader"] button > span,
+    [data-testid="collapsedControl"] button [data-testid="stIconMaterial"],
+    [data-testid="stSidebarCollapseButton"] button [data-testid="stIconMaterial"],
+    [data-testid="stSidebarCollapsedControl"] button [data-testid="stIconMaterial"],
+    [data-testid="stExpandSidebarButton"] button [data-testid="stIconMaterial"],
+    [data-testid="stSidebarHeader"] button [data-testid="stIconMaterial"] {
+        display: none !important;
     }
     div[role="tooltip"] {
         font-family: Inter, system-ui, sans-serif !important;
