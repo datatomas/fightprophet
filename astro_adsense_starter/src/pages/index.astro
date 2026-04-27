@@ -172,53 +172,7 @@ const newsStructuredData = newsItems.map((item) => ({
 ---
 
 <BaseLayout title="Fight Prophet | Home" description="MMA AI and ML-powered fight analytics, predictions, fighter rankings, and model insights to help fight fans bet smarter.">
-  <div class="fp-home-layout" id="fp-home-layout" data-rail-open="false">
-    <button
-      type="button"
-      class="fp-rail-toggle"
-      id="fp-rail-toggle"
-      aria-controls="fp-app-rail-shell"
-      aria-expanded="false"
-      aria-label="Open navigation"
-    >
-      <span class="fp-rail-toggle-icon" aria-hidden="true">☰</span>
-      <span class="fp-rail-toggle-label">Menu</span>
-    </button>
-    <div class="fp-rail-backdrop" id="fp-rail-backdrop" hidden></div>
-    <aside class="fp-app-rail-shell" id="fp-app-rail-shell" aria-label="Open live app">
-      <button
-        type="button"
-        class="fp-rail-close"
-        id="fp-rail-close"
-        aria-label="Close navigation"
-      >×</button>
-      <div class="fp-app-rail">
-        <img src="/branding/fightprophet_logo_white.png" alt="FightProphet.com" class="fp-app-rail-logo" loading="lazy" />
-        <div class="fp-lang-switch fp-lang-switch-rail" aria-label="Language selector">
-          <button type="button" class="fp-lang-btn" data-lang="es" title="Español">🇨🇴</button>
-          <button type="button" class="fp-lang-btn" data-lang="pt" title="Português">🇧🇷</button>
-          <button type="button" class="fp-lang-btn" data-lang="en" title="English">🇺🇸</button>
-        </div>
-        <div class="fp-app-rail-links">
-          <a class="fp-app-rail-link is-primary" href={withPage('predictions')} target="_blank" rel="noopener noreferrer">Go to Predictions</a>
-          <a class="fp-app-rail-link" href={withPage('fighter-card')} target="_blank" rel="noopener noreferrer">Open Fighter Cards</a>
-          <a class="fp-app-rail-search" href={withPage('fighter-card')} target="_blank" rel="noopener noreferrer">Search fighter cards in app</a>
-          <a class="fp-app-rail-link" href={withPage('fight-lab')} target="_blank" rel="noopener noreferrer">Open Fight Lab</a>
-        </div>
-        <div class="fp-app-rail-footer">
-          <img src="/branding/fightprophet_ear_white.png" alt="" class="fp-app-rail-mini-mark" loading="lazy" aria-hidden="true" />
-          <div class="fp-app-rail-divider"></div>
-          <div class="fp-app-rail-links is-footer">
-          <a class="fp-app-rail-link is-muted" href="https://www.linkedin.com/company/fight-prophet" target="_blank" rel="noopener noreferrer">Business LinkedIn</a>
-          <a class="fp-app-rail-link is-muted" href="https://www.linkedin.com/in/datatomas/" target="_blank" rel="noopener noreferrer">Founder LinkedIn</a>
-          <a class="fp-app-rail-link is-muted" href="https://github.com/datatomas/fight_prophet" target="_blank" rel="noopener noreferrer">Business GitHub</a>
-          <a class="fp-app-rail-link is-muted" href="/terms/">Go to Terms</a>
-          </div>
-        </div>
-      </div>
-    </aside>
-
-    <main class="fp-home-main">
+  <div class="fp-home-main">
       <section class="fp-hero">
         <div class="fp-hero-shell">
           <div class="fp-hero-top-controls">
@@ -381,7 +335,6 @@ const newsStructuredData = newsItems.map((item) => ({
       </section>
 
       <AdSlot slot="1234567890" />
-    </main>
   </div>
 
   <script>
@@ -692,52 +645,6 @@ const newsStructuredData = newsItems.map((item) => ({
     });
   </script>
 
-  <script>
-    (() => {
-      const layout = document.getElementById('fp-home-layout');
-      const toggle = document.getElementById('fp-rail-toggle');
-      const closeBtn = document.getElementById('fp-rail-close');
-      const backdrop = document.getElementById('fp-rail-backdrop');
-      const rail = document.getElementById('fp-app-rail-shell');
-      if (!layout || !toggle || !rail) return;
-
-      const setOpen = (open) => {
-        layout.dataset.railOpen = open ? 'true' : 'false';
-        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-        toggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
-        if (backdrop) backdrop.hidden = !open;
-        document.body.style.overflow = open ? 'hidden' : '';
-      };
-
-      toggle.addEventListener('click', () => {
-        const isOpen = layout.dataset.railOpen === 'true';
-        setOpen(!isOpen);
-      });
-      if (closeBtn) closeBtn.addEventListener('click', () => setOpen(false));
-      if (backdrop) backdrop.addEventListener('click', () => setOpen(false));
-
-      rail.addEventListener('click', (event) => {
-        const target = event.target;
-        if (target instanceof HTMLAnchorElement) setOpen(false);
-      });
-
-      const desktopQuery = window.matchMedia('(min-width: 901px)');
-      const handleViewport = () => {
-        if (desktopQuery.matches) setOpen(false);
-      };
-      handleViewport();
-      if (typeof desktopQuery.addEventListener === 'function') {
-        desktopQuery.addEventListener('change', handleViewport);
-      } else if (typeof desktopQuery.addListener === 'function') {
-        desktopQuery.addListener(handleViewport);
-      }
-
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && layout.dataset.railOpen === 'true') setOpen(false);
-      });
-    })();
-  </script>
-
   <script type="application/ld+json" set:html={JSON.stringify(newsStructuredData)}></script>
 
   <script define:vars={{ newsItems }}>
@@ -837,169 +744,9 @@ const newsStructuredData = newsItems.map((item) => ({
   </script>
 
   <style>
-    .fp-home-layout {
-      display: grid;
-      grid-template-columns: minmax(280px, 312px) minmax(0, 1fr);
-      gap: clamp(1rem, 2vw, 1.65rem);
-      align-items: stretch;
-      width: 100%;
-    }
-    .fp-rail-toggle {
-      display: none;
-      align-items: center;
-      gap: 0.45rem;
-      position: fixed;
-      top: 0.7rem;
-      left: 0.7rem;
-      z-index: 70;
-      padding: 0.46rem 0.7rem;
-      border-radius: 0.7rem;
-      border: 1px solid rgba(220, 38, 38, 0.45);
-      background: linear-gradient(160deg, rgba(35, 20, 20, 0.92), rgba(22, 22, 26, 0.92));
-      color: #fef2f2;
-      font-size: 0.86rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      cursor: pointer;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 12px rgba(220, 38, 38, 0.18);
-    }
-    .fp-rail-toggle-icon {
-      font-size: 1.1rem;
-      line-height: 1;
-    }
-    .fp-rail-close {
-      display: none;
-      position: absolute;
-      top: 0.55rem;
-      right: 0.55rem;
-      width: 2rem;
-      height: 2rem;
-      align-items: center;
-      justify-content: center;
-      border-radius: 9999px;
-      border: 1px solid rgba(220, 38, 38, 0.45);
-      background: rgba(15, 15, 18, 0.85);
-      color: #fef2f2;
-      font-size: 1.3rem;
-      line-height: 1;
-      cursor: pointer;
-      z-index: 2;
-    }
-    .fp-rail-backdrop {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.55);
-      backdrop-filter: blur(2px);
-      z-index: 50;
-    }
     .fp-home-main {
       min-width: 0;
       width: 100%;
-    }
-    .fp-app-rail-shell {
-      width: 100%;
-      max-width: 312px;
-      justify-self: start;
-      align-self: stretch;
-      min-height: 100%;
-      box-sizing: border-box;
-      padding: 0;
-      border-radius: 1rem;
-      background: linear-gradient(180deg, rgba(18, 18, 22, 0.94), rgba(28, 18, 18, 0.84));
-      border: 1px solid rgba(220, 38, 38, 0.22);
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18), 0 0 16px rgba(220, 38, 38, 0.08);
-    }
-    .fp-app-rail {
-      position: sticky;
-      top: 1.1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.1rem;
-      padding: 1.12rem 1rem;
-      min-height: calc(100vh - 2.2rem);
-      background: linear-gradient(180deg, rgba(24, 24, 30, 0.18), rgba(48, 24, 24, 0.06));
-      border-radius: 1rem;
-    }
-    .fp-app-rail-logo {
-      width: min(250px, 100%);
-      height: auto;
-      object-fit: contain;
-    }
-    .fp-app-rail-search,
-    .fp-app-rail-link {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      min-width: 0;
-      min-height: 3rem;
-      padding: 0.82rem 0.92rem;
-      box-sizing: border-box;
-      border-radius: 0.82rem;
-      text-decoration: none;
-      text-align: center;
-      font-size: 0.94rem;
-      font-weight: 740;
-      line-height: 1.25;
-      color: #f4f4f5;
-      background: linear-gradient(160deg, rgba(45, 24, 24, 0.5), rgba(39, 39, 42, 0.65));
-      border: 1px solid rgba(220, 38, 38, 0.22);
-      box-shadow: 0 0 10px rgba(220, 38, 38, 0.08);
-      overflow-wrap: anywhere;
-    }
-    .fp-app-rail-search {
-      justify-content: flex-start;
-      background: rgba(39, 39, 42, 0.9);
-      border-color: rgba(113, 113, 122, 0.42);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
-      text-align: left;
-    }
-    .fp-app-rail-search::before {
-      content: '⌕';
-      margin-right: 0.58rem;
-      color: #fca5a5;
-      font-size: 1.02rem;
-    }
-    .fp-app-rail-links {
-      display: grid;
-      gap: 0.9rem;
-      width: 100%;
-    }
-    .fp-app-rail-link.is-primary {
-      min-height: 3.2rem;
-      background: linear-gradient(160deg, #ef4444, #dc2626);
-      border-color: rgba(248, 113, 113, 0.68);
-      box-shadow: 0 0 18px rgba(239, 68, 68, 0.28);
-      font-size: 1.05rem;
-      font-weight: 780;
-    }
-    .fp-app-rail-link.is-muted {
-      font-size: 0.86rem;
-      color: #d4d4d8;
-      background: rgba(24, 24, 27, 0.82);
-      border-color: rgba(113, 113, 122, 0.34);
-      box-shadow: none;
-    }
-    .fp-app-rail-footer {
-      margin-top: auto;
-      display: grid;
-      gap: 1rem;
-      align-content: end;
-      padding-top: clamp(1.75rem, 10vh, 5rem);
-    }
-    .fp-app-rail-mini-mark {
-      width: 42px;
-      height: 42px;
-      object-fit: contain;
-      justify-self: center;
-      opacity: 0.9;
-      filter: drop-shadow(0 0 10px rgba(220, 38, 38, 0.2));
-    }
-    .fp-app-rail-divider {
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(220, 38, 38, 0.34), transparent);
-      margin: 0;
     }
     .fp-visually-hidden {
       position: absolute;
@@ -1011,34 +758,6 @@ const newsStructuredData = newsItems.map((item) => ({
       clip: rect(0, 0, 0, 0);
       white-space: nowrap;
       border: 0;
-    }
-    .fp-lang-switch {
-      display: inline-flex;
-      gap: 0.28rem;
-      background: rgba(15, 15, 18, 0.64);
-      border: 1px solid rgba(113, 113, 122, 0.42);
-      border-radius: 9999px;
-      padding: 0.2rem;
-    }
-    .fp-lang-switch-rail {
-      align-self: center;
-      justify-self: center;
-      margin-top: -0.05rem;
-    }
-    .fp-lang-btn {
-      border: 0;
-      background: transparent;
-      color: #f4f4f5;
-      border-radius: 9999px;
-      width: 2.72rem;
-      height: 2.72rem;
-      cursor: pointer;
-      font-size: 1.34rem;
-      line-height: 1;
-    }
-    .fp-lang-btn.is-active {
-      background: linear-gradient(160deg, #ef4444, #b91c1c);
-      box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);
     }
     .fp-hero-subtitle {
       margin: 0.1rem 0 0;
@@ -1585,73 +1304,12 @@ const newsStructuredData = newsItems.map((item) => ({
       background: linear-gradient(160deg, rgba(127, 29, 29, 0.72), rgba(24, 24, 27, 0.7));
     }
     @media (max-width: 1180px) {
-      .fp-home-layout {
-        grid-template-columns: 228px minmax(0, 1fr);
-        gap: 1rem;
-      }
-      .fp-app-rail-shell {
-        max-width: 228px;
-      }
-      .fp-app-rail {
-        padding-inline: 0.8rem;
-      }
-      .fp-app-rail-logo {
-        width: min(188px, 100%);
-      }
-      .fp-lang-btn {
-        width: 2.38rem;
-        height: 2.38rem;
-        font-size: 1.16rem;
-      }
-      .fp-app-rail-copy {
-        font-size: 0.88rem;
-      }
       .fp-champ-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.82rem;
       }
     }
     @media (max-width: 900px) {
-      .fp-home-layout {
-        grid-template-columns: 1fr;
-      }
-      .fp-rail-toggle {
-        display: inline-flex;
-      }
-      .fp-app-rail-shell {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 100vh;
-        height: 100dvh;
-        width: min(82vw, 300px);
-        max-width: min(82vw, 300px);
-        min-height: 0;
-        z-index: 60;
-        margin: 0;
-        border-radius: 0 1rem 1rem 0;
-        box-shadow: 16px 0 32px rgba(0, 0, 0, 0.55);
-        transform: translateX(-100%);
-        transition: transform 0.25s ease;
-        overflow-y: auto;
-        overflow-x: hidden;
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior: contain;
-      }
-      .fp-home-layout[data-rail-open="true"] .fp-app-rail-shell {
-        transform: translateX(0);
-      }
-      .fp-app-rail {
-        position: static;
-        min-height: 0;
-        padding: 1rem 0.95rem 1.6rem;
-      }
-      .fp-rail-close {
-        display: inline-flex;
-      }
-      .fp-home-layout[data-rail-open="true"] .fp-rail-backdrop {
-        display: block;
-      }
       .fp-section-head {
         flex-direction: column;
         align-items: flex-start;
@@ -1703,11 +1361,6 @@ const newsStructuredData = newsItems.map((item) => ({
         font-size: 0.92rem;
         line-height: 1.55;
       }
-      .fp-lang-btn {
-        width: 2.18rem;
-        height: 2.18rem;
-        font-size: 1.08rem;
-      }
       .fp-btn {
         font-size: 0.84rem;
         padding: 0.46rem 0.68rem;
@@ -1727,14 +1380,6 @@ const newsStructuredData = newsItems.map((item) => ({
       }
     }
     @media (max-width: 620px) {
-      .fp-app-rail {
-        padding: 0.8rem;
-      }
-      .fp-app-rail-search,
-      .fp-app-rail-link,
-      .fp-app-rail-link.is-primary {
-        min-height: 2.7rem;
-      }
       .fp-cta-grid {
         grid-template-columns: 1fr;
       }

@@ -13,6 +13,15 @@ const siteUrl = import.meta.env.PUBLIC_SITE_URL ?? 'https://fightprophet.com';
 const appUrl = import.meta.env.PUBLIC_APP_URL ?? 'https://app.fightprophet.com';
 const canonicalUrl = new URL(Astro.url.pathname, siteUrl).toString();
 const ogImageUrl = new URL('/branding/fightprophet_logo_white.png', siteUrl).toString();
+
+const withPage = (slug: string) =>
+  `${appUrl}${appUrl.includes('?') ? '&' : '?'}page=${encodeURIComponent(slug)}`;
+
+const currentPath = Astro.url.pathname;
+const isActive = (href: string) => {
+  if (href === '/') return currentPath === '/';
+  return currentPath.startsWith(href);
+};
 ---
 
 <!doctype html>
@@ -43,26 +52,17 @@ const ogImageUrl = new URL('/branding/fightprophet_logo_white.png', siteUrl).toS
     <title>{title}</title>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5085788292969536" crossorigin="anonymous"></script>
     <script is:inline define:vars={{ appUrl }}>
-      // Prewarm the Streamlit app so Azure Container Apps cold-start finishes
-      // before the user clicks "Open App". Fires after the page has had a
-      // moment to render its own resources.
       (() => {
         if (typeof window === 'undefined') return;
         const warm = () => {
           try {
             fetch(appUrl + '/_stcore/health', {
-              mode: 'no-cors',
-              credentials: 'omit',
-              cache: 'no-store',
-              keepalive: true,
+              mode: 'no-cors', credentials: 'omit', cache: 'no-store', keepalive: true,
             }).catch(() => {});
           } catch (e) { /* no-op */ }
         };
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(warm, { timeout: 2500 });
-        } else {
-          setTimeout(warm, 1500);
-        }
+        if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 2500 });
+        else setTimeout(warm, 1500);
       })();
     </script>
     <script is:inline>
@@ -73,40 +73,178 @@ const ogImageUrl = new URL('/branding/fightprophet_logo_white.png', siteUrl).toS
           if (!favicon) return;
           favicon.setAttribute('href', prefersDark ? '/branding/white_ear_favicon.png' : '/branding/ear_favicon_transparent.png');
         };
-
         updateFavicon();
         const media = window.matchMedia('(prefers-color-scheme: dark)');
-        if (typeof media.addEventListener === 'function') {
-          media.addEventListener('change', updateFavicon);
-        } else if (typeof media.addListener === 'function') {
-          media.addListener(updateFavicon);
-        }
+        if (typeof media.addEventListener === 'function') media.addEventListener('change', updateFavicon);
+        else if (typeof media.addListener === 'function') media.addListener(updateFavicon);
       })();
     </script>
   </head>
   <body>
-    <main>
-      <slot />
-    </main>
-    <footer class="fp-site-footer">
-      <nav class="fp-site-footer-nav" aria-label="Site sections">
-        <a href="/">Home</a>
-        <a href="/predictions/">Predictions</a>
-        <a href="/fight-lab/">Fight Lab</a>
-        <a href="/rankings/">Rankings</a>
-        <a href="/belt-holders/">Belt Holders</a>
-        <a href="/fighter-card/">Fighter Cards</a>
-        <a href="/events-history/">Events History</a>
-        <a href="/privacy/">Privacy</a>
-        <a href="/terms/">Terms</a>
-      </nav>
-      <p class="fp-site-footer-meta">© Fight Prophet · Information and education only — not financial advice.</p>
-    </footer>
+
+    <!-- Rail toggle (mobile only) -->
+    <button
+      type="button"
+      class="fp-rail-toggle"
+      id="fp-rail-toggle"
+      aria-controls="fp-app-rail-shell"
+      aria-expanded="false"
+      aria-label="Open navigation"
+    >
+      <span aria-hidden="true">☰</span>
+      <span class="fp-rail-toggle-label">Menu</span>
+    </button>
+
+    <!-- Backdrop (mobile only) -->
+    <div class="fp-rail-backdrop" id="fp-rail-backdrop" hidden></div>
+
+    <!-- Left rail -->
+    <aside class="fp-app-rail-shell" id="fp-app-rail-shell" aria-label="Site navigation">
+      <button type="button" class="fp-rail-close" id="fp-rail-close" aria-label="Close navigation">×</button>
+      <div class="fp-app-rail">
+        <a href="/" class="fp-app-rail-logo-wrap">
+          <img src="/branding/fightprophet_logo_white.png" alt="Fight Prophet" class="fp-app-rail-logo" loading="lazy" />
+        </a>
+
+        <!-- Language switcher -->
+        <div class="fp-lang-switch fp-lang-switch-rail" aria-label="Language selector">
+          <button type="button" class="fp-lang-btn" data-lang="es" title="Español">🇨🇴</button>
+          <button type="button" class="fp-lang-btn" data-lang="pt" title="Português">🇧🇷</button>
+          <button type="button" class="fp-lang-btn" data-lang="en" title="English">🇺🇸</button>
+        </div>
+
+        <!-- Site pages nav -->
+        <nav class="fp-app-rail-nav" aria-label="Site pages">
+          <a class={`fp-app-rail-nav-link${isActive('/') ? ' is-active' : ''}`} href="/">Home</a>
+          <a class={`fp-app-rail-nav-link${isActive('/rankings/') ? ' is-active' : ''}`} href="/rankings/">Rankings</a>
+          <a class={`fp-app-rail-nav-link${isActive('/belt-holders/') ? ' is-active' : ''}`} href="/belt-holders/">Belt Holders</a>
+          <a class={`fp-app-rail-nav-link${isActive('/fighter-card/') ? ' is-active' : ''}`} href="/fighter-card/">Fighter Cards</a>
+          <a class={`fp-app-rail-nav-link${isActive('/events-history/') ? ' is-active' : ''}`} href="/events-history/">Events History</a>
+          <a class={`fp-app-rail-nav-link${isActive('/predictions/') ? ' is-active' : ''}`} href="/predictions/">Predictions</a>
+          <a class={`fp-app-rail-nav-link${isActive('/fight-lab/') ? ' is-active' : ''}`} href="/fight-lab/">Fight Lab</a>
+        </nav>
+
+        <!-- App quick links -->
+        <div class="fp-app-rail-links">
+          <a class="fp-app-rail-link is-primary" href={withPage('predictions')} target="_blank" rel="noopener noreferrer">Open Predictions App</a>
+          <a class="fp-app-rail-link" href={withPage('fighter-card')} target="_blank" rel="noopener noreferrer">Open Fighter Cards</a>
+          <a class="fp-app-rail-link" href={withPage('fight-lab')} target="_blank" rel="noopener noreferrer">Open Fight Lab</a>
+        </div>
+
+        <!-- Footer -->
+        <div class="fp-app-rail-footer">
+          <img src="/branding/fightprophet_ear_white.png" alt="" class="fp-app-rail-mini-mark" loading="lazy" aria-hidden="true" />
+          <div class="fp-app-rail-divider"></div>
+          <div class="fp-app-rail-links is-footer">
+            <a class="fp-app-rail-link is-muted" href="https://www.linkedin.com/company/fight-prophet" target="_blank" rel="noopener noreferrer">Business LinkedIn</a>
+            <a class="fp-app-rail-link is-muted" href="https://www.linkedin.com/in/datatomas/" target="_blank" rel="noopener noreferrer">Founder LinkedIn</a>
+            <a class="fp-app-rail-link is-muted" href="https://github.com/datatomas/fight_prophet" target="_blank" rel="noopener noreferrer">Business GitHub</a>
+            <a class="fp-app-rail-link is-muted" href="/terms/">Terms</a>
+            <a class="fp-app-rail-link is-muted" href="/privacy/">Privacy</a>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Page content -->
+    <div class="fp-layout-wrap">
+      <main>
+        <slot />
+      </main>
+      <footer class="fp-site-footer">
+        <nav class="fp-site-footer-nav" aria-label="Site sections">
+          <a href="/">Home</a>
+          <a href="/predictions/">Predictions</a>
+          <a href="/fight-lab/">Fight Lab</a>
+          <a href="/rankings/">Rankings</a>
+          <a href="/belt-holders/">Belt Holders</a>
+          <a href="/fighter-card/">Fighter Cards</a>
+          <a href="/events-history/">Events History</a>
+          <a href="/privacy/">Privacy</a>
+          <a href="/terms/">Terms</a>
+        </nav>
+        <p class="fp-site-footer-meta">© Fight Prophet · Information and education only — not financial advice.</p>
+      </footer>
+    </div>
+
   </body>
 </html>
 
+<script>
+  (() => {
+    const RAIL_WIDTH = 285;
+    const DESKTOP_BP = 901;
+    const FP_LANG_KEY = 'fp_lang';
+
+    const layout = document.querySelector('.fp-layout-wrap') as HTMLElement | null;
+    const rail = document.getElementById('fp-app-rail-shell') as HTMLElement | null;
+    const toggle = document.getElementById('fp-rail-toggle') as HTMLButtonElement | null;
+    const closeBtn = document.getElementById('fp-rail-close') as HTMLButtonElement | null;
+    const backdrop = document.getElementById('fp-rail-backdrop') as HTMLElement | null;
+    const body = document.body;
+
+    const isMobile = () => window.innerWidth < DESKTOP_BP;
+
+    const setOpen = (open: boolean) => {
+      if (!rail) return;
+      rail.dataset.railOpen = open ? 'true' : 'false';
+      if (toggle) {
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        toggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+      }
+      if (backdrop) backdrop.hidden = !open;
+      body.style.overflow = open && isMobile() ? 'hidden' : '';
+    };
+
+    if (toggle) toggle.addEventListener('click', () => setOpen(rail?.dataset.railOpen !== 'true'));
+    if (closeBtn) closeBtn.addEventListener('click', () => setOpen(false));
+    if (backdrop) backdrop.addEventListener('click', () => setOpen(false));
+
+    if (rail) {
+      rail.addEventListener('click', (event) => {
+        if (event.target instanceof HTMLAnchorElement && isMobile()) setOpen(false);
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && rail?.dataset.railOpen === 'true') setOpen(false);
+    });
+
+    const desktopQuery = window.matchMedia(`(min-width: ${DESKTOP_BP}px)`);
+    const handleViewport = () => {
+      if (desktopQuery.matches) {
+        setOpen(false);
+        body.style.overflow = '';
+      }
+    };
+    handleViewport();
+    if (typeof desktopQuery.addEventListener === 'function') desktopQuery.addEventListener('change', handleViewport);
+    else if (typeof desktopQuery.addListener === 'function') (desktopQuery as any).addListener(handleViewport);
+
+    // Language button active state (full applyLanguage is in index.astro for home content)
+    const initLangButtons = (lang: string) => {
+      document.querySelectorAll<HTMLButtonElement>('.fp-lang-btn').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.dataset.lang === lang);
+      });
+      document.documentElement.lang = lang;
+    };
+
+    const storedLang = localStorage.getItem(FP_LANG_KEY) || 'en';
+    initLangButtons(storedLang);
+
+    document.querySelectorAll<HTMLButtonElement>('.fp-lang-btn[data-lang]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const lang = btn.dataset.lang || 'en';
+        localStorage.setItem(FP_LANG_KEY, lang);
+        initLangButtons(lang);
+      });
+    });
+  })();
+</script>
+
 <style>
   :global(:root) {
+    --fp-rail-width: 285px;
     --fp-shell-max: 1720px;
   }
 
@@ -149,24 +287,248 @@ const ogImageUrl = new URL('/branding/fightprophet_logo_white.png', siteUrl).toS
     pointer-events: none;
   }
 
+  /* ── Rail toggle button (mobile only) ─────────────────────────────── */
+  .fp-rail-toggle {
+    display: none;
+    position: fixed;
+    top: 0.7rem;
+    left: 0.7rem;
+    z-index: 70;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.46rem 0.76rem;
+    border-radius: 0.7rem;
+    border: 1px solid rgba(220, 38, 38, 0.45);
+    background: linear-gradient(160deg, rgba(35, 20, 20, 0.94), rgba(22, 22, 26, 0.94));
+    color: #fef2f2;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 12px rgba(220, 38, 38, 0.18);
+    backdrop-filter: blur(4px);
+  }
+  .fp-rail-toggle-label {
+    font-size: 0.84rem;
+  }
+
+  /* ── Backdrop (mobile only) ───────────────────────────────────────── */
+  .fp-rail-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+    z-index: 50;
+  }
+
+  /* ── Close button (inside rail, mobile only) ──────────────────────── */
+  .fp-rail-close {
+    display: none;
+    position: absolute;
+    top: 0.55rem;
+    right: 0.6rem;
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 1px solid rgba(220, 38, 38, 0.45);
+    background: rgba(15, 15, 18, 0.88);
+    color: #fef2f2;
+    font-size: 1.32rem;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 2;
+  }
+
+  /* ── Left rail shell ──────────────────────────────────────────────── */
+  .fp-app-rail-shell {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100dvh;
+    width: var(--fp-rail-width);
+    z-index: 60;
+    background: linear-gradient(180deg, rgba(14, 14, 18, 0.98), rgba(22, 12, 12, 0.96));
+    border-right: 1px solid rgba(220, 38, 38, 0.22);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35), inset -1px 0 0 rgba(127, 29, 29, 0.28);
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    box-sizing: border-box;
+  }
+
+  .fp-app-rail {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.1rem 0.95rem 1.6rem;
+    min-height: 100%;
+  }
+
+  .fp-app-rail-logo-wrap {
+    display: block;
+    line-height: 0;
+  }
+
+  .fp-app-rail-logo {
+    width: min(220px, 100%);
+    height: auto;
+    object-fit: contain;
+  }
+
+  /* Language switch inside rail */
+  .fp-lang-switch {
+    display: inline-flex;
+    gap: 0.28rem;
+    background: rgba(15, 15, 18, 0.64);
+    border: 1px solid rgba(113, 113, 122, 0.42);
+    border-radius: 9999px;
+    padding: 0.2rem;
+  }
+  :global(.fp-lang-btn) {
+    border: 0;
+    background: transparent;
+    color: #f4f4f5;
+    border-radius: 9999px;
+    width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  :global(.fp-lang-btn.is-active) {
+    background: linear-gradient(160deg, #ef4444, #b91c1c);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);
+  }
+
+  /* Site nav */
+  .fp-app-rail-nav {
+    display: grid;
+    gap: 0.22rem;
+  }
+
+  .fp-app-rail-nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.52rem 0.7rem;
+    border-radius: 0.65rem;
+    border: 1px solid transparent;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #d4d4d8;
+    transition: background 80ms ease, border-color 80ms ease;
+  }
+  .fp-app-rail-nav-link:hover {
+    background: rgba(220, 38, 38, 0.12);
+    border-color: rgba(220, 38, 38, 0.22);
+    color: #fef2f2;
+  }
+  .fp-app-rail-nav-link.is-active {
+    background: rgba(220, 38, 38, 0.18);
+    border-color: rgba(248, 113, 113, 0.38);
+    color: #fef2f2;
+    font-weight: 700;
+  }
+
+  /* App links */
+  .fp-app-rail-links {
+    display: grid;
+    gap: 0.72rem;
+  }
+
+  .fp-app-rail-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.8rem;
+    padding: 0.72rem 0.88rem;
+    border-radius: 0.78rem;
+    text-decoration: none;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #f4f4f5;
+    background: linear-gradient(160deg, rgba(45, 24, 24, 0.5), rgba(39, 39, 42, 0.65));
+    border: 1px solid rgba(220, 38, 38, 0.22);
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.08);
+    overflow-wrap: anywhere;
+  }
+  .fp-app-rail-link.is-primary {
+    min-height: 3rem;
+    background: linear-gradient(160deg, #ef4444, #dc2626);
+    border-color: rgba(248, 113, 113, 0.68);
+    box-shadow: 0 0 18px rgba(239, 68, 68, 0.28);
+    font-size: 0.95rem;
+    font-weight: 780;
+  }
+  .fp-app-rail-link.is-muted {
+    min-height: auto;
+    padding: 0.38rem 0.56rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #a1a1aa;
+    background: rgba(24, 24, 27, 0.72);
+    border-color: rgba(113, 113, 122, 0.28);
+    box-shadow: none;
+  }
+
+  .fp-app-rail-footer {
+    margin-top: auto;
+    display: grid;
+    gap: 0.88rem;
+    padding-top: clamp(1.5rem, 8vh, 4rem);
+  }
+
+  .fp-app-rail-mini-mark {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    justify-self: center;
+    opacity: 0.88;
+    filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.2));
+  }
+
+  .fp-app-rail-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(220, 38, 38, 0.34), transparent);
+  }
+
+  /* ── Page layout wrap ─────────────────────────────────────────────── */
+  .fp-layout-wrap {
+    margin-left: var(--fp-rail-width);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
   main {
+    flex: 1;
     max-width: var(--fp-shell-max);
+    width: 100%;
     margin: 0 auto;
-    padding: 1.25rem clamp(1rem, 2vw, 1.6rem);
+    padding: 1.25rem clamp(0.85rem, 2vw, 1.5rem);
     position: relative;
     z-index: 1;
+    box-sizing: border-box;
   }
 
   .fp-site-footer {
     max-width: var(--fp-shell-max);
+    width: 100%;
     margin: 0 auto;
-    padding: 1.25rem clamp(1rem, 2vw, 1.6rem) 2rem;
+    padding: 1.25rem clamp(0.85rem, 2vw, 1.5rem) 2rem;
     border-top: 1px solid rgba(113, 113, 122, 0.32);
     color: #a1a1aa;
     background: linear-gradient(180deg, rgba(9, 9, 11, 0.1), rgba(9, 9, 11, 0.32));
     backdrop-filter: blur(1px);
     position: relative;
     z-index: 1;
+    box-sizing: border-box;
   }
   .fp-site-footer-nav {
     display: flex;
@@ -192,7 +554,38 @@ const ogImageUrl = new URL('/branding/fightprophet_logo_white.png', siteUrl).toS
     text-align: center;
   }
 
+  /* ── Mobile (≤900px): drawer behavior ────────────────────────────── */
   @media (max-width: 900px) {
+    .fp-rail-toggle {
+      display: inline-flex;
+    }
+
+    .fp-app-rail-shell {
+      transform: translateX(-100%);
+      transition: transform 0.24s ease;
+      width: min(82vw, 300px);
+      max-width: min(82vw, 300px);
+      border-radius: 0 1rem 1rem 0;
+      box-shadow: 16px 0 40px rgba(0, 0, 0, 0.58);
+    }
+
+    .fp-app-rail-shell[data-rail-open="true"] {
+      transform: translateX(0);
+    }
+
+    .fp-rail-backdrop:not([hidden]) {
+      display: block;
+    }
+
+    .fp-rail-close {
+      display: inline-flex;
+    }
+
+    .fp-layout-wrap {
+      margin-left: 0;
+      padding-top: 3rem;
+    }
+
     :global(body)::before {
       background:
         linear-gradient(180deg, rgba(9, 9, 11, 0.6) 0%, rgba(9, 9, 11, 0.74) 34%, rgba(9, 9, 11, 0.84) 100%),
@@ -203,6 +596,14 @@ const ogImageUrl = new URL('/branding/fightprophet_logo_white.png', siteUrl).toS
       width: min(56vw, 280px);
       top: 50%;
       opacity: 0.1;
+    }
+  }
+
+  /* ── Small phones (≤480px) ────────────────────────────────────────── */
+  @media (max-width: 480px) {
+    .fp-app-rail-shell {
+      width: min(88vw, 268px);
+      max-width: min(88vw, 268px);
     }
   }
 </style>
