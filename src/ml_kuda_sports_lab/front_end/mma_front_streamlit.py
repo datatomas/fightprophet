@@ -3523,11 +3523,11 @@ with st.sidebar:
 
     _page_slug_to_label = {
         "predictions": t('nav.predictions'),
-        "fight-lab": t('nav.historical'),
+        "fighter-card": t('nav.fighter_profile'),
+        "belt-holders": t('nav.belt_holders'),
         "events-history": t('nav.events_history'),
         "rankings": t('nav.rankings'),
-        "belt-holders": t('nav.belt_holders'),
-        "fighter-card": t('nav.fighter_profile'),
+        "fight-lab": t('nav.historical'),
         "terms": t('nav.terms'),
     }
     _requested_slug = _PAGE_SLUG_ALIASES.get(str(st.query_params.get("page", "")).strip().lower(), str(st.query_params.get("page", "")).strip().lower())
