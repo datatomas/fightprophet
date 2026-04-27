@@ -82,19 +82,6 @@ const isActive = (href: string) => {
   </head>
   <body>
 
-    <!-- Rail toggle (mobile only) -->
-    <button
-      type="button"
-      class="fp-rail-toggle"
-      id="fp-rail-toggle"
-      aria-controls="fp-app-rail-shell"
-      aria-expanded="false"
-      aria-label="Open navigation"
-    >
-      <span aria-hidden="true">☰</span>
-      <span class="fp-rail-toggle-label">Menu</span>
-    </button>
-
     <!-- Backdrop (mobile only) -->
     <div class="fp-rail-backdrop" id="fp-rail-backdrop" hidden></div>
 
@@ -148,6 +135,19 @@ const isActive = (href: string) => {
 
     <!-- Page content -->
     <div class="fp-layout-wrap">
+      <!-- Mobile top bar — only visible on small screens, part of normal flow so nothing overlaps -->
+      <div class="fp-mobile-topbar" id="fp-mobile-topbar">
+        <button
+          type="button"
+          class="fp-rail-toggle"
+          id="fp-rail-toggle"
+          aria-controls="fp-app-rail-shell"
+          aria-expanded="false"
+          aria-label="Open navigation"
+        >
+          <span aria-hidden="true">☰</span>
+        </button>
+      </div>
       <main>
         <slot />
       </main>
@@ -172,7 +172,7 @@ const isActive = (href: string) => {
 
 <script>
   (() => {
-    const RAIL_WIDTH = 285;
+    const RAIL_WIDTH = 260;
     const DESKTOP_BP = 901;
     const FP_LANG_KEY = 'fp_lang';
 
@@ -244,7 +244,7 @@ const isActive = (href: string) => {
 
 <style>
   :global(:root) {
-    --fp-rail-width: 285px;
+    --fp-rail-width: 260px;
     --fp-shell-max: 1720px;
   }
 
@@ -287,29 +287,35 @@ const isActive = (href: string) => {
     pointer-events: none;
   }
 
-  /* ── Rail toggle button (mobile only) ─────────────────────────────── */
-  .fp-rail-toggle {
+  /* ── Mobile top bar (hidden on desktop) ───────────────────────────── */
+  .fp-mobile-topbar {
     display: none;
-    position: fixed;
-    top: 0.7rem;
-    left: 0.7rem;
-    z-index: 70;
     align-items: center;
-    gap: 0.45rem;
-    padding: 0.46rem 0.76rem;
-    border-radius: 0.7rem;
+    padding: 0.5rem 0.75rem;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: rgba(9, 9, 11, 0.88);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid rgba(220, 38, 38, 0.18);
+  }
+
+  /* ── Rail toggle button ────────────────────────────────────────────── */
+  .fp-rail-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.6rem;
     border: 1px solid rgba(220, 38, 38, 0.45);
     background: linear-gradient(160deg, rgba(35, 20, 20, 0.94), rgba(22, 22, 26, 0.94));
     color: #fef2f2;
-    font-size: 0.88rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
+    font-size: 1.1rem;
+    line-height: 1;
     cursor: pointer;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 12px rgba(220, 38, 38, 0.18);
-    backdrop-filter: blur(4px);
-  }
-  .fp-rail-toggle-label {
-    font-size: 0.84rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 8px rgba(220, 38, 38, 0.15);
+    flex-shrink: 0;
   }
 
   /* ── Backdrop (mobile only) ───────────────────────────────────────── */
@@ -556,15 +562,15 @@ const isActive = (href: string) => {
 
   /* ── Mobile (≤900px): drawer behavior ────────────────────────────── */
   @media (max-width: 900px) {
-    .fp-rail-toggle {
-      display: inline-flex;
+    .fp-mobile-topbar {
+      display: flex;
     }
 
     .fp-app-rail-shell {
       transform: translateX(-100%);
       transition: transform 0.24s ease;
-      width: min(82vw, 300px);
-      max-width: min(82vw, 300px);
+      width: min(72vw, 260px);
+      max-width: min(72vw, 260px);
       border-radius: 0 1rem 1rem 0;
       box-shadow: 16px 0 40px rgba(0, 0, 0, 0.58);
     }
@@ -583,7 +589,6 @@ const isActive = (href: string) => {
 
     .fp-layout-wrap {
       margin-left: 0;
-      padding-top: 3rem;
     }
 
     :global(body)::before {
@@ -602,8 +607,8 @@ const isActive = (href: string) => {
   /* ── Small phones (≤480px) ────────────────────────────────────────── */
   @media (max-width: 480px) {
     .fp-app-rail-shell {
-      width: min(88vw, 268px);
-      max-width: min(88vw, 268px);
+      width: min(78vw, 245px);
+      max-width: min(78vw, 245px);
     }
   }
 </style>
