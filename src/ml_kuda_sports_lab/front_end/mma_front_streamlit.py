@@ -549,6 +549,27 @@ def _render_lang_flag_selector(current_lang: str) -> str:
     return selected
 
 
+def _render_sidebar_lang_switch(current_lang: str, page_slug: str) -> str:
+    selected = current_lang if current_lang in _LANG_BUTTONS else "en"
+    safe_page = (page_slug or "predictions").strip().lower() or "predictions"
+    links: list[str] = []
+    for lang_code in ("es", "pt", "en"):
+        classes = "fp-sidebar-lang-btn is-active" if lang_code == selected else "fp-sidebar-lang-btn"
+        href = f"?page={quote_plus(safe_page)}&lang={quote_plus(lang_code)}"
+        label = _LANG_BUTTONS[lang_code]
+        title = escape(_LANG_CODE_TO_LABEL.get(lang_code, lang_code))
+        links.append(
+            f'<a class="{classes}" href="{escape(href, quote=True)}" title="{title}" aria-label="{title}">{escape(label)}</a>'
+        )
+    st.markdown(
+        '<div class="fp-sidebar-lang-switch" aria-label="Language selector">'
+        + "".join(links)
+        + "</div>",
+        unsafe_allow_html=True,
+    )
+    return selected
+
+
 def _render_mma_news(*, location: str = "sidebar", limit: int = 6) -> None:
     """Lightweight MMA RSS headlines for SEO/context. Silent on failures."""
     try:
@@ -2735,6 +2756,48 @@ st.markdown(
         font-size: 0.84rem;
         line-height: 1.45;
     }
+    .fp-sidebar-lang-switch {
+        display: flex;
+        width: 100%;
+        max-width: 100%;
+        justify-content: center;
+        align-items: center;
+        gap: 0.28rem;
+        background: rgba(15, 15, 18, 0.64);
+        border: 1px solid rgba(113, 113, 122, 0.42);
+        border-radius: 9999px;
+        padding: 0.2rem;
+        box-sizing: border-box;
+        margin: 0.1rem auto 1rem;
+    }
+    .fp-sidebar-lang-btn,
+    .fp-sidebar-lang-btn:link,
+    .fp-sidebar-lang-btn:visited {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 9999px;
+        text-decoration: none !important;
+        color: #f4f4f5 !important;
+        background: transparent;
+        font-size: 1rem;
+        line-height: 1;
+        transition: background 80ms ease, box-shadow 80ms ease, color 80ms ease;
+    }
+    .fp-sidebar-lang-btn:hover,
+    .fp-sidebar-lang-btn:focus,
+    .fp-sidebar-lang-btn:active {
+        text-decoration: none !important;
+        color: #fef2f2 !important;
+        background: rgba(220, 38, 38, 0.12);
+        box-shadow: none !important;
+    }
+    .fp-sidebar-lang-btn.is-active {
+        background: linear-gradient(160deg, #ef4444, #b91c1c);
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);
+    }
     .fp-sidebar-nav {
         display: grid;
         gap: 0.22rem;
@@ -3509,9 +3572,14 @@ with st.sidebar:
         _ui_lang = "en"
     st.session_state["ui_lang"] = _ui_lang
 
+    _requested_slug = _PAGE_SLUG_ALIASES.get(str(st.query_params.get("page", "")).strip().lower(), str(st.query_params.get("page", "")).strip().lower())
+    _cookie_page_slug = _PAGE_SLUG_ALIASES.get(_cookie_get(_COOKIE_PAGE_SLUG, "").strip().lower(), _cookie_get(_COOKIE_PAGE_SLUG, "").strip().lower())
+    _initial_slug = _requested_slug or _cookie_page_slug
+    _sidebar_page_slug = _initial_slug or "predictions"
+
     _render_sidebar_primary_logo()
     st.caption(f"{t('sidebar.language')}: {_LANG_CODE_TO_LABEL.get(_ui_lang, 'English')}")
-    _selected_lang = _render_lang_flag_selector(_ui_lang)
+    _selected_lang = _render_sidebar_lang_switch(_ui_lang, _sidebar_page_slug)
     st.session_state["ui_lang"] = _selected_lang
     if _selected_lang != _ui_lang or str(st.query_params.get("lang", "")).strip().lower() != _selected_lang:
         st.query_params["lang"] = _selected_lang
@@ -3530,9 +3598,6 @@ with st.sidebar:
         "fight-lab": t('nav.historical'),
         "terms": t('nav.terms'),
     }
-    _requested_slug = _PAGE_SLUG_ALIASES.get(str(st.query_params.get("page", "")).strip().lower(), str(st.query_params.get("page", "")).strip().lower())
-    _cookie_page_slug = _PAGE_SLUG_ALIASES.get(_cookie_get(_COOKIE_PAGE_SLUG, "").strip().lower(), _cookie_get(_COOKIE_PAGE_SLUG, "").strip().lower())
-    _initial_slug = _requested_slug or _cookie_page_slug
     _active_page_slug = _initial_slug if _initial_slug in _page_slug_to_label else "predictions"
 
     st.caption(t("sidebar.navigate"))
