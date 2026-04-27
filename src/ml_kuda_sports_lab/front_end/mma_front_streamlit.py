@@ -628,7 +628,7 @@ _NAV_ICON_FILES = {
     "events-history": "b91c1c-events-emoji-rail.png",
     "rankings": "b91c1c-goat-emoji-rail.png",
     "fight-lab": "b91c1c-lab-emoji-rail.png",
-    "terms": "",
+    "terms": "b91c1c-terms-emoji-rail.png",
 }
 
 from ml_kuda_sports_lab.front_end.country_master import (
