@@ -74,7 +74,7 @@ From repo root:
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate
+source /home/ares/Documents/uppercutanalytics/venv/bin/activate
 pip install -U pip
 pip install -r requirements.front.txt
 streamlit run src/ml_kuda_sports_lab/front_end/mma_front_streamlit.py
