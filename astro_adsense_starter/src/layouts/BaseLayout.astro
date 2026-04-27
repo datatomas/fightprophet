@@ -100,14 +100,14 @@ const isActive = (href: string) => {
           <button type="button" class="fp-lang-btn" data-lang="en" title="English">🇺🇸</button>
         </div>
 
-        <!-- App nav — all open the Streamlit app -->
+        <!-- App nav — same order as Streamlit sidebar -->
         <nav class="fp-app-rail-nav" aria-label="App sections">
           <a class="fp-app-rail-nav-link is-primary-nav" href={withPage('predictions')} target="_blank" rel="noopener noreferrer">📈 Predictions</a>
-          <a class="fp-app-rail-nav-link" href={withPage('rankings')} target="_blank" rel="noopener noreferrer">🐐 Rankings</a>
           <a class="fp-app-rail-nav-link" href={withPage('fighter-card')} target="_blank" rel="noopener noreferrer">👤 Fighter Cards</a>
-          <a class="fp-app-rail-nav-link" href={withPage('fight-lab')} target="_blank" rel="noopener noreferrer">🧪 Fight Lab</a>
           <a class="fp-app-rail-nav-link" href={withPage('belt-holders')} target="_blank" rel="noopener noreferrer">👑 Belt Holders</a>
           <a class="fp-app-rail-nav-link" href={withPage('events-history')} target="_blank" rel="noopener noreferrer">📅 Events History</a>
+          <a class="fp-app-rail-nav-link" href={withPage('rankings')} target="_blank" rel="noopener noreferrer">🐐 Fighter Rankings</a>
+          <a class="fp-app-rail-nav-link" href={withPage('fight-lab')} target="_blank" rel="noopener noreferrer">🧪 Fight Lab</a>
         </nav>
 
         <!-- Footer -->
@@ -378,29 +378,39 @@ const isActive = (href: string) => {
     object-fit: contain;
   }
 
-  /* Language switch inside rail */
+  /* Language switch — always fills the full rail content width */
   .fp-lang-switch {
-    display: inline-flex;
+    display: flex;
+    width: 100%;
     gap: 0.28rem;
     background: rgba(15, 15, 18, 0.64);
     border: 1px solid rgba(113, 113, 122, 0.42);
     border-radius: 9999px;
-    padding: 0.2rem;
+    padding: 0.25rem;
+    box-sizing: border-box;
   }
   :global(.fp-lang-btn) {
+    /* Each button takes an equal share of the container width and stays square */
+    flex: 1 1 0;
+    min-width: 0;
+    aspect-ratio: 1 / 1;
     border: 0;
     background: transparent;
     color: #f4f4f5;
     border-radius: 9999px;
-    width: 2rem;
-    height: 2rem;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: clamp(1rem, 4.5cqi, 1.5rem);
     line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-sizing: border-box;
   }
   :global(.fp-lang-btn.is-active) {
     background: linear-gradient(160deg, #ef4444, #b91c1c);
-    box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);
+    /* ring sits outside the box model — never displaces sibling buttons */
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5);
   }
 
   /* Site nav */
