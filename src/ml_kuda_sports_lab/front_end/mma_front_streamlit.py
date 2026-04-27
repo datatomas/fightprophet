@@ -2893,13 +2893,13 @@ st.markdown(
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 2rem;
-        height: 2rem;
+        width: 2.35rem;
+        height: 2.35rem;
         border-radius: 9999px;
         text-decoration: none !important;
         color: #f4f4f5 !important;
         background: transparent;
-        font-size: 1rem;
+        font-size: 1.34rem;
         line-height: 1;
         transition: background 80ms ease, box-shadow 80ms ease, color 80ms ease;
     }
@@ -2950,6 +2950,28 @@ st.markdown(
     }
     .fp-inline-goat--signal {
         filter: drop-shadow(0 0 8px rgba(248, 113, 113, 0.28));
+    }
+    .fp-inline-emoji {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        line-height: 1;
+        vertical-align: middle;
+        filter: drop-shadow(0 0 8px rgba(248, 113, 113, 0.18));
+    }
+    .fp-inline-emoji--signal {
+        font-size: 0.92rem;
+    }
+    .fp-inline-emoji--guide {
+        font-size: 0.98rem;
+    }
+    .fp-inline-emoji--kpi {
+        font-size: 1.08rem;
+    }
+    .fp-inline-emoji--versus {
+        font-size: 1.7rem;
+        filter: drop-shadow(0 0 14px rgba(248, 113, 113, 0.34));
     }
     .fp-inline-goat--champ {
         margin-left: 0.16rem;
@@ -3834,17 +3856,25 @@ ACTIVE_PREFIX = _prefix_input.strip("/")
 # Helper: signal badge
 # ---------------------------------------------------------------------------
 
+
+def _inline_emoji_html(emoji: str, *, extra_class: str = "") -> str:
+    class_attr = "fp-inline-emoji"
+    if extra_class:
+        class_attr += f" {extra_class.strip()}"
+    return f'<span class="{class_attr}" aria-hidden="true">{escape(emoji)}</span>'
+
+
 _SIGNAL_ICONS = {
-    "STRONG": _goat_icon_html(size=14, extra_class="fp-inline-goat--signal"),
-    "MEDIUM": _goat_icon_html(size=14, extra_class="fp-inline-goat--signal"),
-    "WEAK": _goat_icon_html(size=14, extra_class="fp-inline-goat--signal"),
+    "STRONG": _inline_emoji_html("🟢", extra_class="fp-inline-emoji--signal"),
+    "MEDIUM": _inline_emoji_html("🟡", extra_class="fp-inline-emoji--signal"),
+    "WEAK": _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal"),
 }
 
 
 def _signal_icon(sig: str | None) -> str:
     if sig is None:
-        return _goat_icon_html(size=14, extra_class="fp-inline-goat--signal")
-    return _SIGNAL_ICONS.get(sig.upper(), _goat_icon_html(size=14, extra_class="fp-inline-goat--signal"))
+        return _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal")
+    return _SIGNAL_ICONS.get(sig.upper(), _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal"))
 
 
 def _odds_display(odds: float | None) -> str:
@@ -3934,7 +3964,7 @@ _FIGHTER_CARD_CSS = """
 .fp-card--compact .fp-card-initials{font-size:1.92rem;}
 .fp-card--compact .fp-card-name{font-size:0.92rem;margin:0 0 0.34rem;}
 .fp-card--compact .fp-card-country{font-size:0.64rem;}
-.fp-card--compact .fp-card-flag{font-size:1rem;padding:0.18rem 0.34rem;}
+.fp-card--compact .fp-card-flag{font-size:1.34rem;padding:0.2rem 0.4rem;}
 .fp-card--compact .fp-card-stat-val{min-width:2rem;font-size:0.76rem;}
 .fp-card-crown{position:absolute;top:0.46rem;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;justify-content:center;line-height:1;z-index:3;text-shadow:0 0 6px rgba(0,0,0,0.55);}
 .fp-card-chrome{position:absolute;inset:0;z-index:1;pointer-events:none;}
@@ -3952,7 +3982,7 @@ _FIGHTER_CARD_CSS = """
 .fp-card-rating-pos{font-size:0.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;}
 .fp-card.is-champ .fp-card-rating-pos{color:rgba(31,19,0,0.8);}
 .fp-card.is-default .fp-card-rating-pos{color:rgba(255,255,255,0.78);}
-.fp-card-flag{font-size:1.18rem;line-height:1;background:rgba(0,0,0,0.34);border-radius:999px;padding:0.22rem 0.38rem;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.08);}
+.fp-card-flag{font-size:1.56rem;line-height:1;background:rgba(0,0,0,0.34);border-radius:999px;padding:0.24rem 0.44rem;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.08);}
 .fp-card-portrait{position:relative;display:flex;align-items:center;justify-content:center;flex:1;margin:0.42rem 0 0.42rem;border-radius:1rem 1rem 0.85rem 0.85rem;background:radial-gradient(circle at 50% 30%,rgba(255,255,255,0.16),transparent 52%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(0,0,0,0.04));box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06),inset 0 -18px 28px rgba(0,0,0,0.22);overflow:hidden;z-index:2;}
 .fp-card-portrait-silhouette{display:inline-flex;align-items:center;justify-content:center;width:4.2rem;height:4.2rem;opacity:0.16;line-height:1;filter:blur(0.35px);}
 .fp-card.is-champ .fp-card-portrait-silhouette{opacity:0.22;}
@@ -3969,8 +3999,8 @@ _FIGHTER_CARD_CSS = """
 .fp-card.is-default .fp-card-division{color:rgba(255,255,255,0.72);}
 .fp-card.is-champ .fp-card-badge{background:rgba(31,19,0,0.14);color:rgba(31,19,0,0.92);box-shadow:inset 0 0 0 1px rgba(31,19,0,0.18);}
 .fp-card.is-default .fp-card-badge{background:rgba(220,38,38,0.2);color:rgba(255,228,228,0.95);box-shadow:inset 0 0 0 1px rgba(248,113,113,0.22);}
-.fp-card-country{display:flex;align-items:center;justify-content:center;gap:0.28rem;margin:-0.05rem 0 0.38rem;font-size:0.68rem;font-weight:700;line-height:1.05;min-height:0.9rem;position:relative;z-index:2;}
-.fp-card-country-flag{font-size:0.9rem;line-height:1;}
+.fp-card-country{display:flex;align-items:center;justify-content:center;gap:0.34rem;margin:-0.05rem 0 0.38rem;font-size:0.72rem;font-weight:700;line-height:1.05;min-height:1rem;position:relative;z-index:2;}
+.fp-card-country-flag{font-size:1.18rem;line-height:1;}
 .fp-card-country-full,.fp-card-country-short{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .fp-card-country-short{display:none;letter-spacing:0.05em;text-transform:uppercase;}
 .fp-card.is-champ .fp-card-country{color:rgba(31,19,0,0.84);}
@@ -4255,19 +4285,19 @@ def _render_betting_signals_guide() -> None:
         '</div>'
         '<div class="fp-guide-grid">'
         '<div class="fp-guide-item fp-guide-item--strong">'
-        f'<div class="fp-guide-label">{_goat_icon_html(size=14)} STRONG</div>'
+        f'<div class="fp-guide-label">{_inline_emoji_html("🟢", extra_class="fp-inline-emoji--guide")} STRONG</div>'
         '<div class="fp-guide-copy">Higher-confidence signal based on model edge and agreement; shortlist first.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--medium">'
-        f'<div class="fp-guide-label">{_goat_icon_html(size=14)} MEDIUM</div>'
+        f'<div class="fp-guide-label">{_inline_emoji_html("🟡", extra_class="fp-inline-emoji--guide")} MEDIUM</div>'
         '<div class="fp-guide-copy">Possible value, but needs extra checks like injuries, style matchup, and line movement.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--weak">'
-        f'<div class="fp-guide-label">{_goat_icon_html(size=14)} WEAK</div>'
+        f'<div class="fp-guide-label">{_inline_emoji_html("⚪", extra_class="fp-inline-emoji--guide")} WEAK</div>'
         '<div class="fp-guide-copy">Low edge or noisy setup; usually a pass.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--recommended">'
-        f'<div class="fp-guide-label">{_goat_icon_html(size=14)} RECOMMENDED BET</div>'
+        f'<div class="fp-guide-label">{_inline_emoji_html("✅", extra_class="fp-inline-emoji--guide")} RECOMMENDED BET</div>'
         '<div class="fp-guide-copy">Passed internal thresholds, but value bets are still high-variance and can lose often.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--check">'
@@ -5128,15 +5158,35 @@ def page_upcoming() -> None:
     # Quick stats
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        _render_kpi_card(t("page.upcoming.total_fights"), str(len(df_show)), icon=_goat_icon_html(), accent="#ef4444")
+        _render_kpi_card(
+            t("page.upcoming.total_fights"),
+            str(len(df_show)),
+            icon=_inline_emoji_html("⚔️", extra_class="fp-inline-emoji--kpi"),
+            accent="#ef4444",
+        )
     with col2:
-        _render_kpi_card(t("page.upcoming.events"), str(df_show["event_name"].nunique()), icon=_goat_icon_html(), accent="#22c55e")
+        _render_kpi_card(
+            t("page.upcoming.events"),
+            str(df_show["event_name"].nunique()),
+            icon=_inline_emoji_html("📅", extra_class="fp-inline-emoji--kpi"),
+            accent="#22c55e",
+        )
     strong = (df_show["signal_strength"] == "STRONG").sum() if "signal_strength" in df_show else 0
     with col3:
-        _render_kpi_card(t("page.upcoming.strong_signals"), str(int(strong)), icon=_goat_icon_html(), accent="#f59e0b")
+        _render_kpi_card(
+            t("page.upcoming.strong_signals"),
+            str(int(strong)),
+            icon=_inline_emoji_html("🟢", extra_class="fp-inline-emoji--kpi"),
+            accent="#f59e0b",
+        )
     recommended = df_show["recommended_bet"].sum() if "recommended_bet" in df_show else 0
     with col4:
-        _render_kpi_card(t("page.upcoming.recommended_bets"), str(int(recommended)), icon=_goat_icon_html(), accent="#8b5cf6")
+        _render_kpi_card(
+            t("page.upcoming.recommended_bets"),
+            str(int(recommended)),
+            icon=_inline_emoji_html("✅", extra_class="fp-inline-emoji--kpi"),
+            accent="#8b5cf6",
+        )
 
     _render_betting_signals_guide()
 
@@ -5288,7 +5338,7 @@ def _render_fight_card(row: pd.Series) -> None:
         "weak": "fp-matchup-signal--weak",
     }.get(signal_key, "fp-matchup-signal--neutral")
     signal_label = str(signal or "Signal").upper()
-    recommended_chip = f" • {t('page.upcoming.threshold_passed')}" if recommended else ""
+    recommended_chip = f" • ✅ {t('page.upcoming.threshold_passed')}" if recommended else ""
     value_label = (
         t("page.upcoming.underdog_value_angle")
         if bet_on_is_underdog
@@ -5351,7 +5401,7 @@ def _render_fight_card(row: pd.Series) -> None:
             f"<div class='fp-odds-chip'><span class='fp-odds-chip-label'>Odds</span>{escape(_odds_display(row.get('fighter_odds')))}</div>"
             "</div>"
             "<div class='fp-versus-core'>"
-            f"<div class='fp-versus-mark'>{_goat_icon_html(size=20)}</div>"
+            f"<div class='fp-versus-mark'>{_inline_emoji_html('⚔️', extra_class='fp-inline-emoji--versus')}</div>"
             f"<div class='fp-versus-title'>{escape(t('page.upcoming.model_probabilities'))}</div>"
             "<div class='fp-prob-stack'>"
             "<div class='fp-prob-row'>"
