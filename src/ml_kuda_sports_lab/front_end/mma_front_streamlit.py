@@ -2612,7 +2612,6 @@ st.markdown(
     }
 
     [data-testid="stAppViewContainer"] {
-        position: relative !important;
         isolation: isolate !important;
     }
 
@@ -3146,6 +3145,9 @@ st.markdown(
             width: min(78vw, 290px) !important;
             min-width: unset !important;
             max-width: min(78vw, 290px) !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior: contain !important;
             box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5) !important;
             transition: transform 0.25s ease !important;
         }
