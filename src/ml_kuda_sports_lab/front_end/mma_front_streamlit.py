@@ -2733,6 +2733,57 @@ st.markdown(
         color: #f4f4f5;
     }
 
+    .fp-sidebar-heading {
+        margin: 0.3rem 0 0.15rem;
+        color: #f4f4f5;
+        font-size: 1.08rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+    }
+    .fp-sidebar-subheading {
+        margin: 0 0 0.9rem;
+        color: #a1a1aa;
+        font-size: 0.84rem;
+        line-height: 1.45;
+    }
+    .fp-sidebar-nav {
+        display: grid;
+        gap: 0.22rem;
+        margin: 0.35rem 0 0.95rem;
+    }
+    .fp-sidebar-nav-link {
+        display: flex;
+        align-items: center;
+        padding: 0.52rem 0.7rem;
+        border-radius: 0.65rem;
+        border: 1px solid transparent;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #d4d4d8 !important;
+        transition: background 80ms ease, border-color 80ms ease, color 80ms ease;
+    }
+    .fp-sidebar-nav-link,
+    .fp-sidebar-nav-link:link,
+    .fp-sidebar-nav-link:visited,
+    .fp-sidebar-nav-link:hover,
+    .fp-sidebar-nav-link:focus,
+    .fp-sidebar-nav-link:active {
+        text-decoration: none !important;
+        box-shadow: none !important;
+    }
+    .fp-sidebar-nav-link:hover {
+        background: rgba(220, 38, 38, 0.12);
+        border-color: rgba(220, 38, 38, 0.22);
+        color: #fef2f2 !important;
+    }
+    .fp-sidebar-nav-link.is-active {
+        background: rgba(220, 38, 38, 0.18);
+        border-color: rgba(248, 113, 113, 0.38);
+        color: #fef2f2 !important;
+        font-weight: 700;
+    }
+
     /* Sidebar controls should stay dark (language flags, selectors, actions) */
     section[data-testid="stSidebar"] div[data-testid="stButton"] > button {
         background: rgba(39, 39, 42, 0.92) !important;
@@ -3444,6 +3495,28 @@ st.markdown(
 )
 
 
+def _render_sidebar_nav(
+    active_slug: str,
+    page_slug_to_label: dict[str, str],
+    *,
+    lang: str,
+) -> None:
+    links: list[str] = []
+    safe_lang = (lang or "en").strip().lower() or "en"
+    for slug, label in page_slug_to_label.items():
+        classes = "fp-sidebar-nav-link is-active" if slug == active_slug else "fp-sidebar-nav-link"
+        href = f"?page={quote_plus(slug)}&lang={quote_plus(safe_lang)}"
+        links.append(
+            f'<a class="{classes}" href="{escape(href, quote=True)}">{escape(label)}</a>'
+        )
+    st.markdown(
+        '<nav class="fp-sidebar-nav" aria-label="App sections">'
+        + "".join(links)
+        + "</nav>",
+        unsafe_allow_html=True,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Sidebar
 # ---------------------------------------------------------------------------
@@ -3463,17 +3536,17 @@ with st.sidebar:
     if _cookie_get(_COOKIE_LANG, "") != _selected_lang:
         _cookie_set(_COOKIE_LANG, _selected_lang)
 
-    st.title(t("sidebar.title"))
-    st.caption(t("sidebar.caption"))
+    st.markdown(f'<div class="fp-sidebar-heading">{escape(t("sidebar.title"))}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="fp-sidebar-subheading">{escape(t("sidebar.caption"))}</div>', unsafe_allow_html=True)
 
     _page_slug_to_label = {
-        "predictions": f"📈 {t('nav.predictions')}",
-        "fight-lab": f"🧪 {t('nav.historical')}",
-        "events-history": f"📅 {t('nav.events_history')}",
-        "rankings": f"🐐 {t('nav.rankings')}",
-        "belt-holders": f"👑 {t('nav.belt_holders')}",
-        "fighter-card": f"👤 {t('nav.fighter_profile')}",
-        "terms": f"📄 {t('nav.terms')}",
+        "predictions": t('nav.predictions'),
+        "fight-lab": t('nav.historical'),
+        "events-history": t('nav.events_history'),
+        "rankings": t('nav.rankings'),
+        "belt-holders": t('nav.belt_holders'),
+        "fighter-card": t('nav.fighter_profile'),
+        "terms": t('nav.terms'),
     }
     _requested_slug = _PAGE_SLUG_ALIASES.get(str(st.query_params.get("page", "")).strip().lower(), str(st.query_params.get("page", "")).strip().lower())
     _cookie_page_slug = _PAGE_SLUG_ALIASES.get(_cookie_get(_COOKIE_PAGE_SLUG, "").strip().lower(), _cookie_get(_COOKIE_PAGE_SLUG, "").strip().lower())
@@ -3481,16 +3554,7 @@ with st.sidebar:
     _active_page_slug = _initial_slug if _initial_slug in _page_slug_to_label else "predictions"
 
     st.caption(t("sidebar.navigate"))
-    for _slug, _label in _page_slug_to_label.items():
-        _is_active = _slug == _active_page_slug
-        _btn_label = f"{_label} {'•' if _is_active else ''}"
-        if st.button(
-            _btn_label,
-            key=f"page_nav_btn_{_slug}",
-            use_container_width=True,
-            type=("primary" if _is_active else "secondary"),
-        ):
-            _active_page_slug = _slug
+    _render_sidebar_nav(_active_page_slug, _page_slug_to_label, lang=_selected_lang)
 
     st.query_params["page"] = _active_page_slug
     _cookie_set(_COOKIE_PAGE_SLUG, _active_page_slug)
