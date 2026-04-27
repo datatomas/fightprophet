@@ -129,10 +129,21 @@ npm run build
 
 
 # run local preview
-export AZURE_STORAGE_ACCOUNT=...
-export AZURE_STORAGE_KEY=...
-npx wrangler pages dev dist --compatibility-flag=nodejs_compat
-
+bash -lc '
+source ~/.bashrc
 cd /home/ares/Documents/gitrepos/ml_kuda_sports_lab/astro_adsense_starter
+trap "rm -f .dev.vars" EXIT
+cat > .dev.vars <<EOF
+AZURE_STORAGE_ACCOUNT=$AZURE_STORAGE_ACCOUNT
+AZURE_STORAGE_KEY=$AZURE_STORAGE_KEY
+AZURE_STORAGE_CONTAINER=${AZURE_STORAGE_CONTAINER:-fightprophet-dashboard}
+PARQUET_PREFIX=${PARQUET_PREFIX:-mma/diamond}
+PUBLIC_SITE_URL=${PUBLIC_SITE_URL:-https://fightprophet.com}
+PUBLIC_APP_URL=$PUBLIC_APP_URL
+PUBLIC_ADSENSE_CLIENT=$PUBLIC_ADSENSE_CLIENT
+PUBLIC_ADSENSE_ENABLED=$PUBLIC_ADSENSE_ENABLED
+PUBLIC_SUBSCRIBE_ENDPOINT=$PUBLIC_SUBSCRIBE_ENDPOINT
+EOF
 npm run build
 npx wrangler pages dev dist --compatibility-flag=nodejs_compat
+'
