@@ -22,6 +22,7 @@ const beltEmojiUrl = '/branding/b91c1c-belt-emoji-rail.png';
 const eventsEmojiUrl = '/branding/b91c1c-events-emoji-rail.png';
 const rankingsEmojiUrl = '/branding/b91c1c-goat-emoji-rail.png';
 const labEmojiUrl = '/branding/b91c1c-lab-emoji-rail.png';
+const termsEmojiUrl = '/branding/b91c1c-terms-emoji-rail.png';
 
 const currentPath = Astro.url.pathname;
 const isActive = (href: string) => {
@@ -106,6 +107,10 @@ const isActive = (href: string) => {
           <button type="button" class="fp-lang-btn" data-lang="en" title="English">🇺🇸</button>
         </div>
 
+        <div class="fp-app-rail-heading">Bet wisely with Fight Prophet</div>
+        <div class="fp-app-rail-subheading">AI-powered MMA fight predictions</div>
+        <div class="fp-app-rail-section-label">Navigate</div>
+
         <!-- App nav — same order as Streamlit sidebar -->
         <nav class="fp-app-rail-nav" aria-label="App sections">
           <a class="fp-app-rail-nav-link is-primary-nav" href={withPage('predictions')} target="_blank" rel="noopener noreferrer"><span class="fp-app-rail-nav-copy"><img src={predictionsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Predictions</span></span></a>
@@ -114,6 +119,7 @@ const isActive = (href: string) => {
           <a class="fp-app-rail-nav-link" href={withPage('events-history')} target="_blank" rel="noopener noreferrer"><span class="fp-app-rail-nav-copy"><img src={eventsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Events History</span></span></a>
           <a class="fp-app-rail-nav-link" href={withPage('rankings')} target="_blank" rel="noopener noreferrer"><span class="fp-app-rail-nav-copy"><img src={rankingsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Fighter Rankings</span></span></a>
           <a class="fp-app-rail-nav-link" href={withPage('fight-lab')} target="_blank" rel="noopener noreferrer"><span class="fp-app-rail-nav-copy"><img src={labEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Fight Lab</span></span></a>
+          <a class="fp-app-rail-nav-link" href={withPage('terms')} target="_blank" rel="noopener noreferrer"><span class="fp-app-rail-nav-copy"><img src={termsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Terms &amp; Conditions</span></span></a>
         </nav>
 
         <!-- Footer -->
@@ -417,6 +423,25 @@ const isActive = (href: string) => {
     background: linear-gradient(160deg, #ef4444, #b91c1c);
     /* ring sits outside the box model — never displaces sibling buttons */
     box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5);
+  }
+  .fp-app-rail-heading {
+    margin: 0.3rem 0 0.15rem;
+    color: #f4f4f5;
+    font-size: 1.08rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  .fp-app-rail-subheading {
+    margin: 0 0 0.9rem;
+    color: #a1a1aa;
+    font-size: 0.84rem;
+    line-height: 1.45;
+  }
+  .fp-app-rail-section-label {
+    margin: 0 0 0.35rem;
+    color: #a1a1aa;
+    font-size: 0.9rem;
+    line-height: 1.35;
   }
 
   /* Site nav */
