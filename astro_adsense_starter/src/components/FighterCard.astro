@@ -309,11 +309,11 @@ const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(l
     color: rgba(31, 19, 0, 0.8);
   }
   .fp-card-flag {
-    font-size: 1.18rem;
+    font-size: 1.42rem;
     line-height: 1;
     background: rgba(0, 0, 0, 0.34);
     border-radius: 999px;
-    padding: 0.22rem 0.38rem;
+    padding: 0.24rem 0.42rem;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
   }
 
@@ -435,9 +435,9 @@ const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(l
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.28rem;
+    gap: 0.34rem;
     margin: -0.05rem 0 0.38rem;
-    font-size: 0.68rem;
+    font-size: 0.76rem;
     font-weight: 700;
     line-height: 1.05;
     min-height: 0.9rem;
@@ -445,7 +445,7 @@ const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(l
     z-index: 2;
   }
   .fp-card-country-flag {
-    font-size: 0.9rem;
+    font-size: 1.06rem;
     line-height: 1;
   }
   .fp-card-country-full,
@@ -496,7 +496,7 @@ const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(l
     background: rgba(31, 19, 0, 0.16);
   }
   .fp-card-stat-label {
-    font-size: 0.56rem;
+    font-size: 0.58rem;
     font-weight: 800;
     letter-spacing: 0.08em;
     color: rgba(255, 255, 255, 0.72);
@@ -508,10 +508,10 @@ const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(l
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 2.2rem;
-    padding: 0.16rem 0.28rem;
+    min-width: 2.45rem;
+    padding: 0.18rem 0.34rem;
     border-radius: 999px;
-    font-size: 0.82rem;
+    font-size: 0.95rem;
     font-weight: 900;
     letter-spacing: 0.01em;
     color: rgba(255, 255, 255, 0.96);
@@ -524,11 +524,21 @@ const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(l
     box-shadow: inset 0 0 0 1px rgba(77, 50, 0, 0.12);
   }
   @media (max-width: 640px) {
+    .fp-card-country {
+      font-size: 0.74rem;
+    }
+    .fp-card-country-flag {
+      font-size: 1rem;
+    }
     .fp-card-country-full {
       display: none;
     }
     .fp-card-country-short {
       display: inline;
+    }
+    .fp-card-stat-val {
+      min-width: 2.3rem;
+      font-size: 0.9rem;
     }
   }
 </style>

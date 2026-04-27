@@ -15,12 +15,22 @@ const allRankedFighters = await getAllRankedFighterCards(runtimeEnvFromLocals(As
 const rankedDivisions = groupRankedFightersByDivision(allRankedFighters);
 const totalRankedFighters = allRankedFighters.length;
 const homePreviewLimit = 10;
+const allDivisionsSlug = 'all-divisions';
 const divisionSlug = (value: string) => value.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
 const defaultDivision =
   rankedDivisions.find((group) => group.weight_class.trim().toLowerCase() === 'heavyweight')?.weight_class
   ?? rankedDivisions[0]?.weight_class
   ?? 'Heavyweight';
 const defaultDivisionSlug = divisionSlug(defaultDivision);
+const previewFighters = (fighters: typeof allRankedFighters) =>
+  [...fighters]
+    .sort((a, b) =>
+      Number(Boolean(b.is_champion)) - Number(Boolean(a.is_champion))
+      || (a.rank ?? Number.POSITIVE_INFINITY) - (b.rank ?? Number.POSITIVE_INFINITY)
+      || (b.points ?? Number.NEGATIVE_INFINITY) - (a.points ?? Number.NEGATIVE_INFINITY)
+      || a.name.localeCompare(b.name)
+    )
+    .slice(0, homePreviewLimit);
 interface NewsItem {
   id: string;
   title: string;
@@ -179,11 +189,6 @@ const newsStructuredData = newsItems.map((item) => ({
           <p class="fp-hero-subtitle" id="i18n-topbar-subtitle">The fight data already knows who's getting smashed. We just highlight it.</p>
         </div>
         <div class="fp-hero-main">
-          <div class="fp-hero-pills" aria-label="Highlights">
-            <span class="fp-hero-pill" id="i18n-pill-1">AI-powered fight previews</span>
-            <span class="fp-hero-pill" id="i18n-pill-2">Model confidence</span>
-            <span class="fp-hero-pill" id="i18n-pill-3">Risk-aware decision support</span>
-          </div>
           <p class="fp-hero-note" id="i18n-hero-note">For information and education only — never financial advice.</p>
           <div class="fp-hero-actions">
             <a class="fp-btn fp-btn-primary fp-btn-hero-primary" href={withPage('predictions')} target="_blank" rel="noopener noreferrer" id="i18n-open-app-main">Go to Predictions</a>
@@ -198,16 +203,16 @@ const newsStructuredData = newsItems.map((item) => ({
       <div>
         <p class="fp-section-label">Ranked Fighters Wall</p>
         <p class="fp-section-intro fp-section-intro-tight">
-          A homepage preview of the live rankings across {rankedDivisions.length || 0} divisions{totalRankedFighters ? ` (${totalRankedFighters} fighters tracked)` : ''}. Start with {defaultDivision}, browse the top cards here, then open the full rankings when you want the complete table.
+          A homepage preview of the live rankings across {rankedDivisions.length || 0} divisions{totalRankedFighters ? ` (${totalRankedFighters} fighters tracked)` : ''}. Start with {defaultDivision}, browse the top 10 cards here, or switch to All Divisions for the full homepage wall.
         </p>
       </div>
-      <a class="fp-btn fp-btn-secondary" href="/rankings/">Full rankings</a>
     </div>
     {rankedDivisions.length > 0 ? (
       <div class="fp-rankings-wall" data-default-division={defaultDivisionSlug}>
         <div class="fp-division-tools">
           <label class="fp-visually-hidden" for="fp-division-select">Select division</label>
           <select id="fp-division-select" class="fp-division-select" aria-label="Select division">
+            <option value={allDivisionsSlug}>All divisions ({rankedDivisions.length})</option>
             {rankedDivisions.map((group) => (
               <option value={divisionSlug(group.weight_class)} selected={divisionSlug(group.weight_class) === defaultDivisionSlug}>
                 {group.weight_class} ({group.fighters.length})
@@ -216,6 +221,15 @@ const newsStructuredData = newsItems.map((item) => ({
           </select>
         </div>
         <nav class="fp-division-jump" aria-label="Choose division">
+          <button
+            type="button"
+            class="fp-division-pill"
+            data-division-target={allDivisionsSlug}
+            aria-pressed="false"
+          >
+            All divisions
+            <span class="fp-division-pill-count">{rankedDivisions.length}</span>
+          </button>
           {rankedDivisions.map((g) => (
             <button
               type="button"
@@ -237,11 +251,11 @@ const newsStructuredData = newsItems.map((item) => ({
             <div class="fp-division-header">
               <h3 class="fp-division-title">{group.weight_class}</h3>
               <span class="fp-division-count">
-                showing {Math.min(group.fighters.length, homePreviewLimit)} of {group.fighters.length}
+                top {Math.min(group.fighters.length, homePreviewLimit)} of {group.fighters.length}
               </span>
             </div>
             <div class="fp-champ-grid">
-              {group.fighters.slice(0, homePreviewLimit).map((c) => (
+              {previewFighters(group.fighters).map((c) => (
                 <FighterCard
                   name={c.name}
                   fighterId={c.fighter_id}
@@ -258,14 +272,6 @@ const newsStructuredData = newsItems.map((item) => ({
                 />
               ))}
             </div>
-            {group.fighters.length > homePreviewLimit && (
-              <div class="fp-division-footer">
-                <span class="fp-division-footer-copy">
-                  The full {group.weight_class} rankings continue on the rankings page and in the live app.
-                </span>
-                <a class="fp-btn fp-btn-secondary fp-division-footer-btn" href="/rankings/">See full rankings</a>
-              </div>
-            )}
           </div>
         ))}
       </div>
@@ -755,7 +761,7 @@ const newsStructuredData = newsItems.map((item) => ({
       });
 
       divisionPanels.forEach((panel) => {
-        const isActive = panel.getAttribute('data-division-panel') === slug;
+        const isActive = slug === 'all-divisions' || panel.getAttribute('data-division-panel') === slug;
         panel.classList.toggle('is-active', isActive);
         panel.hidden = !isActive;
       });
@@ -814,10 +820,10 @@ const newsStructuredData = newsItems.map((item) => ({
       background: transparent;
       color: #f4f4f5;
       border-radius: 9999px;
-      width: 2rem;
-      height: 2rem;
+      width: 2.35rem;
+      height: 2.35rem;
       cursor: pointer;
-      font-size: 1rem;
+      font-size: 1.18rem;
       line-height: 1;
     }
     .fp-lang-btn.is-active {
@@ -918,24 +924,6 @@ const newsStructuredData = newsItems.map((item) => ({
       z-index: 1;
       font-size: 1.05rem;
     }
-    .fp-hero-pills {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.35rem;
-      margin: 0.46rem 0 0.2rem;
-      position: relative;
-      z-index: 1;
-    }
-    .fp-hero-pill {
-      background: rgba(39, 39, 42, 0.72);
-      border: 1px solid rgba(113, 113, 122, 0.5);
-      color: #d4d4d8;
-      border-radius: 9999px;
-      font-size: 0.88rem;
-      font-weight: 600;
-      padding: 0.22rem 0.58rem;
-      letter-spacing: 0.025em;
-    }
     .fp-hero-datasci {
       color: #a1a1aa;
       font-size: 0.88rem;
@@ -976,12 +964,12 @@ const newsStructuredData = newsItems.map((item) => ({
       box-shadow: 0 0 12px rgba(220, 38, 38, 0.14);
     }
     .fp-btn-hero-primary {
-      padding: 0.82rem 1.18rem;
-      font-size: 1rem;
+      padding: 1rem 1.5rem;
+      font-size: 1.08rem;
       font-weight: 800;
       letter-spacing: 0.01em;
-      border-radius: 0.82rem;
-      box-shadow: 0 0 18px rgba(239, 68, 68, 0.32);
+      border-radius: 0.9rem;
+      box-shadow: 0 0 22px rgba(239, 68, 68, 0.34);
     }
     .fp-btn-hero-secondary {
       padding: 0.76rem 1rem;
@@ -1021,7 +1009,8 @@ const newsStructuredData = newsItems.map((item) => ({
       margin: -0.1rem 0 1rem;
       max-width: 68ch;
       color: #d4d4d8;
-      line-height: 1.55;
+      line-height: 1.68;
+      font-size: 1.04rem;
     }
     .fp-section-intro-tight {
       margin-bottom: 0.65rem;
@@ -1194,25 +1183,6 @@ const newsStructuredData = newsItems.map((item) => ({
       letter-spacing: 0.06em;
       text-transform: uppercase;
       font-weight: 700;
-    }
-    .fp-division-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.8rem;
-      margin-top: 0.85rem;
-      padding: 0.72rem 0.8rem;
-      border: 1px solid rgba(113, 113, 122, 0.28);
-      border-radius: 0.82rem;
-      background: linear-gradient(160deg, rgba(22, 22, 26, 0.84), rgba(36, 36, 42, 0.58));
-    }
-    .fp-division-footer-copy {
-      color: #a1a1aa;
-      font-size: 0.82rem;
-      line-height: 1.45;
-    }
-    .fp-division-footer-btn {
-      flex-shrink: 0;
     }
     .fp-cta-card {
       display: flex;
@@ -1448,10 +1418,6 @@ const newsStructuredData = newsItems.map((item) => ({
       .fp-news-shell {
         grid-template-columns: 1fr;
       }
-      .fp-division-footer {
-        flex-direction: column;
-        align-items: flex-start;
-      }
       .fp-news-menu {
         max-height: 280px;
       }
@@ -1478,13 +1444,18 @@ const newsStructuredData = newsItems.map((item) => ({
       .fp-hero-subtitle {
         font-size: 0.86rem;
       }
+      .fp-lang-btn {
+        width: 2.18rem;
+        height: 2.18rem;
+        font-size: 1.08rem;
+      }
       .fp-btn {
         font-size: 0.84rem;
         padding: 0.46rem 0.68rem;
       }
       .fp-btn-hero-primary {
-        padding: 0.72rem 1rem;
-        font-size: 0.94rem;
+        padding: 0.9rem 1.18rem;
+        font-size: 1rem;
       }
       .fp-btn-hero-secondary {
         padding: 0.68rem 0.92rem;
