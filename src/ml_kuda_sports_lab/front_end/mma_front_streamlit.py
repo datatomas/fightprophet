@@ -3129,6 +3129,9 @@ st.markdown(
     .fp-inline-goat--signal {
         filter: drop-shadow(0 0 8px rgba(248, 113, 113, 0.28));
     }
+    .fp-inline-goat.fp-inline-emoji--kpi {
+        filter: brightness(1.18) saturate(1.18) contrast(1.1) drop-shadow(0 0 10px rgba(248, 113, 113, 0.24));
+    }
     .fp-inline-emoji {
         display: inline-flex;
         align-items: center;
@@ -3145,7 +3148,8 @@ st.markdown(
         font-size: 0.98rem;
     }
     .fp-inline-emoji--kpi {
-        font-size: 1.08rem;
+        font-size: 1.95rem;
+        filter: drop-shadow(0 0 10px rgba(248, 113, 113, 0.24));
     }
     .fp-inline-emoji--versus {
         font-size: 1.7rem;
@@ -3456,8 +3460,8 @@ st.markdown(
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 16px;
-        margin-bottom: 0.15rem;
+        min-height: 46px;
+        margin-bottom: 0.24rem;
         line-height: 1;
         color: #cbd5e1;
     }
@@ -4993,6 +4997,8 @@ def _ui_copy_pack() -> dict[str, object]:
                 "**LogReg**: interpretable baseline that stabilizes directional probability checks.",
                 "Signals are generated from historical outcomes and feature engineering — outputs are probabilistic, not guarantees.",
             ],
+            "model_picker_intro": "Available model views:",
+            "model_picker_recommendation": "Recommendation: start with **Ensemble** for the best overall default view.",
             "risk_intro": "Responsible-use guardrails:",
             "risk_points": [
                 "No guaranteed outcomes, no lock picks, no sure-profit claims.",
@@ -5027,6 +5033,8 @@ def _ui_copy_pack() -> dict[str, object]:
                 "**LogReg**: baseline interpretable para validar dirección de probabilidades.",
                 "Las señales son probabilísticas, no garantías de resultado.",
             ],
+            "model_picker_intro": "Modelos disponibles:",
+            "model_picker_recommendation": "Recomendación: empieza con **Ensemble** como vista general por defecto.",
             "risk_intro": "Reglas de uso responsable:",
             "risk_points": [
                 "Sin resultados garantizados, sin picks seguros, sin promesas de ganancia.",
@@ -5061,6 +5069,8 @@ def _ui_copy_pack() -> dict[str, object]:
                 "**LogReg**: baseline interpretável para checar direção das probabilidades.",
                 "Os sinais são probabilísticos e não garantem resultados.",
             ],
+            "model_picker_intro": "Modelos disponíveis:",
+            "model_picker_recommendation": "Recomendação: comece com **Ensemble** como melhor visão padrão.",
             "risk_intro": "Regras de uso responsável:",
             "risk_points": [
                 "Sem resultados garantidos, sem picks certos, sem promessa de lucro.",
@@ -5078,6 +5088,20 @@ def _ui_copy_pack() -> dict[str, object]:
         },
     }
     return packs.get(lang, packs["en"])
+
+
+def _render_model_picker_help() -> None:
+    copy_pack = _ui_copy_pack()
+    engine_points = copy_pack.get("engine_points", [])
+    model_points = [str(point) for point in engine_points[:3]]
+    intro = str(copy_pack.get("model_picker_intro", "Available model views:"))
+    recommendation = str(
+        copy_pack.get(
+            "model_picker_recommendation",
+            "Recommendation: start with **Ensemble** for the best overall default view.",
+        )
+    )
+    st.caption("  \n".join([intro, *model_points, recommendation]))
 
 
 def _terms_copy_pack() -> dict[str, object]:
@@ -5333,6 +5357,7 @@ def page_upcoming() -> None:
         ["Ensemble", "CatBoost", "LogReg"],
         index=0,
     )
+    _render_model_picker_help()
 
     folder_map = {
         "Ensemble": FOLDER_UPCOMING_ENSEMBLE,
@@ -5376,7 +5401,7 @@ def page_upcoming() -> None:
         _render_kpi_card(
             t("page.upcoming.total_fights"),
             str(len(df_show)),
-            icon=_png_icon_html("b91c1c-fights-emoji.png", size=16, extra_class="fp-inline-emoji--kpi", label="Total fights")
+            icon=_png_icon_html("b91c1c-fights-emoji.png", size=46, extra_class="fp-inline-emoji--kpi", label="Total fights")
             or _inline_emoji_html("⚔️", extra_class="fp-inline-emoji--kpi"),
             accent="#ef4444",
         )
@@ -5384,7 +5409,7 @@ def page_upcoming() -> None:
         _render_kpi_card(
             t("page.upcoming.events"),
             str(df_show["event_name"].nunique()),
-            icon=_png_icon_html("b91c1c-events-emoji-rail.png", size=16, extra_class="fp-inline-emoji--kpi", label="Events")
+            icon=_png_icon_html("b91c1c-events-emoji-rail.png", size=46, extra_class="fp-inline-emoji--kpi", label="Events")
             or _inline_emoji_html("📅", extra_class="fp-inline-emoji--kpi"),
             accent="#22c55e",
         )
@@ -5393,7 +5418,7 @@ def page_upcoming() -> None:
         _render_kpi_card(
             t("page.upcoming.strong_signals"),
             str(int(strong)),
-            icon=_png_icon_html("b91c1c-signals-emoji.png", size=16, extra_class="fp-inline-emoji--kpi", label="Strong signals")
+            icon=_png_icon_html("b91c1c-signals-emoji.png", size=46, extra_class="fp-inline-emoji--kpi", label="Strong signals")
             or _inline_emoji_html("🟢", extra_class="fp-inline-emoji--kpi"),
             accent="#f59e0b",
         )
@@ -5402,7 +5427,7 @@ def page_upcoming() -> None:
         _render_kpi_card(
             t("page.upcoming.recommended_bets"),
             str(int(recommended)),
-            icon=_png_icon_html("b91c1c-bets-emoji.png", size=16, extra_class="fp-inline-emoji--kpi", label="Recommended bets")
+            icon=_png_icon_html("b91c1c-bets-emoji.png", size=46, extra_class="fp-inline-emoji--kpi", label="Recommended bets")
             or _inline_emoji_html("✅", extra_class="fp-inline-emoji--kpi"),
             accent="#8b5cf6",
         )
@@ -5671,6 +5696,7 @@ def page_historical() -> None:
         ["Ensemble", "CatBoost", "LogReg"],
         index=0,
     )
+    _render_model_picker_help()
 
     hist_folder_map = {
         "Ensemble": FOLDER_HIST_ALL_ENSEMBLE,
@@ -5715,7 +5741,7 @@ def page_historical() -> None:
             _render_kpi_card(
                 "Overall Accuracy",
                 f"{float(row.get('accuracy', 0)):.1%}",
-                icon=_png_icon_html("b91c1c-accuracy-emoji.png", size=16, extra_class="fp-inline-emoji--kpi", label="Overall accuracy")
+                icon=_png_icon_html("b91c1c-accuracy-emoji.png", size=46, extra_class="fp-inline-emoji--kpi", label="Overall accuracy")
                 or _goat_icon_html(),
                 accent="#22c55e",
             )
@@ -5723,7 +5749,7 @@ def page_historical() -> None:
             _render_kpi_card(
                 "Total Predictions",
                 f"{int(float(row.get('total_fights', 0))):,}",
-                icon=_png_icon_html("b91c1c-predictions-emoji-rail.png", size=16, extra_class="fp-inline-emoji--kpi", label="Total predictions")
+                icon=_png_icon_html("b91c1c-predictions-emoji-rail.png", size=46, extra_class="fp-inline-emoji--kpi", label="Total predictions")
                 or _goat_icon_html(),
                 accent="#ef4444",
             )
@@ -5731,7 +5757,7 @@ def page_historical() -> None:
             _render_kpi_card(
                 "Events Covered",
                 f"{int(float(row.get('events_covered', 0)))}",
-                icon=_png_icon_html("b91c1c-events-emoji-rail.png", size=16, extra_class="fp-inline-emoji--kpi", label="Events covered")
+                icon=_png_icon_html("b91c1c-events-emoji-rail.png", size=46, extra_class="fp-inline-emoji--kpi", label="Events covered")
                 or _goat_icon_html(),
                 accent="#3b82f6",
             )
@@ -5760,7 +5786,7 @@ def page_historical() -> None:
         _render_kpi_card(
             "Correct Picks",
             f"{int(top_correct)}",
-            icon=_png_icon_html("b91c1c-correct-emoji.png", size=16, extra_class="fp-inline-emoji--kpi", label="Correct picks")
+            icon=_png_icon_html("b91c1c-correct-emoji.png", size=46, extra_class="fp-inline-emoji--kpi", label="Correct picks")
             or _goat_icon_html(),
             accent="#10b981",
             compact=False,
@@ -5769,7 +5795,7 @@ def page_historical() -> None:
         _render_kpi_card(
             "Wrong Picks",
             f"{int(top_total - top_correct)}",
-            icon=_png_icon_html("b91c1c-incorrect-emoji.png", size=16, extra_class="fp-inline-emoji--kpi", label="Wrong picks")
+            icon=_png_icon_html("b91c1c-incorrect-emoji.png", size=46, extra_class="fp-inline-emoji--kpi", label="Wrong picks")
             or _goat_icon_html(),
             accent="#ef4444",
             compact=False,
