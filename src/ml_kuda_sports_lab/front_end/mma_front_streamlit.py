@@ -44,6 +44,8 @@ import streamlit as st
 import streamlit.components.v1 as _st_components
 
 _MARKETING_SITE_ORIGIN = "https://fightprophet.com"
+_MARKETING_HOME_URL = f"{_MARKETING_SITE_ORIGIN}/"
+_MARKETING_TERMS_URL = f"{_MARKETING_SITE_ORIGIN}/terms/"
 _CANONICAL_BY_SLUG = {
     "predictions": f"{_MARKETING_SITE_ORIGIN}/predictions/",
     "upcoming": f"{_MARKETING_SITE_ORIGIN}/predictions/",
@@ -79,6 +81,121 @@ def _inject_canonical_link(slug: str) -> None:
               doc.head.appendChild(link);
             }} catch (e) {{}}
           }})();
+        </script>
+        """,
+        height=0,
+    )
+
+
+def _inject_marketing_handoff_bridge() -> None:
+    _st_components.html(
+        """
+        <script>
+          (function() {
+            try {
+              var win = window.parent || window;
+              var doc = win.document;
+              if (!doc) return;
+
+              if (!doc.getElementById('fp-site-handoff-style')) {
+                var style = doc.createElement('style');
+                style.id = 'fp-site-handoff-style';
+                style.textContent = `
+                  #fp-site-handoff {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 9999;
+                    display: grid;
+                    place-items: center;
+                    padding: 1.5rem;
+                    background: rgba(9, 9, 11, 0.32);
+                    backdrop-filter: blur(2px);
+                    opacity: 0;
+                    transition: opacity 180ms ease;
+                    pointer-events: none;
+                  }
+                  #fp-site-handoff[data-visible="true"] {
+                    opacity: 1;
+                  }
+                  #fp-site-handoff .fp-site-handoff-card {
+                    display: grid;
+                    gap: 0.45rem;
+                    min-width: min(92vw, 320px);
+                    padding: 1rem 1.05rem;
+                    border-radius: 1rem;
+                    border: 1px solid rgba(248, 113, 113, 0.34);
+                    background: linear-gradient(155deg, rgba(18, 18, 22, 0.94), rgba(45, 18, 18, 0.88));
+                    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34), 0 0 28px rgba(220, 38, 38, 0.14);
+                    color: #f4f4f5;
+                    text-align: center;
+                    font-family: Inter, system-ui, sans-serif;
+                  }
+                  #fp-site-handoff .fp-site-handoff-card strong {
+                    font-size: 0.96rem;
+                    letter-spacing: 0.02em;
+                  }
+                  #fp-site-handoff .fp-site-handoff-card span {
+                    font-size: 0.84rem;
+                    color: #d4d4d8;
+                  }
+                  #fp-site-handoff .fp-site-handoff-spinner {
+                    width: 1.8rem;
+                    height: 1.8rem;
+                    margin: 0 auto 0.1rem;
+                    border-radius: 999px;
+                    border: 2px solid rgba(255, 255, 255, 0.16);
+                    border-top-color: #f87171;
+                    animation: fp-site-handoff-spin 700ms linear infinite;
+                  }
+                  @keyframes fp-site-handoff-spin {
+                    to { transform: rotate(360deg); }
+                  }
+                `;
+                doc.head.appendChild(style);
+              }
+
+              if (!doc.getElementById('fp-site-handoff')) {
+                var overlay = doc.createElement('div');
+                overlay.id = 'fp-site-handoff';
+                overlay.setAttribute('aria-hidden', 'true');
+                overlay.hidden = true;
+                overlay.innerHTML =
+                  '<div class="fp-site-handoff-card">' +
+                  '<div class="fp-site-handoff-spinner" aria-hidden="true"></div>' +
+                  '<strong>Opening Fight Prophet</strong>' +
+                  '<span>Returning to the main site…</span>' +
+                  '</div>';
+                doc.body.appendChild(overlay);
+              }
+
+              if (win.__fpSiteHandoffBound) return;
+              win.__fpSiteHandoffBound = true;
+
+              doc.addEventListener('click', function(event) {
+                var target = event.target;
+                if (!target || !target.closest) return;
+                var anchor = target.closest('a.fp-site-shell-link[href]');
+                if (!anchor) return;
+                if (event.defaultPrevented) return;
+                if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                var href = anchor.getAttribute('href');
+                if (!href) return;
+
+                event.preventDefault();
+                var overlay = doc.getElementById('fp-site-handoff');
+                if (overlay) {
+                  overlay.hidden = false;
+                  overlay.setAttribute('aria-hidden', 'false');
+                  win.requestAnimationFrame(function() {
+                    overlay.dataset.visible = 'true';
+                  });
+                }
+                win.setTimeout(function() {
+                  win.location.href = href;
+                }, 120);
+              }, true);
+            } catch (e) {}
+          })();
         </script>
         """,
         height=0,
@@ -172,7 +289,7 @@ STRINGS = {
     "sidebar.title": "Bet wisely with Fight Prophet",
     "sidebar.caption": "AI-powered MMA fight predictions",
     "sidebar.navigate": "Navigate",
-    "nav.home": "Home",
+    "nav.home": "Home & Rankings",
     "nav.terms": "Terms & Conditions",
     "nav.predictions": "Predictions",
     "nav.model_performance": "Fight Lab",
@@ -290,7 +407,7 @@ STATIC_TRANSLATIONS = {
         "sidebar.title": "Apuesta con inteligencia con Fight Prophet",
         "sidebar.caption": "Predicciones de MMA impulsadas por IA",
         "sidebar.navigate": "Navegar",
-        "nav.home": "Inicio",
+        "nav.home": "Inicio y Rankings",
         "nav.terms": "Términos y Condiciones",
         "nav.predictions": "Predicciones",
         "nav.model_performance": "Fight Lab",
@@ -379,7 +496,7 @@ Usa la barra lateral para navegar:
         "sidebar.title": "Aposte com inteligência com Fight Prophet",
         "sidebar.caption": "Previsões de lutas de MMA com IA",
         "sidebar.navigate": "Navegar",
-        "nav.home": "Início",
+        "nav.home": "Início e Rankings",
         "nav.terms": "Termos e Condições",
         "nav.predictions": "Previsões",
         "nav.model_performance": "Fight Lab",
@@ -3741,14 +3858,32 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+_inject_marketing_handoff_bridge()
+
+
+def _render_site_shell_link(label: str, href: str, icon_slug: str, *, is_active: bool = False) -> str:
+    classes = "fp-sidebar-nav-link fp-site-shell-link"
+    if is_active:
+        classes += " is-active"
+    icon_class = _nav_icon_class(icon_slug)
+    return (
+        f'<a class="{classes}" href="{escape(href, quote=True)}">'
+        f'<span class="fp-sidebar-nav-copy"><span class="fp-sidebar-nav-icon fp-sidebar-nav-icon--{escape(icon_class)}" aria-hidden="true"></span><span>{escape(label)}</span></span>'
+        "</a>"
+    )
+
 
 def _render_sidebar_nav(
     active_slug: str,
     page_slug_to_label: dict[str, str],
     *,
     lang: str,
+    leading_links: list[str] | None = None,
+    trailing_links: list[str] | None = None,
 ) -> None:
     links: list[str] = []
+    if leading_links:
+        links.extend(leading_links)
     safe_lang = (lang or "en").strip().lower() or "en"
     for slug, label in page_slug_to_label.items():
         classes = "fp-sidebar-nav-link is-active" if slug == active_slug else "fp-sidebar-nav-link"
@@ -3759,6 +3894,8 @@ def _render_sidebar_nav(
             f'<span class="fp-sidebar-nav-copy"><span class="fp-sidebar-nav-icon fp-sidebar-nav-icon--{escape(icon_class)}" aria-hidden="true"></span><span>{escape(label)}</span></span>'
             "</a>"
         )
+    if trailing_links:
+        links.extend(trailing_links)
     st.markdown(
         '<nav class="fp-sidebar-nav" aria-label="App sections">'
         + "".join(links)
@@ -3801,12 +3938,26 @@ with st.sidebar:
         "events-history": t('nav.events_history'),
         "rankings": t('nav.rankings'),
         "fight-lab": t('nav.historical'),
-        "terms": t('nav.terms'),
     }
-    _active_page_slug = _initial_slug if _initial_slug in _page_slug_to_label else "predictions"
+    _legacy_streamlit_pages = {"terms"}
+    _active_page_slug = (
+        _initial_slug
+        if _initial_slug in _page_slug_to_label or _initial_slug in _legacy_streamlit_pages
+        else "predictions"
+    )
 
     st.caption(t("sidebar.navigate"))
-    _render_sidebar_nav(_active_page_slug, _page_slug_to_label, lang=_selected_lang)
+    _render_sidebar_nav(
+        _active_page_slug,
+        _page_slug_to_label,
+        lang=_selected_lang,
+        leading_links=[
+            _render_site_shell_link(t("nav.home"), _MARKETING_HOME_URL, "rankings"),
+        ],
+        trailing_links=[
+            _render_site_shell_link(t("nav.terms"), _MARKETING_TERMS_URL, "terms", is_active=_active_page_slug == "terms"),
+        ],
+    )
 
     st.query_params["page"] = _active_page_slug
     _cookie_set(_COOKIE_PAGE_SLUG, _active_page_slug)
@@ -5055,54 +5206,56 @@ def page_home() -> None:
 
 
 def page_terms() -> None:
-    copy_pack = _terms_copy_pack()
     lang = _normalize_lang(st.session_state.get("ui_lang", "en")) or "en"
-
-    global_title_map = {
-        "en": "Global compliance notice",
-        "es": "Aviso global de cumplimiento",
-        "pt": "Aviso global de conformidade",
+    redirect_title_map = {
+        "en": "Terms now live on the main Fight Prophet site.",
+        "es": "Los términos ahora viven en el sitio principal de Fight Prophet.",
+        "pt": "Os termos agora ficam no site principal do Fight Prophet.",
     }
-    global_points_map = {
-        "en": [
-            "This dashboard is intended for a global audience and does not provide jurisdiction-specific legal advice.",
-            "Access and use are allowed only where legal; each user must verify local laws, age limits, and operator authorization.",
-            "If local law restricts betting activity, do not use predictions or analytics for wagering decisions.",
-        ],
-        "es": [
-            "Este dashboard está dirigido a una audiencia global y no ofrece asesoría legal específica por jurisdicción.",
-            "El acceso y uso solo se permite donde sea legal; cada usuario debe verificar leyes locales, edad mínima y autorización del operador.",
-            "Si la ley local restringe las apuestas, no uses predicciones o analítica para apostar.",
-        ],
-        "pt": [
-            "Este dashboard é destinado a público global e não fornece aconselhamento jurídico específico por jurisdição.",
-            "O acesso e uso só são permitidos onde for legal; cada usuário deve verificar leis locais, idade mínima e autorização do operador.",
-            "Se a lei local restringir apostas, não use previsões ou análises para apostar.",
-        ],
+    redirect_body_map = {
+        "en": "Redirecting you to the Astro terms page in the same tab so the experience stays consistent.",
+        "es": "Te estamos redirigiendo a la página de términos en Astro en la misma pestaña para mantener la experiencia consistente.",
+        "pt": "Estamos te redirecionando para a página de termos em Astro na mesma aba para manter a experiência consistente.",
+    }
+    redirect_cta_map = {
+        "en": "Open terms on fightprophet.com",
+        "es": "Abrir términos en fightprophet.com",
+        "pt": "Abrir termos em fightprophet.com",
     }
 
     st.header(f"{t('page.terms.title')}")
-    st.error(str(copy_pack["warning"]))
-
-    st.subheader(str(copy_pack["core_title"]))
-    st.markdown("\n".join([f"- {line}" for line in copy_pack["core"]]))
-
-    st.subheader(global_title_map.get(lang, global_title_map["en"]))
-    st.markdown("\n".join([f"- {line}" for line in global_points_map.get(lang, global_points_map["en"])]))
-
-    st.subheader(str(copy_pack["safe_title"]))
-    st.markdown("\n".join([f"- {line}" for line in copy_pack["safe_points"]]))
-
-    st.caption(
-        "By continuing to use this dashboard, you acknowledge these terms and agree to independent verification before any action."
+    st.info(redirect_title_map.get(lang, redirect_title_map["en"]))
+    st.caption(redirect_body_map.get(lang, redirect_body_map["en"]))
+    st.markdown(
+        f'<a class="fp-sidebar-nav-link fp-site-shell-link" href="{escape(_MARKETING_TERMS_URL, quote=True)}">'
+        f'<span class="fp-sidebar-nav-copy"><span class="fp-sidebar-nav-icon fp-sidebar-nav-icon--terms" aria-hidden="true"></span>'
+        f'<span>{escape(redirect_cta_map.get(lang, redirect_cta_map["en"]))}</span></span></a>',
+        unsafe_allow_html=True,
     )
-
-    st.subheader(t("common.contact"))
-    st.markdown("- Business LinkedIn: [https://www.linkedin.com/company/fight-prophet](https://www.linkedin.com/company/fight-prophet)")
-    st.markdown("- Founder LinkedIn: [https://www.linkedin.com/in/datatomas/](https://www.linkedin.com/in/datatomas/)")
-    st.markdown("- Business GitHub: [https://github.com/datatomas/fight_prophet](https://github.com/datatomas/fight_prophet)")
-    st.markdown("- Medium: [https://medium.com/@datatomas](https://medium.com/@datatomas)")
-    st.markdown("- Email: [datatomas@uppercutanalytics.com](mailto:datatomas@uppercutanalytics.com)")
+    _st_components.html(
+        f"""
+        <script>
+          (function() {{
+            try {{
+              var win = window.parent || window;
+              var doc = win.document;
+              var overlay = doc && doc.getElementById('fp-site-handoff');
+              if (overlay) {{
+                overlay.hidden = false;
+                overlay.setAttribute('aria-hidden', 'false');
+                win.requestAnimationFrame(function() {{
+                  overlay.dataset.visible = 'true';
+                }});
+              }}
+              win.setTimeout(function() {{
+                win.location.href = {json.dumps(_MARKETING_TERMS_URL)};
+              }}, 180);
+            }} catch (e) {{}}
+          }})();
+        </script>
+        """,
+        height=0,
+    )
 
 
 # ---------------------------------------------------------------------------
