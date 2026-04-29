@@ -88,14 +88,65 @@ def _inject_canonical_link(slug: str) -> None:
 
 
 def _inject_marketing_handoff_bridge() -> None:
-    _st_components.html(
-        """
+    script = """
         <script>
           (function() {
             try {
               var win = window.parent || window;
               var doc = win.document;
               if (!doc) return;
+              var marketingOrigin = __MARKETING_ORIGIN__;
+
+              function ensureHintLink(rel, href, cors) {
+                if (!href || !doc.head) return;
+                var selector = 'link[rel="' + rel + '"][href="' + href + '"]';
+                if (doc.querySelector(selector)) return;
+                var link = doc.createElement('link');
+                link.rel = rel;
+                link.href = href;
+                if (cors) link.crossOrigin = 'anonymous';
+                doc.head.appendChild(link);
+              }
+
+              function primeMarketingOrigin() {
+                if (!marketingOrigin) return;
+                ensureHintLink('dns-prefetch', marketingOrigin);
+                ensureHintLink('preconnect', marketingOrigin, true);
+              }
+
+              function primeMarketingHref(href) {
+                if (!href || win.__fpSiteWarmHref === href) return;
+                win.__fpSiteWarmHref = href;
+                try {
+                  win.fetch(href, {
+                    mode: 'no-cors',
+                    credentials: 'omit',
+                    cache: 'force-cache',
+                    keepalive: true,
+                  }).catch(function() {});
+                } catch (e) {}
+              }
+
+              function showHandoffOverlay() {
+                var overlay = doc.getElementById('fp-site-handoff');
+                if (!overlay) return;
+                overlay.hidden = false;
+                overlay.setAttribute('aria-hidden', 'false');
+                win.requestAnimationFrame(function() {
+                  overlay.dataset.visible = 'true';
+                });
+              }
+
+              function goToMarketingSite(href) {
+                if (!href) return;
+                try {
+                  win.location.replace(href);
+                } catch (e) {
+                  win.location.href = href;
+                }
+              }
+
+              primeMarketingOrigin();
 
               if (!doc.getElementById('fp-site-handoff-style')) {
                 var style = doc.createElement('style');
@@ -171,6 +222,24 @@ def _inject_marketing_handoff_bridge() -> None:
               if (win.__fpSiteHandoffBound) return;
               win.__fpSiteHandoffBound = true;
 
+              doc.addEventListener('pointerdown', function(event) {
+                var target = event.target;
+                if (!target || !target.closest) return;
+                var anchor = target.closest('a.fp-site-shell-link[href]');
+                if (!anchor) return;
+                primeMarketingOrigin();
+                primeMarketingHref(anchor.href || anchor.getAttribute('href'));
+              }, true);
+
+              doc.addEventListener('pointerover', function(event) {
+                var target = event.target;
+                if (!target || !target.closest) return;
+                var anchor = target.closest('a.fp-site-shell-link[href]');
+                if (!anchor) return;
+                primeMarketingOrigin();
+                primeMarketingHref(anchor.href || anchor.getAttribute('href'));
+              }, true);
+
               doc.addEventListener('click', function(event) {
                 var target = event.target;
                 if (!target || !target.closest) return;
@@ -182,22 +251,17 @@ def _inject_marketing_handoff_bridge() -> None:
                 if (!href) return;
 
                 event.preventDefault();
-                var overlay = doc.getElementById('fp-site-handoff');
-                if (overlay) {
-                  overlay.hidden = false;
-                  overlay.setAttribute('aria-hidden', 'false');
-                  win.requestAnimationFrame(function() {
-                    overlay.dataset.visible = 'true';
-                  });
-                }
-                win.setTimeout(function() {
-                  win.location.href = href;
-                }, 120);
+                primeMarketingOrigin();
+                primeMarketingHref(anchor.href || href);
+                showHandoffOverlay();
+                goToMarketingSite(href);
               }, true);
             } catch (e) {}
           })();
         </script>
-        """,
+        """
+    _st_components.html(
+        script.replace("__MARKETING_ORIGIN__", json.dumps(_MARKETING_SITE_ORIGIN)),
         height=0,
     )
 
