@@ -5050,7 +5050,7 @@ def _ui_copy_pack() -> dict[str, object]:
                 "Las señales son probabilísticas, no garantías de resultado.",
             ],
             "model_picker_intro": "Modelos disponibles:",
-            "model_picker_recommendation": "Recomendación: empieza con **Ensemble** como vista general por defecto.",
+            "model_picker_recommendation": "Recomendación: empieza con **CatBoost** como vista general por defecto.",
             "risk_intro": "Reglas de uso responsable:",
             "risk_points": [
                 "Sin resultados garantizados, sin picks seguros, sin promesas de ganancia.",
@@ -5086,7 +5086,7 @@ def _ui_copy_pack() -> dict[str, object]:
                 "Os sinais são probabilísticos e não garantem resultados.",
             ],
             "model_picker_intro": "Modelos disponíveis:",
-            "model_picker_recommendation": "Recomendação: comece com **Ensemble** como melhor visão padrão.",
+            "model_picker_recommendation": "Recomendação: comece com **CatBoost** como melhor visão padrão.",
             "risk_intro": "Regras de uso responsável:",
             "risk_points": [
                 "Sem resultados garantidos, sem picks certos, sem promessa de lucro.",
@@ -5370,7 +5370,7 @@ def page_upcoming() -> None:
 
     model_view = st.selectbox(
         t("page.upcoming.prediction_model"),
-        ["Ensemble", "CatBoost", "LogReg"],
+        ["CatBoost", "Ensemble", "LogReg"],
         index=0,
     )
     _render_model_picker_help()
@@ -5381,7 +5381,7 @@ def page_upcoming() -> None:
         "LogReg": FOLDER_UPCOMING_LOGREG,
     }
 
-    selected_folder = folder_map.get(model_view, FOLDER_UPCOMING_ENSEMBLE)
+    selected_folder = folder_map.get(model_view, FOLDER_UPCOMING_CATBOOST)
     df_upcoming = _load_prepared_upcoming_cards(selected_folder, ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
 
     if df_upcoming.empty:
@@ -5715,7 +5715,7 @@ def page_historical() -> None:
 
     model_view = st.selectbox(
         "Historical model",
-        ["Ensemble", "CatBoost", "LogReg"],
+        ["CatBoost", "Ensemble", "LogReg"],
         index=0,
     )
     _render_model_picker_help()
@@ -5737,7 +5737,7 @@ def page_historical() -> None:
     }
 
     df_hist = _read_parquet(
-        hist_folder_map.get(model_view, FOLDER_HIST_ALL_ENSEMBLE),
+        hist_folder_map.get(model_view, FOLDER_HIST_ALL_CATBOOST),
         ACTIVE_PARQUET_BASE,
         ACTIVE_PREFIX,
     )
@@ -5749,7 +5749,7 @@ def page_historical() -> None:
         return
 
     df_stats = _read_parquet(
-        stats_folder_map.get(model_view, FOLDER_STATS_ENSEMBLE),
+        stats_folder_map.get(model_view, FOLDER_STATS_CATBOOST),
         ACTIVE_PARQUET_BASE,
         ACTIVE_PREFIX,
     )
@@ -5840,7 +5840,7 @@ def page_historical() -> None:
     st.divider()
     st.subheader("Calibration: Predicted vs Actual Win Rate")
     df_cal = _read_parquet(
-        cal_folder_map.get(model_view, FOLDER_CAL_ENSEMBLE),
+        cal_folder_map.get(model_view, FOLDER_CAL_CATBOOST),
         ACTIVE_PARQUET_BASE,
         ACTIVE_PREFIX,
     )
@@ -6118,13 +6118,13 @@ def page_events_history() -> None:
 
     df_upcoming = _read_parquet(FOLDER_UPCOMING, ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
     if df_upcoming.empty:
-        df_upcoming = _read_parquet(FOLDER_UPCOMING_ENSEMBLE, ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
+        df_upcoming = _read_parquet(FOLDER_UPCOMING_CATBOOST, ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
 
     df_events = _read_parquet(FOLDER_EVENTS, ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
 
     df_past = _read_parquet(FOLDER_HIST_ALL, ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
     if df_past.empty:
-        df_past = _read_parquet(FOLDER_HIST_ALL_ENSEMBLE, ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
+        df_past = _read_parquet(FOLDER_HIST_ALL_CATBOOST, ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
 
     def _clean_text_col(series: pd.Series) -> pd.Series:
         out = series.astype(str).str.strip()
