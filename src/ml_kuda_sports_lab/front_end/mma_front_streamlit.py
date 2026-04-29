@@ -3940,7 +3940,7 @@ def _render_sidebar_nav(
         href = f"?page={quote_plus(slug)}&lang={quote_plus(safe_lang)}"
         icon_class = _nav_icon_class(slug)
         links.append(
-            f'<a class="{classes}" href="{escape(href, quote=True)}">'
+            f'<a class="{classes}" href="{escape(href, quote=True)}" target="_self">'
             f'<span class="fp-sidebar-nav-copy"><span class="fp-sidebar-nav-icon fp-sidebar-nav-icon--{escape(icon_class)}" aria-hidden="true"></span><span>{escape(label)}</span></span>'
             "</a>"
         )
@@ -4218,6 +4218,8 @@ _FIGHTER_CARD_CSS = """
 .fp-card-stat{display:flex;align-items:center;justify-content:space-between;gap:0.25rem;line-height:1;padding:0.14rem 0.18rem;border-radius:0.42rem;background:rgba(255,255,255,0.05);}
 .fp-card.is-champ .fp-card-stat{background:rgba(31,19,0,0.16);}
 .fp-card-stat-label{font-size:0.56rem;font-weight:800;letter-spacing:0.08em;}
+.fp-card-stat-label .fp-inline-goat{vertical-align:-2px;}
+.fp-card-stat-icon{filter:brightness(1.14) saturate(1.1) contrast(1.08);}
 .fp-card.is-champ .fp-card-stat-label{color:rgba(31,19,0,0.72);}
 .fp-card.is-default .fp-card-stat-label{color:rgba(255,255,255,0.72);}
 .fp-card-stat-val{display:inline-flex;align-items:center;justify-content:center;min-width:2.2rem;padding:0.16rem 0.28rem;border-radius:999px;font-size:0.82rem;font-weight:900;letter-spacing:0.01em;background:rgba(7,10,16,0.34);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.08);}
@@ -4393,6 +4395,14 @@ def _build_fighter_card_html(
         if country
         else ""
     )
+    win_streak_label = (
+        _png_icon_html("b91c1c-correct-emoji.png", size=13, extra_class="fp-card-stat-icon", label="Win streak")
+        or "W"
+    )
+    loss_streak_label = (
+        _png_icon_html("b91c1c-incorrect-emoji.png", size=13, extra_class="fp-card-stat-icon", label="Loss streak")
+        or "L"
+    )
     tag = "a" if href else "div"
     href_attr = f" href='{escape(href, quote=True)}'" if href else ""
     rel_attr = " target='_self'" if href else ""
@@ -4420,8 +4430,8 @@ def _build_fighter_card_html(
         "<div class='fp-card-stats'>"
         f"<div class='fp-card-stat'><span class='fp-card-stat-label'>FIN</span><span class='fp-card-stat-val'>{_fighter_card_fmt_pct(finish_rate)}</span></div>"
         f"<div class='fp-card-stat'><span class='fp-card-stat-label'>SUB</span><span class='fp-card-stat-val'>{_fighter_card_fmt_pct(sub_rate)}</span></div>"
-        f"<div class='fp-card-stat'><span class='fp-card-stat-label'>W★</span><span class='fp-card-stat-val'>{_fighter_card_fmt_int(win_streak)}</span></div>"
-        f"<div class='fp-card-stat'><span class='fp-card-stat-label'>L✗</span><span class='fp-card-stat-val'>{_fighter_card_fmt_int(loss_streak)}</span></div>"
+        f"<div class='fp-card-stat'><span class='fp-card-stat-label'>{win_streak_label}</span><span class='fp-card-stat-val'>{_fighter_card_fmt_int(win_streak)}</span></div>"
+        f"<div class='fp-card-stat'><span class='fp-card-stat-label'>{loss_streak_label}</span><span class='fp-card-stat-val'>{_fighter_card_fmt_int(loss_streak)}</span></div>"
         "</div>"
         f"</{tag}>"
     )
