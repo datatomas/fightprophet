@@ -3025,6 +3025,9 @@ st.markdown(
     .fp-inline-goat--signal {
         filter: drop-shadow(0 0 8px rgba(248, 113, 113, 0.28));
     }
+    .fp-inline-goat.fp-inline-emoji--signal-low {
+        filter: brightness(1.24) saturate(1.18) contrast(1.18) drop-shadow(0 0 10px rgba(248, 113, 113, 0.3));
+    }
     .fp-inline-goat.fp-inline-emoji--kpi {
         filter: brightness(1.18) saturate(1.18) contrast(1.1) drop-shadow(0 0 10px rgba(248, 113, 113, 0.24));
     }
@@ -3043,8 +3046,16 @@ st.markdown(
     .fp-inline-emoji--signal {
         font-size: 0.92rem;
     }
+    .fp-inline-emoji--signal-low {
+        font-size: 1.02rem;
+        filter: drop-shadow(0 0 10px rgba(248, 113, 113, 0.28));
+    }
     .fp-inline-emoji--guide {
         font-size: 0.98rem;
+    }
+    .fp-inline-emoji--guide-value {
+        font-size: 1.08rem;
+        filter: drop-shadow(0 0 10px rgba(248, 113, 113, 0.28));
     }
     .fp-inline-emoji--kpi {
         font-size: 1.95rem;
@@ -4061,9 +4072,9 @@ _SIGNAL_ICONS = {
     or _inline_emoji_html("🟡", extra_class="fp-inline-emoji--signal"),
     "MID": _png_icon_html("b91c1c-signals-mid-emoji.png", size=16, extra_class="fp-inline-emoji--signal", label="Mid signal")
     or _inline_emoji_html("🟡", extra_class="fp-inline-emoji--signal"),
-    "WEAK": _png_icon_html("b91c1c-signals-low-emoji.png", size=16, extra_class="fp-inline-emoji--signal", label="Low signal")
+    "WEAK": _png_icon_html("b91c1c-signals-low-emoji.png", size=18, extra_class="fp-inline-emoji--signal fp-inline-emoji--signal-low", label="Low signal")
     or _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal"),
-    "LOW": _png_icon_html("b91c1c-signals-low-emoji.png", size=16, extra_class="fp-inline-emoji--signal", label="Low signal")
+    "LOW": _png_icon_html("b91c1c-signals-low-emoji.png", size=18, extra_class="fp-inline-emoji--signal fp-inline-emoji--signal-low", label="Low signal")
     or _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal"),
 }
 
@@ -4497,7 +4508,7 @@ def _render_betting_signals_guide() -> None:
         '<div class="fp-guide-copy">Low edge or noisy setup; usually a pass.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--recommended">'
-        f'<div class="fp-guide-label">{_png_icon_html("b91c1c-bets-emoji.png", size=16, extra_class="fp-inline-emoji--guide", label="Value flag") or _inline_emoji_html("✅", extra_class="fp-inline-emoji--guide")} VALUE FLAG</div>'
+        f'<div class="fp-guide-label">{_png_icon_html("b91c1c-bets-emoji.png", size=20, extra_class="fp-inline-emoji--guide fp-inline-emoji--guide-value", label="Value flag") or _inline_emoji_html("✅", extra_class="fp-inline-emoji--guide fp-inline-emoji--guide-value")} VALUE FLAG</div>'
         '<div class="fp-guide-copy">Triggered internal value thresholds, but these flags are still high-variance and can lose often.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--check">'
