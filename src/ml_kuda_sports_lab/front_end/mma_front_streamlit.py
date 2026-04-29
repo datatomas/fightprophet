@@ -3032,7 +3032,7 @@ st.markdown(
         filter: drop-shadow(0 0 8px rgba(248, 113, 113, 0.28));
     }
     .fp-inline-goat.fp-inline-emoji--signal-low {
-        filter: brightness(1.24) saturate(1.18) contrast(1.18) drop-shadow(0 0 10px rgba(248, 113, 113, 0.3));
+        filter: brightness(1.34) saturate(1.24) contrast(1.26) drop-shadow(0 0 12px rgba(248, 113, 113, 0.34));
     }
     .fp-inline-goat.fp-inline-emoji--kpi {
         filter: brightness(1.18) saturate(1.18) contrast(1.1) drop-shadow(0 0 10px rgba(248, 113, 113, 0.24));
@@ -3053,8 +3053,8 @@ st.markdown(
         font-size: 0.92rem;
     }
     .fp-inline-emoji--signal-low {
-        font-size: 1.02rem;
-        filter: drop-shadow(0 0 10px rgba(248, 113, 113, 0.28));
+        font-size: 1.14rem;
+        filter: drop-shadow(0 0 12px rgba(248, 113, 113, 0.32));
     }
     .fp-inline-emoji--guide {
         font-size: 0.98rem;
@@ -4104,9 +4104,9 @@ _SIGNAL_ICONS = {
     or _inline_emoji_html("🟡", extra_class="fp-inline-emoji--signal"),
     "MID": _png_icon_html("b91c1c-signals-mid-emoji.png", size=16, extra_class="fp-inline-emoji--signal", label="Mid signal")
     or _inline_emoji_html("🟡", extra_class="fp-inline-emoji--signal"),
-    "WEAK": _png_icon_html("b91c1c-signals-low-emoji.png", size=18, extra_class="fp-inline-emoji--signal fp-inline-emoji--signal-low", label="Low signal")
+    "WEAK": _png_icon_html("b91c1c-signals-low-emoji.png", size=22, extra_class="fp-inline-emoji--signal fp-inline-emoji--signal-low", label="Low signal")
     or _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal"),
-    "LOW": _png_icon_html("b91c1c-signals-low-emoji.png", size=18, extra_class="fp-inline-emoji--signal fp-inline-emoji--signal-low", label="Low signal")
+    "LOW": _png_icon_html("b91c1c-signals-low-emoji.png", size=22, extra_class="fp-inline-emoji--signal fp-inline-emoji--signal-low", label="Low signal")
     or _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal"),
 }
 
