@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import AdSlot from '../components/AdSlot.astro';
 import FighterCard from '../components/FighterCard.astro';
 import { runtimeEnvFromLocals } from '../lib/country-master';
-import { getAllRankedFighterCards, groupRankedFightersByDivision } from '../lib/champions';
+import { getAllRankedFighterCards, getHomepageRankingsDebug, groupRankedFightersByDivision } from '../lib/champions';
 
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
 const withPage = (slug: string) => `${appUrl}${appUrl.includes('?') ? '&' : '?'}page=${encodeURIComponent(slug)}`;
@@ -11,7 +11,9 @@ const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'https://fightprophet.com').
 const rankingsAppUrl = withPage('rankings');
 const predictionsAppUrl = withPage('predictions');
 
-const allRankedFighters = await getAllRankedFighterCards(runtimeEnvFromLocals(Astro.locals));
+const runtimeEnv = runtimeEnvFromLocals(Astro.locals);
+const allRankedFighters = await getAllRankedFighterCards(runtimeEnv);
+const homepageRankingsDebug = getHomepageRankingsDebug(runtimeEnv);
 const rankedDivisions = groupRankedFightersByDivision(allRankedFighters);
 const totalRankedFighters = allRankedFighters.length;
 const homePreviewLimit = 12;
@@ -343,6 +345,9 @@ const newsStructuredData = newsItems.map((item) => ({
         <div class="fp-empty-state">
           <strong>Rankings are temporarily unavailable.</strong>
           <span>The live rankings refresh from the Monday ETL feed. If this is empty right now, the site feed has not landed yet.</span>
+          <code class="fp-empty-debug">
+            Azure account: {homepageRankingsDebug.hasAzureAccount ? 'yes' : 'no'} · key: {homepageRankingsDebug.hasAzureKey ? 'yes' : 'no'} · blob: {homepageRankingsDebug.blobPath}
+          </code>
           <a class="fp-cta-primary" href={rankingsAppUrl} target="_blank" rel="noopener noreferrer">Try the predictions section →</a>
         </div>
       )}
@@ -1163,6 +1168,17 @@ const newsStructuredData = newsItems.map((item) => ({
     .fp-empty-state strong {
       color: #fef2f2;
       font-size: 1rem;
+    }
+    .fp-empty-debug {
+      display: block;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      font-size: 0.8rem;
+      color: #fca5a5;
+      background: rgba(20, 20, 22, 0.72);
+      border: 1px solid rgba(220, 38, 38, 0.22);
+      border-radius: 0.8rem;
+      padding: 0.7rem 0.8rem;
     }
     .fp-empty-line {
       margin: 0.5rem 0;
