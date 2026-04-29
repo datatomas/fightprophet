@@ -4083,15 +4083,21 @@ def _inline_emoji_html(emoji: str, *, extra_class: str = "") -> str:
 _SIGNAL_ICONS = {
     "STRONG": _png_icon_html("b91c1c-signals-emoji.png", size=16, extra_class="fp-inline-emoji--signal", label="Strong signal")
     or _inline_emoji_html("🟢", extra_class="fp-inline-emoji--signal"),
-    "MEDIUM": _inline_emoji_html("🟡", extra_class="fp-inline-emoji--signal"),
-    "WEAK": _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal"),
+    "MEDIUM": _png_icon_html("b91c1c-signals-mid-emoji.png", size=16, extra_class="fp-inline-emoji--signal", label="Mid signal")
+    or _inline_emoji_html("🟡", extra_class="fp-inline-emoji--signal"),
+    "MID": _png_icon_html("b91c1c-signals-mid-emoji.png", size=16, extra_class="fp-inline-emoji--signal", label="Mid signal")
+    or _inline_emoji_html("🟡", extra_class="fp-inline-emoji--signal"),
+    "WEAK": _png_icon_html("b91c1c-signals-low-emoji.png", size=16, extra_class="fp-inline-emoji--signal", label="Low signal")
+    or _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal"),
+    "LOW": _png_icon_html("b91c1c-signals-low-emoji.png", size=16, extra_class="fp-inline-emoji--signal", label="Low signal")
+    or _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal"),
 }
 
 
 def _signal_icon(sig: str | None) -> str:
     if sig is None:
-        return _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal")
-    return _SIGNAL_ICONS.get(sig.upper(), _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal"))
+        return _SIGNAL_ICONS["WEAK"]
+    return _SIGNAL_ICONS.get(sig.upper(), _SIGNAL_ICONS["WEAK"])
 
 
 def _odds_display(odds: float | None) -> str:
@@ -4506,11 +4512,11 @@ def _render_betting_signals_guide() -> None:
         '<div class="fp-guide-copy">Higher-confidence signal based on model edge and agreement; shortlist first.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--medium">'
-        f'<div class="fp-guide-label">{_inline_emoji_html("🟡", extra_class="fp-inline-emoji--guide")} MEDIUM</div>'
+        f'<div class="fp-guide-label">{_png_icon_html("b91c1c-signals-mid-emoji.png", size=16, extra_class="fp-inline-emoji--guide", label="Mid signal") or _inline_emoji_html("🟡", extra_class="fp-inline-emoji--guide")} MEDIUM</div>'
         '<div class="fp-guide-copy">Possible value, but needs extra checks like injuries, style matchup, and line movement.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--weak">'
-        f'<div class="fp-guide-label">{_inline_emoji_html("⚪", extra_class="fp-inline-emoji--guide")} WEAK</div>'
+        f'<div class="fp-guide-label">{_png_icon_html("b91c1c-signals-low-emoji.png", size=16, extra_class="fp-inline-emoji--guide", label="Low signal") or _inline_emoji_html("⚪", extra_class="fp-inline-emoji--guide")} WEAK</div>'
         '<div class="fp-guide-copy">Low edge or noisy setup; usually a pass.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--recommended">'
