@@ -258,7 +258,8 @@ const newsStructuredData = newsItems.map((item) => ({
                         lossStreak={c.loss_streak ?? null}
                         wins={c.wins ?? null}
                         losses={c.losses ?? null}
-                        rank={c.global_rank ?? c.rank ?? null}
+                        globalRank={c.global_rank ?? null}
+                        divisionRank={c.rank ?? null}
                         compact={true}
                         appUrl={appUrl}
                       />
