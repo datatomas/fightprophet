@@ -4077,7 +4077,8 @@ def _inline_emoji_html(emoji: str, *, extra_class: str = "") -> str:
 
 
 _SIGNAL_ICONS = {
-    "STRONG": _inline_emoji_html("🟢", extra_class="fp-inline-emoji--signal"),
+    "STRONG": _png_icon_html("b91c1c-signals-emoji.png", size=16, extra_class="fp-inline-emoji--signal", label="Strong signal")
+    or _inline_emoji_html("🟢", extra_class="fp-inline-emoji--signal"),
     "MEDIUM": _inline_emoji_html("🟡", extra_class="fp-inline-emoji--signal"),
     "WEAK": _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal"),
 }
@@ -4497,7 +4498,7 @@ def _render_betting_signals_guide() -> None:
         '</div>'
         '<div class="fp-guide-grid">'
         '<div class="fp-guide-item fp-guide-item--strong">'
-        f'<div class="fp-guide-label">{_inline_emoji_html("🟢", extra_class="fp-inline-emoji--guide")} STRONG</div>'
+        f'<div class="fp-guide-label">{_png_icon_html("b91c1c-signals-emoji.png", size=16, extra_class="fp-inline-emoji--guide", label="Strong signal") or _inline_emoji_html("🟢", extra_class="fp-inline-emoji--guide")} STRONG</div>'
         '<div class="fp-guide-copy">Higher-confidence signal based on model edge and agreement; shortlist first.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--medium">'
@@ -5375,14 +5376,16 @@ def page_upcoming() -> None:
         _render_kpi_card(
             t("page.upcoming.total_fights"),
             str(len(df_show)),
-            icon=_inline_emoji_html("⚔️", extra_class="fp-inline-emoji--kpi"),
+            icon=_png_icon_html("b91c1c-fights-emoji.png", size=16, extra_class="fp-inline-emoji--kpi", label="Total fights")
+            or _inline_emoji_html("⚔️", extra_class="fp-inline-emoji--kpi"),
             accent="#ef4444",
         )
     with col2:
         _render_kpi_card(
             t("page.upcoming.events"),
             str(df_show["event_name"].nunique()),
-            icon=_inline_emoji_html("📅", extra_class="fp-inline-emoji--kpi"),
+            icon=_png_icon_html("b91c1c-events-emoji-rail.png", size=16, extra_class="fp-inline-emoji--kpi", label="Events")
+            or _inline_emoji_html("📅", extra_class="fp-inline-emoji--kpi"),
             accent="#22c55e",
         )
     strong = (df_show["signal_strength"] == "STRONG").sum() if "signal_strength" in df_show else 0
@@ -5390,7 +5393,8 @@ def page_upcoming() -> None:
         _render_kpi_card(
             t("page.upcoming.strong_signals"),
             str(int(strong)),
-            icon=_inline_emoji_html("🟢", extra_class="fp-inline-emoji--kpi"),
+            icon=_png_icon_html("b91c1c-signals-emoji.png", size=16, extra_class="fp-inline-emoji--kpi", label="Strong signals")
+            or _inline_emoji_html("🟢", extra_class="fp-inline-emoji--kpi"),
             accent="#f59e0b",
         )
     recommended = df_show["recommended_bet"].sum() if "recommended_bet" in df_show else 0
@@ -5398,7 +5402,8 @@ def page_upcoming() -> None:
         _render_kpi_card(
             t("page.upcoming.recommended_bets"),
             str(int(recommended)),
-            icon=_inline_emoji_html("✅", extra_class="fp-inline-emoji--kpi"),
+            icon=_png_icon_html("b91c1c-bets-emoji.png", size=16, extra_class="fp-inline-emoji--kpi", label="Recommended bets")
+            or _inline_emoji_html("✅", extra_class="fp-inline-emoji--kpi"),
             accent="#8b5cf6",
         )
 
@@ -5707,11 +5712,29 @@ def page_historical() -> None:
         row = df_stats.iloc[0]
         m1, m2, m3 = st.columns(3, gap="medium")
         with m1:
-            _render_kpi_card("Overall Accuracy", f"{float(row.get('accuracy', 0)):.1%}", icon=_goat_icon_html(), accent="#22c55e")
+            _render_kpi_card(
+                "Overall Accuracy",
+                f"{float(row.get('accuracy', 0)):.1%}",
+                icon=_png_icon_html("b91c1c-accuracy-emoji.png", size=16, extra_class="fp-inline-emoji--kpi", label="Overall accuracy")
+                or _goat_icon_html(),
+                accent="#22c55e",
+            )
         with m2:
-            _render_kpi_card("Total Predictions", f"{int(float(row.get('total_fights', 0))):,}", icon=_goat_icon_html(), accent="#ef4444")
+            _render_kpi_card(
+                "Total Predictions",
+                f"{int(float(row.get('total_fights', 0))):,}",
+                icon=_png_icon_html("b91c1c-predictions-emoji-rail.png", size=16, extra_class="fp-inline-emoji--kpi", label="Total predictions")
+                or _goat_icon_html(),
+                accent="#ef4444",
+            )
         with m3:
-            _render_kpi_card("Events Covered", f"{int(float(row.get('events_covered', 0)))}", icon=_goat_icon_html(), accent="#3b82f6")
+            _render_kpi_card(
+                "Events Covered",
+                f"{int(float(row.get('events_covered', 0)))}",
+                icon=_png_icon_html("b91c1c-events-emoji-rail.png", size=16, extra_class="fp-inline-emoji--kpi", label="Events covered")
+                or _goat_icon_html(),
+                accent="#3b82f6",
+            )
 
     if "event_date" in df_hist.columns:
         df_hist["event_date"] = pd.to_datetime(df_hist["event_date"], errors="coerce")
@@ -5734,9 +5757,23 @@ def page_historical() -> None:
 
     c1, _, c2 = st.columns([1, 0.08, 1], gap="medium")
     with c1:
-        _render_kpi_card("Correct Picks", f"{int(top_correct)}", icon=_goat_icon_html(), accent="#10b981", compact=False)
+        _render_kpi_card(
+            "Correct Picks",
+            f"{int(top_correct)}",
+            icon=_png_icon_html("b91c1c-correct-emoji.png", size=16, extra_class="fp-inline-emoji--kpi", label="Correct picks")
+            or _goat_icon_html(),
+            accent="#10b981",
+            compact=False,
+        )
     with c2:
-        _render_kpi_card("Wrong Picks", f"{int(top_total - top_correct)}", icon=_goat_icon_html(), accent="#ef4444", compact=False)
+        _render_kpi_card(
+            "Wrong Picks",
+            f"{int(top_total - top_correct)}",
+            icon=_png_icon_html("b91c1c-incorrect-emoji.png", size=16, extra_class="fp-inline-emoji--kpi", label="Wrong picks")
+            or _goat_icon_html(),
+            accent="#ef4444",
+            compact=False,
+        )
 
     st.markdown("<div style='height: 0.45rem;'></div>", unsafe_allow_html=True)
 
