@@ -127,97 +127,7 @@ def _inject_marketing_handoff_bridge() -> None:
                 } catch (e) {}
               }
 
-              function showHandoffOverlay() {
-                var overlay = doc.getElementById('fp-site-handoff');
-                if (!overlay) return;
-                overlay.hidden = false;
-                overlay.setAttribute('aria-hidden', 'false');
-                win.requestAnimationFrame(function() {
-                  overlay.dataset.visible = 'true';
-                });
-              }
-
-              function goToMarketingSite(href) {
-                if (!href) return;
-                try {
-                  win.location.replace(href);
-                } catch (e) {
-                  win.location.href = href;
-                }
-              }
-
               primeMarketingOrigin();
-
-              if (!doc.getElementById('fp-site-handoff-style')) {
-                var style = doc.createElement('style');
-                style.id = 'fp-site-handoff-style';
-                style.textContent = `
-                  #fp-site-handoff {
-                    position: fixed;
-                    inset: 0;
-                    z-index: 9999;
-                    display: grid;
-                    place-items: center;
-                    padding: 1.5rem;
-                    background: rgba(9, 9, 11, 0.32);
-                    backdrop-filter: blur(2px);
-                    opacity: 0;
-                    transition: opacity 180ms ease;
-                    pointer-events: none;
-                  }
-                  #fp-site-handoff[data-visible="true"] {
-                    opacity: 1;
-                  }
-                  #fp-site-handoff .fp-site-handoff-card {
-                    display: grid;
-                    gap: 0.45rem;
-                    min-width: min(92vw, 320px);
-                    padding: 1rem 1.05rem;
-                    border-radius: 1rem;
-                    border: 1px solid rgba(248, 113, 113, 0.34);
-                    background: linear-gradient(155deg, rgba(18, 18, 22, 0.94), rgba(45, 18, 18, 0.88));
-                    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34), 0 0 28px rgba(220, 38, 38, 0.14);
-                    color: #f4f4f5;
-                    text-align: center;
-                    font-family: Inter, system-ui, sans-serif;
-                  }
-                  #fp-site-handoff .fp-site-handoff-card strong {
-                    font-size: 0.96rem;
-                    letter-spacing: 0.02em;
-                  }
-                  #fp-site-handoff .fp-site-handoff-card span {
-                    font-size: 0.84rem;
-                    color: #d4d4d8;
-                  }
-                  #fp-site-handoff .fp-site-handoff-spinner {
-                    width: 1.8rem;
-                    height: 1.8rem;
-                    margin: 0 auto 0.1rem;
-                    border-radius: 999px;
-                    border: 2px solid rgba(255, 255, 255, 0.16);
-                    border-top-color: #f87171;
-                    animation: fp-site-handoff-spin 700ms linear infinite;
-                  }
-                  @keyframes fp-site-handoff-spin {
-                    to { transform: rotate(360deg); }
-                  }
-                `;
-                doc.head.appendChild(style);
-              }
-
-              if (!doc.getElementById('fp-site-handoff')) {
-                var overlay = doc.createElement('div');
-                overlay.id = 'fp-site-handoff';
-                overlay.setAttribute('aria-hidden', 'true');
-                overlay.hidden = true;
-                overlay.innerHTML =
-                  '<div class="fp-site-handoff-card">' +
-                  '<div class="fp-site-handoff-spinner" aria-hidden="true"></div>' +
-                  '<strong>Opening Fight Prophet</strong>' +
-                  '<span>Returning to the main site…</span>' +
-                  '</div>';
-                doc.body.appendChild(overlay);
-              }
 
               if (win.__fpSiteHandoffBound) return;
               win.__fpSiteHandoffBound = true;
@@ -238,23 +148,6 @@ def _inject_marketing_handoff_bridge() -> None:
                 if (!anchor) return;
                 primeMarketingOrigin();
                 primeMarketingHref(anchor.href || anchor.getAttribute('href'));
-              }, true);
-
-              doc.addEventListener('click', function(event) {
-                var target = event.target;
-                if (!target || !target.closest) return;
-                var anchor = target.closest('a.fp-site-shell-link[href]');
-                if (!anchor) return;
-                if (event.defaultPrevented) return;
-                if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-                var href = anchor.getAttribute('href');
-                if (!href) return;
-
-                event.preventDefault();
-                primeMarketingOrigin();
-                primeMarketingHref(anchor.href || href);
-                showHandoffOverlay();
-                goToMarketingSite(href);
               }, true);
             } catch (e) {}
           })();
