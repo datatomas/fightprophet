@@ -2217,9 +2217,6 @@ def _get_favicon_icon_paths() -> tuple[Path | None, Path | None]:
 
 def _get_default_page_icon() -> str:
     """Default favicon used by Streamlit page config before JS theme swap runs."""
-    goat_icon = _get_goat_icon_path()
-    if goat_icon is not None:
-        return str(goat_icon)
     light_icon, dark_icon = _get_favicon_icon_paths()
     chosen = light_icon or dark_icon
     if chosen is not None and chosen.exists():
