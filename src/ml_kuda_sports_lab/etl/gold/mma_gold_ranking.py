@@ -20,14 +20,25 @@ Docker ETL image (requirements.etl.txt does not include pandas).
 from __future__ import annotations
 
 import argparse
+import logging
 import math
 import os
+import sys
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
 import duckdb
+
+
+logging.basicConfig(
+    level=os.environ.get("LOG_LEVEL", "INFO").upper(),
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    stream=sys.stdout,
+    force=True,
+)
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -442,16 +453,30 @@ def main() -> None:
     args = parse_args()
     as_of = _parse_as_of_date(args.as_of_date)
     db_path = resolve_duckdb_path(args)
+    logger.info(
+        "Starting MMA gold ranking build target=%s rebuild=%s as_of_date=%s db_path=%s",
+        args.target,
+        args.rebuild,
+        as_of.isoformat(),
+        db_path,
+    )
 
     conn = duckdb.connect(db_path)
     conn.execute("PRAGMA enable_progress_bar = FALSE")
+    logger.info("Connected to DuckDB and disabled DuckDB progress bar")
 
     ensure_gold_tables(conn, rebuild=args.rebuild)
-
+    logger.info("Gold ranking tables are ready")
 
     bouts = load_bouts(conn)
+    total_bouts = len(bouts)
+    logger.info("Loaded %s UFC bouts from silver.fights", total_bouts)
+    if total_bouts == 0:
+        logger.warning("No bouts were loaded; downstream ranking tables will be refreshed with zero rows")
+
     # Store naive UTC to match DuckDB TIMESTAMP columns without using deprecated utcnow().
     computed_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    logger.info("Computed timestamp for this run: %s UTC", computed_at.isoformat())
 
 
     base_points = 0.01
@@ -595,8 +620,9 @@ def main() -> None:
         return t
 
     fight_log_rows: List[Tuple] = []
+    progress_interval = max(250, min(1000, total_bouts // 10 if total_bouts else 250))
 
-    for (
+    for bout_idx, (
         org,
         wc,
         ev_date,
@@ -614,9 +640,21 @@ def main() -> None:
         f2_id,
         f2_name,
         f2_result,
-    ) in bouts:
+    ) in enumerate(bouts, 1):
         if ev_date is None or wc is None:
             continue
+
+        if bout_idx == 1 or bout_idx % progress_interval == 0 or bout_idx == total_bouts:
+            logger.info(
+                "Processing bout %s/%s org=%s weight_class=%s event_date=%s fighters=%s vs %s",
+                bout_idx,
+                total_bouts,
+                org,
+                wc,
+                ev_date,
+                f1_name,
+                f2_name,
+            )
 
         wc = str(wc)
         org = str(org)
@@ -1087,7 +1125,10 @@ def main() -> None:
             )
         )
 
+    logger.info("Finished processing bouts; prepared %s fight log rows", len(fight_log_rows))
+
     # Persist fight log (append by default)
+    logger.info("Writing %s rows to gold.mma_ranking_fight_log", len(fight_log_rows))
     conn.executemany(
     """
     INSERT INTO gold.mma_ranking_fight_log (
@@ -1225,15 +1266,26 @@ def main() -> None:
                 )
             )
 
+    logger.info(
+        "Prepared %s weight-class ranking rows across %s classes and %s overall ranking rows across %s organizations",
+        len(snapshot_rows),
+        len(grouped),
+        len(overall_snapshot_rows),
+        len(overall_grouped),
+    )
+
     if args.rebuild:
+        logger.info("Rebuild requested; clearing existing gold.mma_rankings and gold.mma_overall_rankings rows")
         conn.execute("DELETE FROM gold.mma_rankings")
         conn.execute("DELETE FROM gold.mma_overall_rankings")
     else:
         # keep only the latest snapshot for each run by clearing prior rows with same computed_at
+        logger.info("Deleting any existing rows for computed_at=%s before inserting fresh snapshot rows", computed_at.isoformat())
         conn.execute("DELETE FROM gold.mma_rankings WHERE computed_at = ?", [computed_at])
         conn.execute("DELETE FROM gold.mma_overall_rankings WHERE computed_at = ?", [computed_at])
 
     if snapshot_rows:
+        logger.info("Writing %s rows to gold.mma_rankings", len(snapshot_rows))
         conn.executemany(
             """
             INSERT INTO gold.mma_rankings (
@@ -1274,8 +1326,11 @@ def main() -> None:
             """,
             snapshot_rows,
         )
+    else:
+        logger.warning("No weight-class ranking rows were generated")
 
     if overall_snapshot_rows:
+        logger.info("Writing %s rows to gold.mma_overall_rankings", len(overall_snapshot_rows))
         conn.executemany(
             """
             INSERT INTO gold.mma_overall_rankings (
@@ -1302,7 +1357,10 @@ def main() -> None:
             """,
             overall_snapshot_rows,
         )
+    else:
+        logger.warning("No overall ranking rows were generated")
 
+    logger.info("Updating normalized overall scores")
     conn.execute(
         """
         WITH org_max AS (
@@ -1326,6 +1384,7 @@ def main() -> None:
         """
     )
 
+    logger.info("Updating per-weight-class rows with overall rank metadata")
     conn.execute(
         """
         UPDATE gold.mma_rankings AS r
@@ -1341,8 +1400,28 @@ def main() -> None:
         """
     )
 
+    fight_log_count = conn.execute(
+        "SELECT COUNT(*) FROM gold.mma_ranking_fight_log WHERE computed_at = ?",
+        [computed_at],
+    ).fetchone()[0]
+    ranking_count = conn.execute(
+        "SELECT COUNT(*) FROM gold.mma_rankings WHERE computed_at = ?",
+        [computed_at],
+    ).fetchone()[0]
+    overall_count = conn.execute(
+        "SELECT COUNT(*) FROM gold.mma_overall_rankings WHERE computed_at = ?",
+        [computed_at],
+    ).fetchone()[0]
+    logger.info(
+        "MMA gold ranking build complete computed_at=%s fight_log_rows=%s ranking_rows=%s overall_rows=%s",
+        computed_at.isoformat(),
+        fight_log_count,
+        ranking_count,
+        overall_count,
+    )
 
     conn.close()
+    logger.info("Closed DuckDB connection")
 
 
 if __name__ == "__main__":
