@@ -7176,11 +7176,6 @@ def page_fighter_profile() -> None:
             "It blends each fighter's observed finish outcomes with a global UFC prior so small-sample fighters are less noisy. "
             "Method Sample is the historical fight count used for that estimate."
         )
-        st.caption(
-            "If values look stale after data updates, re-run profile exports (and country sync when needed): "
-            "`sudo -E docker compose --env-file \"$PIPELINE_ENV_FILE\" --profile sunday run --rm --no-deps mma_manual_fighter_countries_sync` "
-            "then `mma_parquets_dashboard`."
-        )
     elif metrics_view == "Striking":
         _render_fighter_overview_card(
             [
