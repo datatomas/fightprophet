@@ -2,43 +2,24 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import AdSlot from '../components/AdSlot.astro';
 import FighterCard from '../components/FighterCard.astro';
+import { buildAppPageUrl } from '../lib/app-url';
 import { runtimeEnvFromLocals } from '../lib/country-master';
-import { getAllRankedFighterCards, getHomepageRankingsDebug, groupRankedFightersByDivision } from '../lib/champions';
+import { getAllRankedFighterCards, getHomepageGoatCards, getHomepageRankingsDebug, groupRankedFightersByDivision } from '../lib/champions';
 
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
-const withPage = (slug: string) => `${appUrl}${appUrl.includes('?') ? '&' : '?'}page=${encodeURIComponent(slug)}`;
+const withPage = (slug: string) => buildAppPageUrl(appUrl, slug);
 const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'https://fightprophet.com').replace(/\/$/, '');
-const rankingsAppUrl = withPage('rankings');
+const rankingsPageUrl = '/#fp-rankings';
 const predictionsAppUrl = withPage('predictions');
 
 const runtimeEnv = runtimeEnvFromLocals(Astro.locals);
 const allRankedFighters = await getAllRankedFighterCards(runtimeEnv);
+const homepageGoats = await getHomepageGoatCards(runtimeEnv);
 const homepageRankingsDebug = getHomepageRankingsDebug(runtimeEnv);
 const rankedDivisions = groupRankedFightersByDivision(allRankedFighters);
 const totalRankedFighters = allRankedFighters.length;
-const homePreviewLimit = 12;
-
-const divisionSlug = (value: string) => value.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
-const isWomensDivision = (wc: string) => /^women's/i.test(wc.trim());
-
-const mensDivisions = rankedDivisions.filter((g) => !isWomensDivision(g.weight_class));
-const womensDivisions = rankedDivisions.filter((g) => isWomensDivision(g.weight_class));
-
-const defaultMensDivision =
-  mensDivisions.find((g) => g.weight_class.trim().toLowerCase() === 'heavyweight')?.weight_class
-  ?? mensDivisions[0]?.weight_class
-  ?? '';
-const defaultWomensDivision = womensDivisions[0]?.weight_class ?? '';
-
-const previewFighters = (fighters: typeof allRankedFighters) =>
-  [...fighters]
-    .sort((a, b) =>
-      Number(Boolean(b.is_champion)) - Number(Boolean(a.is_champion))
-      || (a.rank ?? Number.POSITIVE_INFINITY) - (b.rank ?? Number.POSITIVE_INFINITY)
-      || (b.points ?? Number.NEGATIVE_INFINITY) - (a.points ?? Number.NEGATIVE_INFINITY)
-      || a.name.localeCompare(b.name)
-    )
-    .slice(0, homePreviewLimit);
+const goatPreviewLimit = 12;
+const topGoats = homepageGoats.slice(0, goatPreviewLimit);
 
 interface NewsItem {
   id: string;
@@ -174,8 +155,8 @@ const newsStructuredData = newsItems.map((item) => ({
       <div class="fp-hero-brand">
         <img src="/branding/fightprophet_logo_white.png" alt="Fight Prophet" class="fp-hero-logo" loading="eager" />
       </div>
-      <h1 class="fp-hero-title" id="i18n-hero-title">Built for fans by fans.</h1>
-      <p class="fp-hero-sub" id="i18n-hero-sub">The fight data already knows who&apos;s getting smashed. We just highlight it.</p>
+      <h1 class="fp-hero-title" id="i18n-hero-title">AI-powered MMA analytics, stats, rankings, and predictions.</h1>
+      <p class="fp-hero-sub" id="i18n-hero-sub">Built for fans by fans who want the fight data fast.</p>
       <div class="fp-hero-ctas">
         <a class="fp-cta-primary" href={predictionsAppUrl} target="_blank" rel="noopener noreferrer">
           <span id="i18n-cta-open-app">See predictions</span>
@@ -183,162 +164,50 @@ const newsStructuredData = newsItems.map((item) => ({
         </a>
         <a class="fp-cta-ghost" href="#fp-rankings" id="i18n-cta-browse">Browse rankings ↓</a>
       </div>
-      <p class="fp-hero-note" id="i18n-hero-note">For information and education only — never financial advice.</p>
+      <p class="fp-hero-note" id="i18n-hero-note">For information and education only — not financial advice. Our predictions and estimates can be wrong.</p>
     </header>
 
     <!-- RANKINGS CENTERPIECE -->
     <section id="fp-rankings" class="fp-rank-section">
       <div class="fp-rank-section-head">
         <div>
-          <p class="fp-section-label" id="i18n-rank-label">Fighter Rankings</p>
+          <p class="fp-section-label" id="i18n-rank-label">GOAT Board</p>
           <h2 class="fp-rank-section-title" id="i18n-rank-title">
-            {totalRankedFighters
-              ? `${totalRankedFighters} ranked fighters across ${rankedDivisions.length} divisions`
-              : 'Live ranking cards'}
+            {topGoats.length
+              ? `Top ${topGoats.length} global contenders across ${rankedDivisions.length} divisions`
+              : 'Live GOAT board'}
           </h2>
         </div>
-        <a class="fp-rank-section-link" href={rankingsAppUrl} target="_blank" rel="noopener noreferrer">All rankings →</a>
+        <a class="fp-rank-section-link" href={rankingsPageUrl}>All divisions →</a>
       </div>
 
-      {rankedDivisions.length > 0 ? (
-        <div class="fp-rank-wall" data-default-mens={divisionSlug(defaultMensDivision)} data-default-womens={divisionSlug(defaultWomensDivision)}>
-          <div class="fp-gender-tabs" role="tablist" aria-label="Fighter category">
-            <button type="button" class="fp-gender-tab is-active" data-gender="mens" role="tab" aria-selected="true">
-              <span>Men's</span>
-              <span class="fp-gender-tab-count">{mensDivisions.length}</span>
-            </button>
-            <button type="button" class="fp-gender-tab" data-gender="womens" role="tab" aria-selected="false">
-              <span>Women's</span>
-              <span class="fp-gender-tab-count">{womensDivisions.length}</span>
-            </button>
-          </div>
-
-          <div class="fp-gender-panel is-active" data-gender-panel="mens">
-            {mensDivisions.length > 0 && (
-              <nav class="fp-division-pills" aria-label="Mens divisions">
-                {mensDivisions.map((g) => (
-                  <button
-                    type="button"
-                    class={`fp-division-pill${divisionSlug(g.weight_class) === divisionSlug(defaultMensDivision) ? ' is-active' : ''}`}
-                    data-division-target={divisionSlug(g.weight_class)}
-                    data-division-gender="mens"
-                    aria-pressed={divisionSlug(g.weight_class) === divisionSlug(defaultMensDivision) ? 'true' : 'false'}
-                  >
-                    {g.weight_class}
-                    <span class="fp-division-pill-count">{g.fighters.length}</span>
-                  </button>
-                ))}
-              </nav>
-            )}
-            {mensDivisions.map((group) => (
-              <div
-                class={`fp-division-block${divisionSlug(group.weight_class) === divisionSlug(defaultMensDivision) ? ' is-active' : ''}`}
-                data-division-panel={divisionSlug(group.weight_class)}
-                data-division-gender="mens"
-                data-division-total={group.fighters.length}
-                data-division-name={group.weight_class}
-                hidden={divisionSlug(group.weight_class) === divisionSlug(defaultMensDivision) ? undefined : true}
-              >
-                <div class="fp-division-header">
-                  <h3 class="fp-division-title">{group.weight_class}</h3>
-                  <span class="fp-division-count">
-                    top {Math.min(group.fighters.length, homePreviewLimit)} of {group.fighters.length}
-                  </span>
-                </div>
-                <div class="fp-card-grid">
-                  {previewFighters(group.fighters).map((c) => (
-                    <FighterCard
-                      name={c.name}
-                      fighterId={c.fighter_id}
-                      country={c.country}
-                      weightClass={c.weight_class}
-                      isChampion={c.is_champion ?? false}
-                      finishRate={c.finish_rate ?? null}
-                      subRate={c.sub_rate ?? null}
-                      winStreak={c.win_streak ?? null}
-                      lossStreak={c.loss_streak ?? null}
-                      wins={c.wins ?? null}
-                      losses={c.losses ?? null}
-                      rank={c.rank ?? null}
-                      compact={true}
-                      appUrl={appUrl}
-                    />
-                  ))}
-                </div>
-                <div class="fp-division-footer">
-                  <a class="fp-division-link" href={rankingsAppUrl} target="_blank" rel="noopener noreferrer">
-                    Full {group.weight_class} ranking →
-                  </a>
-                </div>
-              </div>
+      {topGoats.length > 0 ? (
+        <div class="fp-goat-board">
+          <p class="fp-rank-note">Built from the latest model-wide UFC ranking snapshot. Full divisional tables still live in the rankings page.</p>
+          <div class="fp-card-grid">
+            {topGoats.map((c) => (
+              <FighterCard
+                name={c.name}
+                fighterId={c.fighter_id}
+                country={c.country}
+                weightClass={c.weight_class}
+                isChampion={c.is_champion ?? false}
+                finishRate={c.finish_rate ?? null}
+                subRate={c.sub_rate ?? null}
+                winStreak={c.win_streak ?? null}
+                lossStreak={c.loss_streak ?? null}
+                wins={c.wins ?? null}
+                losses={c.losses ?? null}
+                rank={c.global_rank ?? c.rank ?? null}
+                compact={true}
+                appUrl={appUrl}
+              />
             ))}
-            {mensDivisions.length === 0 && (
-              <p class="fp-empty-line">No mens divisions are currently published.</p>
-            )}
           </div>
-
-          <div class="fp-gender-panel" data-gender-panel="womens" hidden>
-            {womensDivisions.length > 0 && (
-              <nav class="fp-division-pills" aria-label="Womens divisions">
-                {womensDivisions.map((g) => (
-                  <button
-                    type="button"
-                    class={`fp-division-pill${divisionSlug(g.weight_class) === divisionSlug(defaultWomensDivision) ? ' is-active' : ''}`}
-                    data-division-target={divisionSlug(g.weight_class)}
-                    data-division-gender="womens"
-                    aria-pressed={divisionSlug(g.weight_class) === divisionSlug(defaultWomensDivision) ? 'true' : 'false'}
-                  >
-                    {g.weight_class.replace(/^Women.s\s+/i, '')}
-                    <span class="fp-division-pill-count">{g.fighters.length}</span>
-                  </button>
-                ))}
-              </nav>
-            )}
-            {womensDivisions.map((group) => (
-              <div
-                class={`fp-division-block${divisionSlug(group.weight_class) === divisionSlug(defaultWomensDivision) ? ' is-active' : ''}`}
-                data-division-panel={divisionSlug(group.weight_class)}
-                data-division-gender="womens"
-                data-division-total={group.fighters.length}
-                data-division-name={group.weight_class}
-                hidden={divisionSlug(group.weight_class) === divisionSlug(defaultWomensDivision) ? undefined : true}
-              >
-                <div class="fp-division-header">
-                  <h3 class="fp-division-title">{group.weight_class}</h3>
-                  <span class="fp-division-count">
-                    top {Math.min(group.fighters.length, homePreviewLimit)} of {group.fighters.length}
-                  </span>
-                </div>
-                <div class="fp-card-grid">
-                  {previewFighters(group.fighters).map((c) => (
-                    <FighterCard
-                      name={c.name}
-                      fighterId={c.fighter_id}
-                      country={c.country}
-                      weightClass={c.weight_class}
-                      isChampion={c.is_champion ?? false}
-                      finishRate={c.finish_rate ?? null}
-                      subRate={c.sub_rate ?? null}
-                      winStreak={c.win_streak ?? null}
-                      lossStreak={c.loss_streak ?? null}
-                      wins={c.wins ?? null}
-                      losses={c.losses ?? null}
-                      rank={c.rank ?? null}
-                      compact={true}
-                      appUrl={appUrl}
-                    />
-                  ))}
-                </div>
-                <div class="fp-division-footer">
-                  <a class="fp-division-link" href={rankingsAppUrl} target="_blank" rel="noopener noreferrer">
-                    Full {group.weight_class} ranking →
-                  </a>
-                </div>
-              </div>
-            ))}
-            {womensDivisions.length === 0 && (
-              <p class="fp-empty-line">No womens divisions are currently published.</p>
-            )}
+          <div class="fp-division-footer">
+            <a class="fp-division-link" href={rankingsPageUrl}>
+              See every division →
+            </a>
           </div>
         </div>
       ) : (
@@ -348,7 +217,7 @@ const newsStructuredData = newsItems.map((item) => ({
           <code class="fp-empty-debug">
             Azure account: {homepageRankingsDebug.hasAzureAccount ? 'yes' : 'no'} · key: {homepageRankingsDebug.hasAzureKey ? 'yes' : 'no'} · blob: {homepageRankingsDebug.blobPath}
           </code>
-          <a class="fp-cta-primary" href={rankingsAppUrl} target="_blank" rel="noopener noreferrer">Try the predictions section →</a>
+          <a class="fp-cta-primary" href={rankingsPageUrl}>See all categories →</a>
         </div>
       )}
     </section>
@@ -368,9 +237,9 @@ const newsStructuredData = newsItems.map((item) => ({
           <strong id="i18n-cta-2-title">Fight Lab</strong>
           <span id="i18n-cta-2-desc">Historical picks + model metrics</span>
         </a>
-        <a class="fp-section-card" href={rankingsAppUrl} target="_blank" rel="noopener noreferrer">
+        <a class="fp-section-card" href={rankingsPageUrl}>
           <strong id="i18n-cta-3-title">Fighter Rankings</strong>
-          <span id="i18n-cta-3-desc">Divisional performance and risers</span>
+          <span id="i18n-cta-3-desc">Every division in one place</span>
         </a>
         <a class="fp-section-card" href={withPage('belt-holders')} target="_blank" rel="noopener noreferrer">
           <strong id="i18n-cta-4-title">Belt Holders</strong>
@@ -527,17 +396,17 @@ const newsStructuredData = newsItems.map((item) => ({
     const FP_LANG_KEY = 'fp_lang';
     const translations = {
       en: {
-        heroTitle: 'Built for fans by fans.',
-        heroSub: "The fight data already knows who's getting smashed. We just highlight it.",
-        heroNote: 'For information and education only — never financial advice.',
+        heroTitle: 'AI-powered MMA analytics, stats, rankings, and predictions.',
+        heroSub: 'Built for fans by fans who want the fight data fast.',
+        heroNote: 'For information and education only — not financial advice. Our predictions and estimates can be wrong.',
         ctaOpenApp: 'See predictions',
         ctaBrowse: 'Browse rankings ↓',
-        rankLabel: 'Fighter Rankings',
+        rankLabel: 'GOAT Board',
         exploreLabel: 'Explore',
         exploreTitle: 'Everything Fight Prophet has',
         cta1Title: 'Predictions', cta1Desc: 'Compare model vs market probability',
         cta2Title: 'Fight Lab', cta2Desc: 'Historical picks + model metrics',
-        cta3Title: 'Fighter Rankings', cta3Desc: 'Divisional performance and risers',
+        cta3Title: 'Fighter Rankings', cta3Desc: 'Every division in one place',
         cta4Title: 'Belt Holders', cta4Desc: 'Champions and title history',
         cta5Title: 'Fighter Cards', cta5Desc: 'Open a data card for any fighter',
         cta6Title: 'Events History', cta6Desc: 'Past UFC cards and results',
@@ -547,12 +416,12 @@ const newsStructuredData = newsItems.map((item) => ({
         finalCta: 'Predictions',
       },
       es: {
-        heroTitle: 'Predicciones, rankings y analítica MMA — para fans.',
-        heroSub: 'Sin saber de estadística. Elige una división abajo y entra a predicciones, fichas o el fight lab.',
-        heroNote: 'Solo para información y educación — nunca asesoría financiera.',
+        heroTitle: 'Analítica, estadísticas, rankings y predicciones MMA con IA.',
+        heroSub: 'Hecho por fans para fans que quieren entender la data de pelea rápido.',
+        heroNote: 'Solo para información y educación — no es asesoría financiera. Nuestras predicciones y estimaciones pueden estar equivocadas.',
         ctaOpenApp: 'Ver predicciones',
         ctaBrowse: 'Ver rankings ↓',
-        rankLabel: 'Rankings de Peleadores',
+        rankLabel: 'Tablero GOAT',
         exploreLabel: 'Explorar',
         exploreTitle: 'Todo lo que tiene Fight Prophet',
         cta1Title: 'Predicciones', cta1Desc: 'Compara probabilidad del modelo vs mercado',
@@ -567,12 +436,12 @@ const newsStructuredData = newsItems.map((item) => ({
         finalCta: 'Abrir Fight Prophet',
       },
       pt: {
-        heroTitle: 'Previsões, rankings e análises de MMA — feitos para fãs.',
-        heroSub: 'Sem precisar de PhD em estatística. Escolha uma divisão, veja quem está ranqueado e abra o app para previsões e cards completos.',
-        heroNote: 'Apenas para informação e educação — nunca aconselhamento financeiro.',
+        heroTitle: 'Análises, estatísticas, rankings e previsões de MMA com IA.',
+        heroSub: 'Feito por fãs para fãs que querem entender os dados da luta rapidamente.',
+        heroNote: 'Apenas para informação e educação — não é aconselhamento financeiro. Nossas previsões e estimativas podem estar erradas.',
         ctaOpenApp: 'Abrir o App',
         ctaBrowse: 'Ver rankings ↓',
-        rankLabel: 'Rankings de Lutadores',
+        rankLabel: 'Quadro GOAT',
         exploreLabel: 'Explorar',
         exploreTitle: 'Tudo que o Fight Prophet tem',
         cta1Title: 'Previsões', cta1Desc: 'Compare probabilidade do modelo vs mercado',
@@ -779,6 +648,18 @@ const newsStructuredData = newsItems.map((item) => ({
       display: flex;
       flex-direction: column;
       gap: 0.85rem;
+    }
+    .fp-goat-board {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .fp-rank-note {
+      margin: 0;
+      color: #d4d4d8;
+      font-size: 0.92rem;
+      line-height: 1.55;
+      max-width: 72ch;
     }
 
     /* GENDER TABS */

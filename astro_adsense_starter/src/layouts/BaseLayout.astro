@@ -1,4 +1,6 @@
 ---
+import { buildAppPageUrl } from '../lib/app-url';
+
 interface Props {
   title?: string;
   description?: string;
@@ -9,13 +11,12 @@ const {
   description = 'AI-powered sports analytics and prediction insights',
 } = Astro.props as Props;
 
-const siteUrl = import.meta.env.PUBLIC_SITE_URL ?? 'https://fightprophet.com';
-const appUrl = import.meta.env.PUBLIC_APP_URL ?? 'https://app.fightprophet.com';
+const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'https://fightprophet.com';
+const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
 const canonicalUrl = new URL(Astro.url.pathname, siteUrl).toString();
 const ogImageUrl = new URL('/branding/fightprophet_logo_white.png', siteUrl).toString();
 
-const withPage = (slug: string) =>
-  `${appUrl}${appUrl.includes('?') ? '&' : '?'}page=${encodeURIComponent(slug)}`;
+const withPage = (slug: string) => buildAppPageUrl(appUrl, slug);
 const predictionsEmojiUrl = '/branding/b91c1c-predictions-emoji-rail.png';
 const fighterCardsEmojiUrl = '/branding/b91c1c-fighterscard-emoji-rail.png';
 const beltEmojiUrl = '/branding/b91c1c-belt-emoji-rail.png';
@@ -26,7 +27,7 @@ const termsEmojiUrl = '/branding/b91c1c-terms-emoji-rail.png';
 
 const currentPath = Astro.url.pathname;
 const isActive = (href: string) => {
-  if (href === '/') return currentPath === '/';
+  if (href === '/') return currentPath === '/' || currentPath === '/rankings' || currentPath === '/rankings/';
   return currentPath.startsWith(href);
 };
 ---
@@ -158,12 +159,12 @@ const isActive = (href: string) => {
       <footer class="fp-site-footer">
         <nav class="fp-site-footer-nav" aria-label="Site sections">
           <a href="/">Home</a>
-          <a href="/predictions/">Predictions</a>
-          <a href="/fight-lab/">Fight Lab</a>
-          <a href="/rankings/">Rankings</a>
-          <a href="/belt-holders/">Belt Holders</a>
-          <a href="/fighter-card/">Fighter Cards</a>
-          <a href="/events-history/">Events History</a>
+          <a href={withPage('predictions')} target="_blank" rel="noopener noreferrer">Predictions</a>
+          <a href={withPage('fight-lab')} target="_blank" rel="noopener noreferrer">Fight Lab</a>
+          <a href="/#fp-rankings">Rankings</a>
+          <a href={withPage('belt-holders')} target="_blank" rel="noopener noreferrer">Belt Holders</a>
+          <a href={withPage('fighter-card')} target="_blank" rel="noopener noreferrer">Fighter Cards</a>
+          <a href={withPage('events-history')} target="_blank" rel="noopener noreferrer">Events History</a>
           <a href="/privacy/">Privacy</a>
           <a href="/terms/">Terms</a>
         </nav>

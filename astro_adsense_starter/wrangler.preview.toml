@@ -16,3 +16,4 @@ binding = "IMAGES"
 
 [vars]
 PUBLIC_SITE_URL = "https://fightprophet.com"
+PUBLIC_APP_URL = "https://app.fightprophet.com"
