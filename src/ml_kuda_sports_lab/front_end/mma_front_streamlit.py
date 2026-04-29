@@ -3426,6 +3426,11 @@ st.markdown(
         background: linear-gradient(145deg, rgba(28, 28, 32, 0.9), rgba(39, 39, 42, 0.72));
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 18px rgba(0,0,0,0.2), 0 0 14px var(--fp-red-glow-soft);
     }
+    .fighter-overview-card--strip {
+        padding: 0.95rem 1rem 1rem;
+        background: linear-gradient(145deg, rgba(28, 28, 32, 0.92), rgba(39, 39, 42, 0.76));
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 18px rgba(0,0,0,0.2), 0 0 14px var(--fp-red-glow-soft);
+    }
     .fighter-overview-title {
         color: #f4f4f5;
         font-size: 0.84rem;
@@ -3439,6 +3444,11 @@ st.markdown(
         color: #d4d4d8;
         margin-bottom: 0.72rem;
     }
+    .fighter-overview-title--strip {
+        font-size: 0.78rem;
+        color: #d4d4d8;
+        margin-bottom: 0.62rem;
+    }
     .fighter-overview-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -3446,6 +3456,14 @@ st.markdown(
     }
     .fighter-overview-grid--summary {
         gap: 0.65rem;
+    }
+    .fighter-overview-grid--strip {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 0;
+        background: rgba(255,255,255,0.025);
+        border: 1px solid rgba(248, 113, 113, 0.14);
+        border-radius: 0.88rem;
+        overflow: hidden;
     }
     .fighter-overview-item {
         background: rgba(39, 39, 42, 0.68);
@@ -3460,6 +3478,22 @@ st.markdown(
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+    }
+    .fighter-overview-item--strip {
+        min-height: 0;
+        padding: 0.78rem 0.72rem 0.72rem;
+        background: transparent;
+        border: 0;
+        border-right: 1px solid rgba(248, 113, 113, 0.12);
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.16rem;
+        text-align: center;
+    }
+    .fighter-overview-item--strip:last-child {
+        border-right: 0;
     }
     .fighter-overview-label {
         color: #a1a1aa;
@@ -3480,6 +3514,12 @@ st.markdown(
         font-weight: 800;
         line-height: 1.05;
         letter-spacing: -0.02em;
+    }
+    .fighter-overview-value--strip {
+        font-size: 1.22rem;
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: -0.01em;
     }
 
     /* Larger reading copy for static content pages */
@@ -3668,6 +3708,10 @@ st.markdown(
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             gap: 0.4rem !important;
         }
+        .fighter-overview-grid--strip {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 0 !important;
+        }
         .fighter-overview-item {
             min-height: 48px !important;
             padding: 0.38rem 0.45rem !important;
@@ -3676,8 +3720,23 @@ st.markdown(
             min-height: 90px !important;
             padding: 0.56rem 0.62rem !important;
         }
+        .fighter-overview-item--strip {
+            min-height: 0 !important;
+            padding: 0.62rem 0.5rem !important;
+            border-right: 1px solid rgba(248, 113, 113, 0.12) !important;
+            border-bottom: 1px solid rgba(248, 113, 113, 0.12) !important;
+        }
+        .fighter-overview-item--strip:nth-child(2n) {
+            border-right: 0 !important;
+        }
+        .fighter-overview-item--strip:nth-last-child(-n+2) {
+            border-bottom: 0 !important;
+        }
         .fighter-overview-value--summary {
             font-size: 1.2rem !important;
+        }
+        .fighter-overview-value--strip {
+            font-size: 1.02rem !important;
         }
         .fighter-stat-card {
             min-height: 80px !important;
@@ -3690,6 +3749,18 @@ st.markdown(
     @media (min-width: 641px) and (max-width: 900px) {
         .fighter-overview-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        }
+        .fighter-overview-grid--strip {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        }
+        .fighter-overview-item--strip {
+            border-bottom: 1px solid rgba(248, 113, 113, 0.12) !important;
+        }
+        .fighter-overview-item--strip:nth-child(3n) {
+            border-right: 0 !important;
+        }
+        .fighter-overview-item--strip:nth-last-child(-n+3) {
+            border-bottom: 0 !important;
         }
     }
 
@@ -4543,14 +4614,23 @@ def _render_fighter_overview_card(
     title: str = "Fighter Vitals",
     html_value_labels: set[str] | None = None,
     emphasized: bool = False,
+    layout: str = "grid",
 ) -> None:
     html_labels = html_value_labels or set()
     cells_parts: list[str] = []
-    item_class = "fighter-overview-item fighter-overview-item--summary" if emphasized else "fighter-overview-item"
-    value_class = "fighter-overview-value fighter-overview-value--summary" if emphasized else "fighter-overview-value"
-    card_class = "fighter-overview-card fighter-overview-card--summary" if emphasized else "fighter-overview-card"
-    title_class = "fighter-overview-title fighter-overview-title--summary" if emphasized else "fighter-overview-title"
-    grid_class = "fighter-overview-grid fighter-overview-grid--summary" if emphasized else "fighter-overview-grid"
+    is_strip = layout == "strip"
+    if is_strip:
+        item_class = "fighter-overview-item fighter-overview-item--strip"
+        value_class = "fighter-overview-value fighter-overview-value--strip"
+        card_class = "fighter-overview-card fighter-overview-card--strip"
+        title_class = "fighter-overview-title fighter-overview-title--strip"
+        grid_class = "fighter-overview-grid fighter-overview-grid--strip"
+    else:
+        item_class = "fighter-overview-item fighter-overview-item--summary" if emphasized else "fighter-overview-item"
+        value_class = "fighter-overview-value fighter-overview-value--summary" if emphasized else "fighter-overview-value"
+        card_class = "fighter-overview-card fighter-overview-card--summary" if emphasized else "fighter-overview-card"
+        title_class = "fighter-overview-title fighter-overview-title--summary" if emphasized else "fighter-overview-title"
+        grid_class = "fighter-overview-grid fighter-overview-grid--summary" if emphasized else "fighter-overview-grid"
     for label, value in items:
         label_txt = escape(str(label))
         value_txt = "" if value is None else str(value)
@@ -5728,6 +5808,7 @@ def page_historical() -> None:
             ("Total Picks", f"{top_total:,}"),
         ],
         title="Historical Metrics",
+        layout="strip",
     )
 
     st.divider()
