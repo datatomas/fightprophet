@@ -432,16 +432,16 @@ By using this dashboard, you acknowledge and agree to the following:
     "page.upcoming.total_fights": "Total Fights",
     "page.upcoming.events": "Events",
     "page.upcoming.strong_signals": "Strong Signals",
-    "page.upcoming.recommended_bets": "Recommended Bets",
+    "page.upcoming.recommended_bets": "Value Flags",
     "page.upcoming.model_prediction_win": "Model prediction to win",
-    "page.upcoming.best_value_bet": "Best value bet",
+    "page.upcoming.best_value_bet": "Top value angle",
     "page.upcoming.underdog_value_angle": "Underdog value angle",
     "page.upcoming.edge": "Edge",
     "page.upcoming.market": "Market",
     "page.upcoming.signal": "Signal",
-    "page.upcoming.threshold_passed": "Threshold passed",
+    "page.upcoming.threshold_passed": "Value flag",
     "page.upcoming.model_probabilities": "Model probabilities",
-    "page.upcoming.value_signal_caption": "Value bet is a market-price signal, not a safe outcome prediction.",
+    "page.upcoming.value_signal_caption": "Value flag is a market-pricing signal, not advice or a safe outcome prediction.",
     "page.events_history.title": "Events History",
     "page.events_history.no_data": "No events history available from exported datasets yet.",
     "page.belt_holders.title": "Belt Holders",
@@ -525,16 +525,16 @@ Usa la barra lateral para navegar:
         "page.upcoming.total_fights": "Total de peleas",
         "page.upcoming.events": "Eventos",
         "page.upcoming.strong_signals": "Señales fuertes",
-        "page.upcoming.recommended_bets": "Apuestas recomendadas",
+        "page.upcoming.recommended_bets": "Señales de valor",
         "page.upcoming.model_prediction_win": "Predicción del modelo para ganar",
-        "page.upcoming.best_value_bet": "Mejor apuesta de valor",
+        "page.upcoming.best_value_bet": "Mejor ángulo de valor",
         "page.upcoming.underdog_value_angle": "Ángulo de valor del no favorito",
         "page.upcoming.edge": "Ventaja",
         "page.upcoming.market": "Mercado",
         "page.upcoming.signal": "Señal",
-        "page.upcoming.threshold_passed": "Umbral superado",
+        "page.upcoming.threshold_passed": "Señal de valor",
         "page.upcoming.model_probabilities": "Probabilidades del modelo",
-        "page.upcoming.value_signal_caption": "La apuesta de valor es una señal de precio de mercado, no una predicción segura del resultado.",
+        "page.upcoming.value_signal_caption": "La señal de valor es una lectura de precio de mercado, no consejo ni una predicción segura del resultado.",
         "page.events_history.title": "Historial de Eventos",
         "page.events_history.no_data": "Aún no hay historial de eventos disponible en los datasets exportados.",
         "page.belt_holders.title": "Poseedores del Cinturón",
@@ -614,16 +614,16 @@ Use a barra lateral para navegar:
         "page.upcoming.total_fights": "Total de lutas",
         "page.upcoming.events": "Eventos",
         "page.upcoming.strong_signals": "Sinais fortes",
-        "page.upcoming.recommended_bets": "Apostas recomendadas",
+        "page.upcoming.recommended_bets": "Sinais de valor",
         "page.upcoming.model_prediction_win": "Previsão do modelo para vencer",
-        "page.upcoming.best_value_bet": "Melhor aposta de valor",
+        "page.upcoming.best_value_bet": "Melhor ângulo de valor",
         "page.upcoming.underdog_value_angle": "Ângulo de valor do azarão",
         "page.upcoming.edge": "Vantagem",
         "page.upcoming.market": "Mercado",
         "page.upcoming.signal": "Sinal",
-        "page.upcoming.threshold_passed": "Limite atingido",
+        "page.upcoming.threshold_passed": "Sinal de valor",
         "page.upcoming.model_probabilities": "Probabilidades do modelo",
-        "page.upcoming.value_signal_caption": "A aposta de valor é um sinal de preço de mercado, não uma previsão segura do resultado.",
+        "page.upcoming.value_signal_caption": "O sinal de valor é uma leitura de preço de mercado, não conselho nem previsão segura do resultado.",
         "page.events_history.title": "Histórico de Eventos",
         "page.events_history.no_data": "Ainda não há histórico de eventos disponível nos datasets exportados.",
         "page.belt_holders.title": "Detentores do Cinturão",
@@ -4520,12 +4520,12 @@ def _render_betting_signals_guide() -> None:
         '<div class="fp-guide-copy">Low edge or noisy setup; usually a pass.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--recommended">'
-        f'<div class="fp-guide-label">{_inline_emoji_html("✅", extra_class="fp-inline-emoji--guide")} RECOMMENDED BET</div>'
-        '<div class="fp-guide-copy">Passed internal thresholds, but value bets are still high-variance and can lose often.</div>'
+        f'<div class="fp-guide-label">{_png_icon_html("b91c1c-bets-emoji.png", size=16, extra_class="fp-inline-emoji--guide", label="Value flag") or _inline_emoji_html("✅", extra_class="fp-inline-emoji--guide")} VALUE FLAG</div>'
+        '<div class="fp-guide-copy">Triggered internal value thresholds, but these flags are still high-variance and can lose often.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--check">'
         '<div class="fp-guide-label">Quick check</div>'
-        '<div class="fp-guide-copy">Model bars show win probability for each fighter. Best value bet only highlights the side that looks most mispriced versus the market.</div>'
+        '<div class="fp-guide-copy">Model bars show win probability for each fighter. Top value angle only highlights the side that looks most mispriced versus the market.</div>'
         '</div>'
         '</div>'
         '<div class="fp-guide-footer">'
@@ -5588,7 +5588,13 @@ def _render_fight_card(row: pd.Series) -> None:
         "weak": "fp-matchup-signal--weak",
     }.get(signal_key, "fp-matchup-signal--neutral")
     signal_label = str(signal or "Signal").upper()
-    recommended_chip = f" • ✅ {t('page.upcoming.threshold_passed')}" if recommended else ""
+    recommended_chip = (
+        " &nbsp;|&nbsp; "
+        + (_png_icon_html("b91c1c-bets-emoji.png", size=16, extra_class="fp-inline-emoji--signal", label=t("page.upcoming.threshold_passed")) or _inline_emoji_html("✅", extra_class="fp-inline-emoji--signal"))
+        + f" <b>{escape(t('page.upcoming.threshold_passed'))}</b>"
+        if recommended
+        else ""
+    )
     value_label = (
         t("page.upcoming.underdog_value_angle")
         if bet_on_is_underdog
@@ -5630,7 +5636,7 @@ def _render_fight_card(row: pd.Series) -> None:
             f"<div class='fp-pick-value'>{icon} <b>{escape(value_label)}:</b> {bet_on_label}"
             f" &nbsp;|&nbsp; {escape(t('page.upcoming.edge'))}: <span style='font-family:ui-monospace,SFMono-Regular,monospace;'>{escape(edge_pct)}</span>"
             f" &nbsp;|&nbsp; {escape(t('page.upcoming.market'))}: <span style='font-family:ui-monospace,SFMono-Regular,monospace;'>{escape(market_str)}</span>"
-            f" &nbsp;|&nbsp; {escape(t('page.upcoming.signal'))}: <b>{escape(signal_label)}</b>{escape(recommended_chip)}"
+            f" &nbsp;|&nbsp; {escape(t('page.upcoming.signal'))}: <b>{escape(signal_label)}</b>{recommended_chip}"
             "</div>"
         )
 
