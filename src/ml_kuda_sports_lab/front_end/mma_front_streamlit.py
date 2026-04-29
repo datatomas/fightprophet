@@ -2719,6 +2719,9 @@ FOLDER_FIGHTER_HISTORY = "dashboard_fighter_history"
 FOLDER_BELT_HOLDERS = "dashboard_belt_holders"
 FOLDER_TITLE_FIGHT_HISTORY = "dashboard_title_fight_history"
 FOLDER_MANUAL_TITLE_VACATES = "dashboard_manual_title_vacates"
+FOLDER_FEATURE_IMPORTANCE_CATBOOST = "dashboard_feature_importance_catboost"
+FOLDER_HPARAM_IMPORTANCE_CATBOOST = "dashboard_hparam_importance_catboost"
+FOLDER_TUNE_TRIALS_CATBOOST = "dashboard_tune_trials_catboost"
 
 
 @st.cache_data(ttl=900, show_spinner=False)
@@ -5683,6 +5686,188 @@ def page_model_performance() -> None:
 # ---------------------------------------------------------------------------
 
 
+def _render_model_diagnostics(model_view: str) -> None:
+    """Render CatBoost feature importance + Optuna hparam importance / trials.
+
+    Reads three dashboard parquets produced by mma_gold_catboost(_tune).py via
+    mma_parquets_dashboard.py. All blocks degrade gracefully if a parquet is
+    missing or empty (first runs, LogReg/Ensemble views).
+    """
+    with st.expander("Model Diagnostics — what the model leans on", expanded=False):
+        st.caption(
+            "Feature importance reflects the production CatBoost model. "
+            "Hyperparameter importance comes from the latest Optuna study."
+        )
+
+        if model_view != "CatBoost":
+            st.info("Diagnostics are currently published only for the CatBoost model.")
+            return
+
+        df_fi = _read_parquet(
+            FOLDER_FEATURE_IMPORTANCE_CATBOOST,
+            ACTIVE_PARQUET_BASE,
+            ACTIVE_PREFIX,
+        )
+        st.subheader("Feature Importance")
+        if df_fi.empty:
+            st.info("No feature importance available yet — run the CatBoost trainer first.")
+        else:
+            df_fi = df_fi.copy()
+            df_fi["importance"] = pd.to_numeric(df_fi["importance"], errors="coerce")
+            df_fi = df_fi.dropna(subset=["importance"]).sort_values("importance", ascending=False)
+            n_features = int(len(df_fi))
+            top_n = st.slider(
+                "Top features",
+                min_value=5,
+                max_value=max(5, min(60, n_features)),
+                value=min(25, n_features),
+                step=5,
+                key="fi_top_n",
+            )
+            df_top = df_fi.head(top_n).iloc[::-1]
+            colors = [
+                "#ef4444" if k == "categorical" else "#3b82f6"
+                for k in df_top.get("feature_kind", pd.Series(["numeric"] * len(df_top)))
+            ]
+            fig_fi = go.Figure()
+            fig_fi.add_trace(
+                go.Bar(
+                    x=df_top["importance"],
+                    y=df_top["feature"],
+                    orientation="h",
+                    marker=dict(color=colors),
+                    hovertemplate="%{y}<br>importance: %{x:.3f}<extra></extra>",
+                )
+            )
+            fig_fi.update_layout(
+                template="plotly_dark",
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                height=max(360, 22 * top_n),
+                margin=dict(l=10, r=20, t=10, b=40),
+                xaxis_title="PredictionValuesChange",
+                yaxis_title="",
+            )
+            st.plotly_chart(fig_fi, use_container_width=True)
+            st.caption(
+                "Blue = numeric delta/profile feature, red = categorical (stance, weight class, …). "
+                "Bars use CatBoost's PredictionValuesChange. Correlated features can split a single "
+                "underlying signal across several rows — read directionally, not as ground truth."
+            )
+
+        df_hp = _read_parquet(
+            FOLDER_HPARAM_IMPORTANCE_CATBOOST,
+            ACTIVE_PARQUET_BASE,
+            ACTIVE_PREFIX,
+        )
+        st.subheader("Optuna Hyperparameter Importance")
+        if df_hp.empty:
+            st.info("No Optuna study persisted yet — run the CatBoost tuner.")
+        else:
+            df_hp = df_hp.copy()
+            df_hp["importance"] = pd.to_numeric(df_hp["importance"], errors="coerce")
+            df_hp = df_hp.dropna(subset=["importance"]).sort_values("importance", ascending=True)
+            fig_hp = go.Figure()
+            fig_hp.add_trace(
+                go.Bar(
+                    x=df_hp["importance"],
+                    y=df_hp["param"],
+                    orientation="h",
+                    marker=dict(color="#22c55e"),
+                    hovertemplate="%{y}<br>importance: %{x:.3f}<extra></extra>",
+                )
+            )
+            fig_hp.update_layout(
+                template="plotly_dark",
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                height=max(280, 28 * len(df_hp)),
+                margin=dict(l=10, r=20, t=10, b=40),
+                xaxis_title="fANOVA importance",
+                yaxis_title="",
+            )
+            st.plotly_chart(fig_hp, use_container_width=True)
+            n_trials_val = (
+                int(df_hp["n_trials"].iloc[0])
+                if "n_trials" in df_hp.columns and not df_hp["n_trials"].isna().all()
+                else None
+            )
+            best_val = (
+                float(df_hp["best_value"].iloc[0])
+                if "best_value" in df_hp.columns and not df_hp["best_value"].isna().all()
+                else None
+            )
+            if n_trials_val is not None and best_val is not None:
+                st.caption(f"Latest study: {n_trials_val} trials, best valid score = {best_val:.4f}")
+
+        df_tr = _read_parquet(
+            FOLDER_TUNE_TRIALS_CATBOOST,
+            ACTIVE_PARQUET_BASE,
+            ACTIVE_PREFIX,
+        )
+        st.subheader("Optuna Trial History")
+        if df_tr.empty:
+            st.info("No tuning trial history available yet.")
+        else:
+            df_tr = df_tr.copy()
+            df_tr["value"] = pd.to_numeric(df_tr["value"], errors="coerce")
+            df_tr["best_value_so_far"] = pd.to_numeric(df_tr["best_value_so_far"], errors="coerce")
+            df_tr = df_tr.sort_values("trial_number")
+            fig_tr = go.Figure()
+            fig_tr.add_trace(
+                go.Scatter(
+                    x=df_tr["trial_number"],
+                    y=df_tr["value"],
+                    mode="markers",
+                    name="Trial score",
+                    marker=dict(
+                        size=8,
+                        color=df_tr["value"],
+                        colorscale="Viridis",
+                        showscale=False,
+                    ),
+                    hovertemplate="trial %{x}<br>value: %{y:.4f}<extra></extra>",
+                )
+            )
+            fig_tr.add_trace(
+                go.Scatter(
+                    x=df_tr["trial_number"],
+                    y=df_tr["best_value_so_far"],
+                    mode="lines",
+                    name="Best so far",
+                    line=dict(color="#ef4444", width=2),
+                )
+            )
+            best_mask = df_tr.get("is_best", pd.Series([False] * len(df_tr))).fillna(False).astype(bool)
+            if best_mask.any():
+                fig_tr.add_trace(
+                    go.Scatter(
+                        x=df_tr.loc[best_mask, "trial_number"],
+                        y=df_tr.loc[best_mask, "value"],
+                        mode="markers",
+                        name="Best trial",
+                        marker=dict(size=14, color="#facc15", symbol="star"),
+                        hovertemplate="best trial %{x}<br>value: %{y:.4f}<extra></extra>",
+                    )
+                )
+            metric_label = (
+                str(df_tr["metric"].iloc[0]).upper()
+                if "metric" in df_tr.columns and not df_tr["metric"].isna().all()
+                else "score"
+            )
+            fig_tr.update_layout(
+                template="plotly_dark",
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                height=380,
+                margin=dict(l=10, r=20, t=10, b=40),
+                xaxis_title="Trial",
+                yaxis_title=metric_label,
+                legend=dict(x=0.02, y=0.02),
+            )
+            st.plotly_chart(fig_tr, use_container_width=True)
+
+
 def page_historical() -> None:
     st.header("Fight Lab: Historical Picks + Model Performance")
 
@@ -5872,6 +6057,8 @@ def page_historical() -> None:
         st.markdown(df_cal_display.to_html(index=False, escape=False), unsafe_allow_html=True)
 
     st.divider()
+    _render_model_diagnostics(model_view)
+
     st.caption(f"Total available historical picks: {total_available:,}")
 
     slice_mode = st.radio(
