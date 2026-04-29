@@ -374,6 +374,9 @@ def ensure_gold_tables(conn: duckdb.DuckDBPyConnection, rebuild: bool) -> None:
             win_streak INTEGER,
             loss_streak INTEGER,
             has_won_title BOOLEAN,
+            global_rank INTEGER,
+            global_points DOUBLE,
+            normalized_global_score DOUBLE,
             rank INTEGER
         );
         """
@@ -401,6 +404,7 @@ def ensure_gold_tables(conn: duckdb.DuckDBPyConnection, rebuild: bool) -> None:
             win_streak INTEGER,
             loss_streak INTEGER,
             has_won_title BOOLEAN,
+            normalized_global_score DOUBLE,
             rank INTEGER
         );
         """
@@ -420,12 +424,16 @@ def ensure_gold_tables(conn: duckdb.DuckDBPyConnection, rebuild: bool) -> None:
         conn.execute("ALTER TABLE gold.mma_rankings ADD COLUMN IF NOT EXISTS class_draws_count INTEGER")
         conn.execute("ALTER TABLE gold.mma_rankings ADD COLUMN IF NOT EXISTS class_nc_count INTEGER")
         conn.execute("ALTER TABLE gold.mma_rankings ADD COLUMN IF NOT EXISTS title_defenses_count INTEGER")
+        conn.execute("ALTER TABLE gold.mma_rankings ADD COLUMN IF NOT EXISTS global_rank INTEGER")
+        conn.execute("ALTER TABLE gold.mma_rankings ADD COLUMN IF NOT EXISTS global_points DOUBLE")
+        conn.execute("ALTER TABLE gold.mma_rankings ADD COLUMN IF NOT EXISTS normalized_global_score DOUBLE")
     except Exception:
         pass
 
     try:
         conn.execute("ALTER TABLE gold.mma_overall_rankings ADD COLUMN IF NOT EXISTS fighter_status VARCHAR")
         conn.execute("ALTER TABLE gold.mma_overall_rankings ADD COLUMN IF NOT EXISTS title_defenses_count INTEGER")
+        conn.execute("ALTER TABLE gold.mma_overall_rankings ADD COLUMN IF NOT EXISTS normalized_global_score DOUBLE")
     except Exception:
         pass
 
@@ -1171,6 +1179,9 @@ def main() -> None:
                     int(st.win_streak),
                     int(st.loss_streak),
                     bool(st.has_won_title),
+                    None,
+                    None,
+                    None,
                     int(idx),
                 )
             )
@@ -1209,6 +1220,7 @@ def main() -> None:
                     int(st.win_streak),
                     int(st.loss_streak),
                     bool(st.has_won_title),
+                    None,
                     int(idx),
                 )
             )
@@ -1253,9 +1265,12 @@ def main() -> None:
                 win_streak,
                 loss_streak,
                 has_won_title,
+                global_rank,
+                global_points,
+                normalized_global_score,
                 rank
             )
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """,
             snapshot_rows,
         )
@@ -1281,11 +1296,50 @@ def main() -> None:
                 win_streak,
                 loss_streak,
                 has_won_title,
+                normalized_global_score,
                 rank
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """,
             overall_snapshot_rows,
         )
+
+    conn.execute(
+        """
+        WITH org_max AS (
+            SELECT
+                computed_at,
+                as_of_date,
+                organization,
+                MAX(points) AS max_points
+            FROM gold.mma_overall_rankings
+            GROUP BY 1, 2, 3
+        )
+        UPDATE gold.mma_overall_rankings AS o
+        SET normalized_global_score = CASE
+            WHEN m.max_points IS NULL OR m.max_points <= 0 THEN 0.0
+            ELSE ROUND((o.points / m.max_points) * 100.0, 6)
+        END
+        FROM org_max AS m
+        WHERE o.computed_at = m.computed_at
+          AND o.as_of_date = m.as_of_date
+          AND o.organization = m.organization
+        """
+    )
+
+    conn.execute(
+        """
+        UPDATE gold.mma_rankings AS r
+        SET
+            global_rank = o.rank,
+            global_points = o.points,
+            normalized_global_score = o.normalized_global_score
+        FROM gold.mma_overall_rankings AS o
+        WHERE r.computed_at = o.computed_at
+          AND r.as_of_date = o.as_of_date
+          AND r.organization = o.organization
+          AND r.fighter_id = o.fighter_id
+        """
+    )
 
 
     conn.close()
