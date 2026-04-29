@@ -6,12 +6,12 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "wrangler dev --config wrangler.preview.toml"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^12.6.0",
+    "@astrojs/cloudflare": "^13.2.2",
     "@astrojs/sitemap": "^3.7.2",
-    "astro": "^5.2.0",
+    "astro": "^6.1.10",
     "hyparquet": "^1.25.6"
   }
 }

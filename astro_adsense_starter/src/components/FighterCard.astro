@@ -14,6 +14,8 @@ interface Props {
   wins?: number | null;
   losses?: number | null;
   appUrl?: string;
+  rank?: number | null;
+  compact?: boolean;
 }
 
 const {
@@ -29,6 +31,8 @@ const {
   wins = null,
   losses = null,
   appUrl = 'https://app.fightprophet.com',
+  rank = null,
+  compact = false,
 } = Astro.props as Props;
 
 const profileUrl = `${appUrl}${appUrl.includes('?') ? '&' : '?'}page=fighter-card&fighter=${encodeURIComponent(name)}`;
@@ -122,7 +126,7 @@ const divisionLabel = weightClass.trim();
 const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(losses)}` : '';
 ---
 
-<a class={`fp-card ${isChampion ? 'is-champ' : 'is-default'}`} href={profileUrl} target="_blank" rel="noopener" data-fighter-id={fighterId}>
+<a class={`fp-card ${isChampion ? 'is-champ' : 'is-default'}${compact ? ' is-compact' : ''}`} href={profileUrl} target="_blank" rel="noopener" data-fighter-id={fighterId}>
   <div class="fp-card-chrome" aria-hidden="true">
     <span class="fp-card-corner fp-card-corner--tl"></span>
     <span class="fp-card-corner fp-card-corner--tr"></span>
@@ -132,8 +136,22 @@ const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(l
   {isChampion && <span class="fp-card-crown" aria-label="Current champion">👑</span>}
   <div class="fp-card-top">
     <div class="fp-card-rating">
-      <span class="fp-card-rating-num">{recordLabel || fmtInt(wins)}</span>
-      {wcAbbr && <span class="fp-card-rating-pos">{wcAbbr}</span>}
+      {rank != null ? (
+        <>
+          <span class="fp-card-rating-num">#{rank}</span>
+          {wcAbbr && <span class="fp-card-rating-pos">{wcAbbr}</span>}
+        </>
+      ) : isChampion ? (
+        <>
+          <span class="fp-card-rating-num">C</span>
+          {wcAbbr && <span class="fp-card-rating-pos">{wcAbbr}</span>}
+        </>
+      ) : (
+        <>
+          <span class="fp-card-rating-num">{recordLabel || fmtInt(wins)}</span>
+          {wcAbbr && <span class="fp-card-rating-pos">{wcAbbr}</span>}
+        </>
+      )}
     </div>
     {flag && <span class="fp-card-flag" title={canonicalCountryValue}>{flag}</span>}
   </div>
@@ -540,5 +558,104 @@ const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(l
       min-width: 2.3rem;
       font-size: 0.9rem;
     }
+  }
+
+  .fp-card.is-compact {
+    aspect-ratio: 4 / 5.4;
+    min-height: 158px;
+    padding: 0.34rem 0.34rem 0.4rem;
+    border-radius: 0.85rem;
+  }
+  .fp-card.is-compact::after {
+    inset: 0.22rem;
+    border-radius: 0.7rem;
+  }
+  .fp-card.is-compact .fp-card-corner {
+    width: 0.78rem;
+    height: 0.78rem;
+  }
+  .fp-card.is-compact .fp-card-corner--tl { top: 0.55rem; left: 0.32rem; }
+  .fp-card.is-compact .fp-card-corner--tr { top: 0.55rem; right: 0.32rem; }
+  .fp-card.is-compact .fp-card-corner--bl { bottom: 0.62rem; left: 0.32rem; }
+  .fp-card.is-compact .fp-card-corner--br { bottom: 0.62rem; right: 0.32rem; }
+  .fp-card.is-compact .fp-card-crown {
+    top: 0.28rem;
+    font-size: 0.78rem;
+  }
+  .fp-card.is-compact .fp-card-rating {
+    padding: 0.14rem 0.28rem 0.18rem;
+    border-radius: 0.42rem;
+    gap: 0.02rem;
+  }
+  .fp-card.is-compact .fp-card-rating-num {
+    font-size: 0.92rem;
+  }
+  .fp-card.is-compact .fp-card-rating-pos {
+    font-size: 0.5rem;
+  }
+  .fp-card.is-compact .fp-card-flag {
+    font-size: 1.12rem;
+    padding: 0.16rem 0.32rem;
+  }
+  .fp-card.is-compact .fp-card-portrait {
+    margin: 0.26rem 0 0.26rem;
+    border-radius: 0.7rem;
+  }
+  .fp-card.is-compact .fp-card-portrait-silhouette {
+    font-size: 2.6rem;
+  }
+  .fp-card.is-compact .fp-card-initials {
+    font-size: 1.32rem;
+    letter-spacing: 0.05em;
+  }
+  .fp-card.is-compact .fp-card-name {
+    font-size: 0.7rem;
+    margin: 0 0 0.24rem;
+    padding: 0.18rem 0.34rem;
+    line-height: 1.1;
+  }
+  .fp-card.is-compact .fp-card-meta {
+    gap: 0.18rem 0.22rem;
+    margin: -0.05rem 0 0.2rem;
+    min-height: 0;
+  }
+  .fp-card.is-compact .fp-card-division {
+    font-size: 0.5rem;
+  }
+  .fp-card.is-compact .fp-card-badge {
+    padding: 0.1rem 0.3rem;
+    font-size: 0.46rem;
+  }
+  .fp-card.is-compact .fp-card-country {
+    margin: -0.02rem 0 0.22rem;
+    font-size: 0.6rem;
+    gap: 0.22rem;
+  }
+  .fp-card.is-compact .fp-card-country-flag {
+    font-size: 0.94rem;
+  }
+  .fp-card.is-compact .fp-card-country-full {
+    display: none;
+  }
+  .fp-card.is-compact .fp-card-country-short {
+    display: inline;
+  }
+  .fp-card.is-compact .fp-card-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.14rem 0.2rem;
+    padding: 0.24rem 0.3rem;
+    border-radius: 0.5rem;
+  }
+  .fp-card.is-compact .fp-card-stat {
+    padding: 0.06rem 0.12rem;
+    border-radius: 0.32rem;
+  }
+  .fp-card.is-compact .fp-card-stat-label {
+    font-size: 0.5rem;
+  }
+  .fp-card.is-compact .fp-card-stat-val {
+    min-width: 1.8rem;
+    padding: 0.12rem 0.24rem;
+    font-size: 0.72rem;
   }
 </style>

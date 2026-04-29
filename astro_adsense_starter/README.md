@@ -145,5 +145,17 @@ PUBLIC_ADSENSE_ENABLED=$PUBLIC_ADSENSE_ENABLED
 PUBLIC_SUBSCRIBE_ENDPOINT=$PUBLIC_SUBSCRIBE_ENDPOINT
 EOF
 npm run build
-npx wrangler pages dev dist --compatibility-flag=nodejs_compat
+npm run preview
+'
+
+
+# azure dat test
+
+bash -lc '
+source ~/.bashrc
+cd /home/ares/Documents/gitrepos/ml_kuda_sports_lab/astro_adsense_starter
+export AZURE_STORAGE_CONTAINER=${AZURE_STORAGE_CONTAINER:-fightprophet-dashboard}
+export PARQUET_PREFIX=${PARQUET_PREFIX:-mma/diamond}
+export PUBLIC_SITE_URL=${PUBLIC_SITE_URL:-https://fightprophet.com}
+npm run dev
 '

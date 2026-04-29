@@ -1,0 +1,18 @@
+name = "fight-prophet-preview"
+compatibility_date = "2026-04-11"
+main = "./dist/server/entry.mjs"
+
+[assets]
+directory = "./dist/client"
+binding = "ASSETS"
+
+[[kv_namespaces]]
+binding = "SESSION"
+id = "local-preview-session"
+preview_id = "local-preview-session"
+
+[images]
+binding = "IMAGES"
+
+[vars]
+PUBLIC_SITE_URL = "https://fightprophet.com"

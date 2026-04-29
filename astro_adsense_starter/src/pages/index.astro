@@ -9,18 +9,25 @@ const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
 const withPage = (slug: string) => `${appUrl}${appUrl.includes('?') ? '&' : '?'}page=${encodeURIComponent(slug)}`;
 const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'https://fightprophet.com').replace(/\/$/, '');
 const rankingsAppUrl = withPage('rankings');
+const predictionsAppUrl = withPage('predictions');
 
 const allRankedFighters = await getAllRankedFighterCards(runtimeEnvFromLocals(Astro.locals));
 const rankedDivisions = groupRankedFightersByDivision(allRankedFighters);
 const totalRankedFighters = allRankedFighters.length;
-const homePreviewLimit = 10;
-const allDivisionsSlug = 'all-divisions';
+const homePreviewLimit = 12;
+
 const divisionSlug = (value: string) => value.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
-const defaultDivision =
-  rankedDivisions.find((group) => group.weight_class.trim().toLowerCase() === 'heavyweight')?.weight_class
-  ?? rankedDivisions[0]?.weight_class
-  ?? 'Heavyweight';
-const defaultDivisionSlug = divisionSlug(defaultDivision);
+const isWomensDivision = (wc: string) => /^women's/i.test(wc.trim());
+
+const mensDivisions = rankedDivisions.filter((g) => !isWomensDivision(g.weight_class));
+const womensDivisions = rankedDivisions.filter((g) => isWomensDivision(g.weight_class));
+
+const defaultMensDivision =
+  mensDivisions.find((g) => g.weight_class.trim().toLowerCase() === 'heavyweight')?.weight_class
+  ?? mensDivisions[0]?.weight_class
+  ?? '';
+const defaultWomensDivision = womensDivisions[0]?.weight_class ?? '';
+
 const previewFighters = (fighters: typeof allRankedFighters) =>
   [...fighters]
     .sort((a, b) =>
@@ -30,6 +37,7 @@ const previewFighters = (fighters: typeof allRankedFighters) =>
       || a.name.localeCompare(b.name)
     )
     .slice(0, homePreviewLimit);
+
 interface NewsItem {
   id: string;
   title: string;
@@ -97,7 +105,7 @@ function parseRssItems(xml: string, source: string, limit = 12): NewsItem[] {
 
 async function getMmaNewsItems(): Promise<NewsItem[]> {
   const allItems: NewsItem[] = [];
-  const perFeed = 6;
+  const perFeed = 5;
 
   for (const feed of MMA_FEEDS) {
     try {
@@ -117,7 +125,7 @@ async function getMmaNewsItems(): Promise<NewsItem[]> {
   const deduped = allItems
     .filter((item, index, arr) => arr.findIndex((other) => other.url === item.url) === index)
     .sort((a, b) => b.datePublished.localeCompare(a.datePublished))
-    .slice(0, 12);
+    .slice(0, 8);
 
   if (deduped.length > 0) {
     return deduped;
@@ -132,19 +140,10 @@ async function getMmaNewsItems(): Promise<NewsItem[]> {
       url: 'https://www.mmafighting.com',
       source: 'MMA News',
     },
-    {
-      id: 'mma-fallback-2',
-      title: 'Fight cards, rankings, and roster movement remain in focus',
-      description: 'Coverage includes event announcements, divisional developments, and key matchup updates across MMA.',
-      datePublished: new Date().toISOString().slice(0, 10),
-      url: 'https://www.mmafighting.com/latest-news',
-      source: 'MMA News',
-    },
   ];
 }
 
 const newsItems = await getMmaNewsItems();
-
 const initialNews = newsItems[0];
 
 const newsStructuredData = newsItems.map((item) => ({
@@ -154,87 +153,89 @@ const newsStructuredData = newsItems.map((item) => ({
   description: item.description,
   datePublished: item.datePublished,
   dateModified: item.datePublished,
-  author: {
-    '@type': 'Organization',
-    name: 'Fight Prophet',
-  },
+  author: { '@type': 'Organization', name: 'Fight Prophet' },
   publisher: {
     '@type': 'Organization',
     name: 'Fight Prophet',
-    logo: {
-      '@type': 'ImageObject',
-      url: `${siteUrl}/branding/fightprophet_logo_white.png`,
-    },
+    logo: { '@type': 'ImageObject', url: `${siteUrl}/branding/fightprophet_logo_white.png` },
   },
   mainEntityOfPage: `${siteUrl}/#news-${item.id}`,
   url: `${siteUrl}/#news-${item.id}`,
 }));
 ---
 
-<BaseLayout title="Fight Prophet | Home" description="MMA AI and ML-powered fight analytics, predictions, fighter rankings, and model insights to help fight fans bet smarter.">
+<BaseLayout title="Fight Prophet | MMA Predictions, Rankings & Analytics" description="MMA AI and ML-powered fight predictions, fighter rankings, and model insights. Built for fans who want clear data without the noise.">
   <div class="fp-home-main">
-      <header class="fp-home-header">
-        <div class="fp-home-header-brand">
-          <img src="/branding/fightprophet_logo_white.png" alt="Fight Prophet" class="fp-home-header-logo" loading="lazy" />
-          <p class="fp-home-header-sub" id="i18n-topbar-subtitle">The fight data already knows who's getting smashed. We just highlight it.</p>
-        </div>
-        <p class="fp-home-header-note" id="i18n-hero-note">For information and education only — never financial advice.</p>
-      </header>
 
-      <section>
-        <div class="fp-section-head">
-          <div>
-            <p class="fp-section-label">Fighter Rankings</p>
-            <p class="fp-section-intro fp-section-intro-tight">
-              {totalRankedFighters ? `${totalRankedFighters} active ranked fighters across ${rankedDivisions.length} divisions.` : `Live ranking cards across ${rankedDivisions.length} divisions.`} Select a division or browse all.
-            </p>
-          </div>
+    <!-- HERO -->
+    <header class="fp-hero">
+      <div class="fp-hero-brand">
+        <img src="/branding/fightprophet_logo_white.png" alt="Fight Prophet" class="fp-hero-logo" loading="eager" />
+      </div>
+      <h1 class="fp-hero-title" id="i18n-hero-title">MMA predictions, rankings, and analytics — built for fans.</h1>
+      <p class="fp-hero-sub" id="i18n-hero-sub">No deep stats degree required. Pick a division below, then jump into predictions, fighter cards, or the fight lab.</p>
+      <div class="fp-hero-ctas">
+        <a class="fp-cta-primary" href={predictionsAppUrl} target="_blank" rel="noopener noreferrer">
+          <span id="i18n-cta-open-app">See predictions</span>
+          <span class="fp-cta-arrow" aria-hidden="true">→</span>
+        </a>
+        <a class="fp-cta-ghost" href="#fp-rankings" id="i18n-cta-browse">Browse rankings ↓</a>
+      </div>
+      <p class="fp-hero-note" id="i18n-hero-note">For information and education only — never financial advice.</p>
+    </header>
+
+    <!-- RANKINGS CENTERPIECE -->
+    <section id="fp-rankings" class="fp-rank-section">
+      <div class="fp-rank-section-head">
+        <div>
+          <p class="fp-section-label" id="i18n-rank-label">Fighter Rankings</p>
+          <h2 class="fp-rank-section-title" id="i18n-rank-title">
+            {totalRankedFighters
+              ? `${totalRankedFighters} ranked fighters across ${rankedDivisions.length} divisions`
+              : 'Live ranking cards'}
+          </h2>
         </div>
-        {rankedDivisions.length > 0 ? (
-          <div class="fp-rankings-wall" data-default-division={defaultDivisionSlug}>
-            <div class="fp-division-tools">
-              <label class="fp-visually-hidden" for="fp-division-select">Select division</label>
-              <select id="fp-division-select" class="fp-division-select" aria-label="Select division">
-                <option value={allDivisionsSlug}>All divisions ({rankedDivisions.length})</option>
-                {rankedDivisions.map((group) => (
-                  <option value={divisionSlug(group.weight_class)} selected={divisionSlug(group.weight_class) === defaultDivisionSlug}>
-                    {group.weight_class} ({group.fighters.length})
-                  </option>
+        <a class="fp-rank-section-link" href={rankingsAppUrl} target="_blank" rel="noopener noreferrer">All rankings →</a>
+      </div>
+
+      {rankedDivisions.length > 0 ? (
+        <div class="fp-rank-wall" data-default-mens={divisionSlug(defaultMensDivision)} data-default-womens={divisionSlug(defaultWomensDivision)}>
+          <div class="fp-gender-tabs" role="tablist" aria-label="Fighter category">
+            <button type="button" class="fp-gender-tab is-active" data-gender="mens" role="tab" aria-selected="true">
+              <span>Men's</span>
+              <span class="fp-gender-tab-count">{mensDivisions.length}</span>
+            </button>
+            <button type="button" class="fp-gender-tab" data-gender="womens" role="tab" aria-selected="false">
+              <span>Women's</span>
+              <span class="fp-gender-tab-count">{womensDivisions.length}</span>
+            </button>
+          </div>
+
+          <div class="fp-gender-panel is-active" data-gender-panel="mens">
+            {mensDivisions.length > 0 && (
+              <nav class="fp-division-pills" aria-label="Mens divisions">
+                {mensDivisions.map((g) => (
+                  <button
+                    type="button"
+                    class={`fp-division-pill${divisionSlug(g.weight_class) === divisionSlug(defaultMensDivision) ? ' is-active' : ''}`}
+                    data-division-target={divisionSlug(g.weight_class)}
+                    data-division-gender="mens"
+                    aria-pressed={divisionSlug(g.weight_class) === divisionSlug(defaultMensDivision) ? 'true' : 'false'}
+                  >
+                    {g.weight_class}
+                    <span class="fp-division-pill-count">{g.fighters.length}</span>
+                  </button>
                 ))}
-              </select>
-              <span class="fp-division-tools-count" id="fp-division-count-display" aria-live="polite">
-                top {Math.min(rankedDivisions.find((group) => divisionSlug(group.weight_class) === defaultDivisionSlug)?.fighters.length ?? 0, homePreviewLimit)} of {rankedDivisions.find((group) => divisionSlug(group.weight_class) === defaultDivisionSlug)?.fighters.length ?? 0}
-              </span>
-            </div>
-            <nav class="fp-division-jump" aria-label="Choose division">
-              <button
-                type="button"
-                class="fp-division-pill"
-                data-division-target={allDivisionsSlug}
-                aria-pressed="false"
-              >
-                All divisions
-                <span class="fp-division-pill-count">{rankedDivisions.length}</span>
-              </button>
-              {rankedDivisions.map((g) => (
-                <button
-                  type="button"
-                  class={`fp-division-pill${divisionSlug(g.weight_class) === defaultDivisionSlug ? ' is-active' : ''}`}
-                  data-division-target={divisionSlug(g.weight_class)}
-                  aria-pressed={divisionSlug(g.weight_class) === defaultDivisionSlug ? 'true' : 'false'}
-                >
-                  {g.weight_class}
-                  <span class="fp-division-pill-count">{g.fighters.length}</span>
-                </button>
-              ))}
-            </nav>
-            {rankedDivisions.map((group) => (
+              </nav>
+            )}
+            {mensDivisions.map((group) => (
               <div
-                class={`fp-division-block${divisionSlug(group.weight_class) === defaultDivisionSlug ? ' is-active' : ''}`}
+                class={`fp-division-block${divisionSlug(group.weight_class) === divisionSlug(defaultMensDivision) ? ' is-active' : ''}`}
                 data-division-panel={divisionSlug(group.weight_class)}
+                data-division-gender="mens"
                 data-division-total={group.fighters.length}
                 data-division-name={group.weight_class}
-                hidden={divisionSlug(group.weight_class) === defaultDivisionSlug ? undefined : true}
+                hidden={divisionSlug(group.weight_class) === divisionSlug(defaultMensDivision) ? undefined : true}
               >
                 <div class="fp-division-header">
                   <h3 class="fp-division-title">{group.weight_class}</h3>
@@ -242,7 +243,7 @@ const newsStructuredData = newsItems.map((item) => ({
                     top {Math.min(group.fighters.length, homePreviewLimit)} of {group.fighters.length}
                   </span>
                 </div>
-                <div class="fp-champ-grid">
+                <div class="fp-card-grid">
                   {previewFighters(group.fighters).map((c) => (
                     <FighterCard
                       name={c.name}
@@ -256,385 +257,176 @@ const newsStructuredData = newsItems.map((item) => ({
                       lossStreak={c.loss_streak ?? null}
                       wins={c.wins ?? null}
                       losses={c.losses ?? null}
+                      rank={c.rank ?? null}
+                      compact={true}
                       appUrl={appUrl}
                     />
                   ))}
                 </div>
+                <div class="fp-division-footer">
+                  <a class="fp-division-link" href={rankingsAppUrl} target="_blank" rel="noopener noreferrer">
+                    Full {group.weight_class} ranking →
+                  </a>
+                </div>
               </div>
             ))}
+            {mensDivisions.length === 0 && (
+              <p class="fp-empty-line">No mens divisions are currently published.</p>
+            )}
           </div>
-        ) : (
-          <div class="fp-empty-state">
-            <strong>Ranked fighter cards are temporarily unavailable on the homepage.</strong>
-            <span>
-              The live rankings wall refreshes from the Monday ETL feed. If it is empty right now, the site feed has not landed yet or is refreshing.
-            </span>
-          </div>
-        )}
-      </section>
 
-      <section>
-    <div class="fp-section-head">
-      <div>
-        <p class="fp-section-label" id="i18n-start-exploring">Sections</p>
+          <div class="fp-gender-panel" data-gender-panel="womens" hidden>
+            {womensDivisions.length > 0 && (
+              <nav class="fp-division-pills" aria-label="Womens divisions">
+                {womensDivisions.map((g) => (
+                  <button
+                    type="button"
+                    class={`fp-division-pill${divisionSlug(g.weight_class) === divisionSlug(defaultWomensDivision) ? ' is-active' : ''}`}
+                    data-division-target={divisionSlug(g.weight_class)}
+                    data-division-gender="womens"
+                    aria-pressed={divisionSlug(g.weight_class) === divisionSlug(defaultWomensDivision) ? 'true' : 'false'}
+                  >
+                    {g.weight_class.replace(/^Women.s\s+/i, '')}
+                    <span class="fp-division-pill-count">{g.fighters.length}</span>
+                  </button>
+                ))}
+              </nav>
+            )}
+            {womensDivisions.map((group) => (
+              <div
+                class={`fp-division-block${divisionSlug(group.weight_class) === divisionSlug(defaultWomensDivision) ? ' is-active' : ''}`}
+                data-division-panel={divisionSlug(group.weight_class)}
+                data-division-gender="womens"
+                data-division-total={group.fighters.length}
+                data-division-name={group.weight_class}
+                hidden={divisionSlug(group.weight_class) === divisionSlug(defaultWomensDivision) ? undefined : true}
+              >
+                <div class="fp-division-header">
+                  <h3 class="fp-division-title">{group.weight_class}</h3>
+                  <span class="fp-division-count">
+                    top {Math.min(group.fighters.length, homePreviewLimit)} of {group.fighters.length}
+                  </span>
+                </div>
+                <div class="fp-card-grid">
+                  {previewFighters(group.fighters).map((c) => (
+                    <FighterCard
+                      name={c.name}
+                      fighterId={c.fighter_id}
+                      country={c.country}
+                      weightClass={c.weight_class}
+                      isChampion={c.is_champion ?? false}
+                      finishRate={c.finish_rate ?? null}
+                      subRate={c.sub_rate ?? null}
+                      winStreak={c.win_streak ?? null}
+                      lossStreak={c.loss_streak ?? null}
+                      wins={c.wins ?? null}
+                      losses={c.losses ?? null}
+                      rank={c.rank ?? null}
+                      compact={true}
+                      appUrl={appUrl}
+                    />
+                  ))}
+                </div>
+                <div class="fp-division-footer">
+                  <a class="fp-division-link" href={rankingsAppUrl} target="_blank" rel="noopener noreferrer">
+                    Full {group.weight_class} ranking →
+                  </a>
+                </div>
+              </div>
+            ))}
+            {womensDivisions.length === 0 && (
+              <p class="fp-empty-line">No womens divisions are currently published.</p>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div class="fp-empty-state">
+          <strong>Rankings are temporarily unavailable.</strong>
+          <span>The live rankings refresh from the Monday ETL feed. If this is empty right now, the site feed has not landed yet.</span>
+          <a class="fp-cta-primary" href={rankingsAppUrl} target="_blank" rel="noopener noreferrer">Try the predictions section →</a>
+        </div>
+      )}
+    </section>
+
+    <!-- SECTIONS GRID -->
+    <section class="fp-sections">
+      <div class="fp-sections-head">
+        <p class="fp-section-label" id="i18n-explore-label">Explore</p>
+        <h2 class="fp-sections-title" id="i18n-explore-title">Everything Fight Prophet has</h2>
       </div>
-    </div>
-    <div class="fp-cta-grid">
-      <a class="fp-cta-card" href="/predictions/"><strong id="i18n-cta-1-title">Predictions</strong><span id="i18n-cta-1-desc">Compare model vs market probability</span></a>
-      <a class="fp-cta-card" href="/fight-lab/"><strong id="i18n-cta-2-title">Fight Lab</strong><span id="i18n-cta-2-desc">Historical picks + model metrics</span></a>
-      <a class="fp-cta-card" href="/rankings/"><strong id="i18n-cta-3-title">Fighter Rankings</strong><span id="i18n-cta-3-desc">Divisional performance and risers</span></a>
-      <a class="fp-cta-card" href="/belt-holders/"><strong id="i18n-cta-4-title">Belt Holders</strong><span id="i18n-cta-4-desc">Champions and title history</span></a>
-      <a class="fp-cta-card" href="/fighter-card/"><strong id="i18n-cta-5-title">Fighter Cards</strong><span id="i18n-cta-5-desc">Open a data card for any fighter</span></a>
-      <a class="fp-cta-card" href="/events-history/"><strong id="i18n-cta-6-title">Events History</strong><span id="i18n-cta-6-desc">Past UFC cards and results</span></a>
-    </div>
-      </section>
-
-      <section>
-    <p class="fp-section-label" id="i18n-latest-news">Latest news</p>
-    <div class="fp-news-shell">
-      <nav class="fp-news-menu" id="fp-news-menu" aria-label="News menu">
-        {newsItems.map((item, idx) => (
-          <button
-            type="button"
-            class={`fp-news-menu-item${idx === 0 ? ' is-active' : ''}`}
-            data-news-id={item.id}
-            id={`news-${item.id}`}
-          >
-            <span class="fp-news-menu-date">{item.datePublished}</span>
-            <span class="fp-news-menu-title">{item.title}</span>
-            <span class="fp-news-menu-source">{item.source}</span>
-          </button>
-        ))}
-      </nav>
-      <article class="fp-news-detail" id="fp-news-detail">
-        <p class="fp-news-date" id="fp-news-detail-date">{initialNews.datePublished}</p>
-        <h2 id="fp-news-detail-title">{initialNews.title}</h2>
-        <p id="fp-news-detail-desc">{initialNews.description}</p>
-        <a id="fp-news-detail-link" class="fp-news-detail-link" href={initialNews.url || appUrl} target="_blank" rel="noopener noreferrer">
-          Open related page
+      <div class="fp-cta-grid">
+        <a class="fp-section-card" href={predictionsAppUrl} target="_blank" rel="noopener noreferrer">
+          <strong id="i18n-cta-1-title">Predictions</strong>
+          <span id="i18n-cta-1-desc">Compare model vs market probability</span>
         </a>
-      </article>
-    </div>
-      </section>
+        <a class="fp-section-card" href={withPage('fight-lab')} target="_blank" rel="noopener noreferrer">
+          <strong id="i18n-cta-2-title">Fight Lab</strong>
+          <span id="i18n-cta-2-desc">Historical picks + model metrics</span>
+        </a>
+        <a class="fp-section-card" href={rankingsAppUrl} target="_blank" rel="noopener noreferrer">
+          <strong id="i18n-cta-3-title">Fighter Rankings</strong>
+          <span id="i18n-cta-3-desc">Divisional performance and risers</span>
+        </a>
+        <a class="fp-section-card" href={withPage('belt-holders')} target="_blank" rel="noopener noreferrer">
+          <strong id="i18n-cta-4-title">Belt Holders</strong>
+          <span id="i18n-cta-4-desc">Champions and title history</span>
+        </a>
+        <a class="fp-section-card" href={withPage('fighter-card')} target="_blank" rel="noopener noreferrer">
+          <strong id="i18n-cta-5-title">Fighter Cards</strong>
+          <span id="i18n-cta-5-desc">Open a data card for any fighter</span>
+        </a>
+        <a class="fp-section-card" href={withPage('events-history')} target="_blank" rel="noopener noreferrer">
+          <strong id="i18n-cta-6-title">Events History</strong>
+          <span id="i18n-cta-6-desc">Past UFC cards and results</span>
+        </a>
+      </div>
+    </section>
 
-      <section>
-    <p class="fp-section-label" id="i18n-why-open-source">Why open source</p>
-    <div class="fp-story">
-      <h2 class="fp-story-title" id="i18n-story-title">Built by fans, improved by community</h2>
-      <p id="i18n-story-text">Fight Prophet is open source. Community members can contribute by reporting data issues, suggesting features, improving model diagnostics, and helping maintain manual override datasets (like title vacates and fighter countries).</p>
-    </div>
+    <!-- LATEST NEWS -->
+    {newsItems.length > 0 && (
+      <section class="fp-news-section">
+        <p class="fp-section-label" id="i18n-news-label">Latest news</p>
+        <div class="fp-news-shell">
+          <nav class="fp-news-menu" id="fp-news-menu" aria-label="News menu">
+            {newsItems.map((item, idx) => (
+              <button
+                type="button"
+                class={`fp-news-menu-item${idx === 0 ? ' is-active' : ''}`}
+                data-news-id={item.id}
+                id={`news-${item.id}`}
+              >
+                <span class="fp-news-menu-date">{item.datePublished}</span>
+                <span class="fp-news-menu-title">{item.title}</span>
+                <span class="fp-news-menu-source">{item.source}</span>
+              </button>
+            ))}
+          </nav>
+          <article class="fp-news-detail" id="fp-news-detail">
+            <p class="fp-news-date" id="fp-news-detail-date">{initialNews.datePublished}</p>
+            <h3 id="fp-news-detail-title">{initialNews.title}</h3>
+            <p id="fp-news-detail-desc">{initialNews.description}</p>
+            <a id="fp-news-detail-link" class="fp-news-detail-link" href={initialNews.url || appUrl} target="_blank" rel="noopener noreferrer">
+              Read full article →
+            </a>
+          </article>
+        </div>
       </section>
+    )}
 
-      <AdSlot slot="1234567890" />
+    <!-- FINAL CTA BANNER -->
+    <section class="fp-final-cta">
+      <div>
+        <p class="fp-final-cta-eyebrow" id="i18n-final-eyebrow">Up next</p>
+        <h2 class="fp-final-cta-title" id="i18n-final-title">Compare model picks vs. market for the upcoming fights.</h2>
+      </div>
+      <a class="fp-cta-primary" href={predictionsAppUrl} target="_blank" rel="noopener noreferrer">
+        <span id="i18n-final-cta">Predictions</span>
+        <span class="fp-cta-arrow" aria-hidden="true">→</span>
+      </a>
+    </section>
+
+    <AdSlot slot="1234567890" />
   </div>
-
-  <script>
-    const FP_LANG_KEY = 'fp_lang';
-    const translations = {
-      en: {
-        topbarSubtitle: "The fight data already knows who's getting smashed. We just highlight it.",
-        heroLead: 'Fight Prophet is an MMA predictions and stats app for fans who want model picks, divisional rankings, fighter cards, and fight-lab diagnostics in one place.',
-        topbarTagline: 'AI-powered MMA fight predictions',
-        openAppTop: 'Open App',
-        heroSub: 'Fight Prophet makes MMA analytics easy to read: upcoming picks, model diagnostics, rankings, belt holders, and fighter cards in one place.',
-        pill1: 'AI-powered fight previews',
-        pill2: 'Model confidence',
-        pill3: 'Risk-aware decision support',
-        heroNote: 'For information and education only — never financial advice.',
-        openAppMain: 'Go to Predictions',
-        upcomingShort: 'Predictions',
-        platformSnapshot: 'Platform snapshot',
-        statUpcoming: 'Upcoming Fights',
-        statEvents: 'Tracked Events',
-        statAcc: 'Historical Accuracy',
-        statEdge: 'Avg Edge',
-        statFighters: 'Tracked Fighters',
-        live: 'Live in app',
-        workflow: 'Learn the workflow',
-        howToUse: 'How to use',
-        how1: 'Review upcoming prediction confidence and market deltas.',
-        how2: 'Validate model quality with historical calibration and backtests.',
-        how3: 'Use outputs as informational analytics, not guaranteed outcomes.',
-        modelEngine: 'Model engine',
-        engine1: 'Ensemble view for balanced confidence and calibration.',
-        engine2: 'CatBoost and LogReg comparisons for cross-checking picks.',
-        engine3: 'Signal strength markers to surface clearer spots.',
-        riskControls: 'Risk controls',
-        risk1: 'Use model outputs as decision support, not guarantees.',
-        risk2: 'Compare probability deltas vs market before acting.',
-        risk3: 'Skip low-signal fights and favor long-term discipline.',
-        startExploring: 'Sections',
-        cta1Title: 'Predictions',
-        cta1Desc: 'Compare model vs market probability',
-        cta2Title: 'Fight Lab',
-        cta2Desc: 'Historical picks + model metrics',
-        cta3Title: 'Fighter Rankings',
-        cta3Desc: 'Divisional performance and risers',
-        cta4Title: 'Belt Holders',
-        cta4Desc: 'Champions and title history',
-        cta5Title: 'Fighter Cards',
-        cta5Desc: 'Open a data card for any fighter',
-        cta6Title: 'Events History',
-        cta6Desc: 'Past UFC cards and results',
-        latestNews: 'Latest news',
-        subscribeTitle: 'Subscribe for updates',
-        subscribeCopy: 'Get release notes, feature updates, and major model changes.',
-        emailLabel: 'Email',
-        subscribeBtn: 'Subscribe',
-        heroDatasci: 'Built with sports data science: probability modeling, calibration analysis, and historical backtesting.',
-        simpleWorkflow: 'Simple workflow for new users',
-        wf1: 'Start in <strong>Upcoming Predictions</strong> to compare model probability vs market probability.',
-        wf2: 'Open <strong>Fight Lab</strong> to review historical outcomes plus metrics like accuracy, F1, AUC, Brier, and log loss.',
-        wf3: 'Use <strong>Fighter Rankings</strong> and <strong>Fighter Cards</strong> to understand matchup context.',
-        wf4: 'Use <strong>Belt Holders</strong> to track champions, title-fight history, and manual vacate overrides.',
-        whyOpenSource: 'Why open source',
-        storyTitle: 'Built by fans, improved by community',
-        storyText: 'Fight Prophet is open source. Community members can contribute by reporting data issues, suggesting features, improving model diagnostics, and helping maintain manual override datasets (like title vacates and fighter countries).',
-        statusInvalid: 'Please enter a valid email.',
-        statusNoEndpoint: 'Subscription endpoint is not configured yet.',
-        statusSubmitting: 'Submitting...',
-        statusSuccess: 'Thanks. You are subscribed.',
-        statusFailed: 'Subscription failed. Please try again.'
-      },
-      es: {
-        topbarSubtitle: "Los datos ya saben quién va a caer. Nosotros solo lo resaltamos.",
-        heroLead: 'Fight Prophet es una app de predicciones y estadísticas de MMA para fans que quieren picks del modelo, rankings por división, tarjetas de peleadores y diagnósticos de Fight Lab en un solo lugar.',
-        topbarTagline: 'Predicciones de peleas MMA impulsadas por IA',
-        openAppTop: 'Abrir App',
-        heroSub: 'Fight Prophet facilita la analítica de MMA: picks próximos, diagnóstico de modelos, rankings, campeones y tarjetas de peleadores en un solo lugar.',
-        pill1: 'Previews de peleas con IA',
-        pill2: 'Confianza del modelo',
-        pill3: 'Soporte de decisión con riesgo',
-        heroNote: 'Solo para información y educación — nunca asesoría financiera.',
-        openAppMain: 'Ir a Predicciones',
-        upcomingShort: 'Predicciones',
-        platformSnapshot: 'Resumen de plataforma',
-        statUpcoming: 'Peleas próximas',
-        statEvents: 'Eventos seguidos',
-        statAcc: 'Precisión histórica',
-        statEdge: 'Edge promedio',
-        statFighters: 'Peleadores seguidos',
-        live: 'En vivo en la app',
-        workflow: 'Flujo de trabajo',
-        howToUse: 'Cómo usar',
-        how1: 'Revisa confianza de predicción y diferencia con mercado.',
-        how2: 'Valida calidad con calibración y backtests históricos.',
-        how3: 'Usa los resultados como analítica, no como garantía.',
-        modelEngine: 'Motor de modelos',
-        engine1: 'Vista Ensemble para confianza y calibración balanceadas.',
-        engine2: 'Comparación CatBoost y LogReg para contraste.',
-        engine3: 'Señales de fuerza para detectar mejores spots.',
-        riskControls: 'Controles de riesgo',
-        risk1: 'Usa el modelo como apoyo, no como garantía.',
-        risk2: 'Compara probabilidades del modelo vs mercado.',
-        risk3: 'Evita peleas de baja señal y prioriza disciplina.',
-        startExploring: 'Secciones',
-        cta1Title: 'Predicciones',
-        cta1Desc: 'Compara probabilidad del modelo vs mercado',
-        cta2Title: 'Fight Lab',
-        cta2Desc: 'Picks históricos + métricas de modelo',
-        cta3Title: 'Rankings de Peleadores',
-        cta3Desc: 'Rendimiento por división y ascensos',
-        cta4Title: 'Poseedores del Cinturón',
-        cta4Desc: 'Campeones e historial de títulos',
-        cta5Title: 'Tarjetas de Peleadores',
-        cta5Desc: 'Abre una tarjeta de datos por peleador',
-        cta6Title: 'Historial de Eventos',
-        cta6Desc: 'Carteleras UFC pasadas y resultados',
-        latestNews: 'Últimas noticias',
-        subscribeTitle: 'Suscríbete a actualizaciones',
-        subscribeCopy: 'Recibe notas de versión, funciones nuevas y cambios de modelo.',
-        emailLabel: 'Correo',
-        subscribeBtn: 'Suscribirme',
-        heroDatasci: 'Construido con ciencia de datos deportiva: modelado probabilístico, análisis de calibración y backtesting histórico.',
-        simpleWorkflow: 'Flujo simple para nuevos usuarios',
-        wf1: 'Ve a <strong>Próximas Predicciones</strong> y compara probabilidad del modelo vs probabilidad de mercado.',
-        wf2: 'Abre <strong>Fight Lab</strong> para revisar histórico y métricas (accuracy, F1, AUC, Brier y log loss).',
-        wf3: 'Usa <strong>Rankings</strong> y <strong>Tarjetas de Peleadores</strong> para contexto del combate.',
-        wf4: 'Usa <strong>Poseedores del Cinturón</strong> para campeones, historial titular y vacantes manuales.',
-        whyOpenSource: 'Por qué open source',
-        storyTitle: 'Hecho por fans, mejorado por la comunidad',
-        storyText: 'Fight Prophet es open source. La comunidad puede contribuir reportando errores de datos, proponiendo funciones, mejorando métricas del modelo y manteniendo datasets manuales (vacantes y países).',
-        statusInvalid: 'Ingresa un correo válido.',
-        statusNoEndpoint: 'El endpoint de suscripción aún no está configurado.',
-        statusSubmitting: 'Enviando...',
-        statusSuccess: 'Listo. Ya estás suscrito.',
-        statusFailed: 'Falló la suscripción. Intenta de nuevo.'
-      },
-      pt: {
-        topbarSubtitle: "Os dados já sabem quem vai apanhar. A gente só destaca isso.",
-        heroLead: 'Fight Prophet é um app de previsões e estatísticas de MMA para fãs que querem picks do modelo, rankings por divisão, cards de lutadores e diagnósticos do Fight Lab em um só lugar.',
-        topbarTagline: 'Previsões de lutas de MMA com IA',
-        openAppTop: 'Abrir App',
-        heroSub: 'Fight Prophet facilita a análise de MMA: previsões próximas, diagnóstico de modelos, rankings, campeões e cards de lutadores em um só lugar.',
-        pill1: 'Prévias de luta com IA',
-        pill2: 'Confiança do modelo',
-        pill3: 'Suporte à decisão com risco',
-        heroNote: 'Apenas para informação e educação — nunca aconselhamento financeiro.',
-        openAppMain: 'Ir para Previsões',
-        upcomingShort: 'Previsões',
-        platformSnapshot: 'Visão da plataforma',
-        statUpcoming: 'Lutas próximas',
-        statEvents: 'Eventos monitorados',
-        statAcc: 'Precisão histórica',
-        statEdge: 'Edge médio',
-        statFighters: 'Lutadores monitorados',
-        live: 'Ao vivo no app',
-        workflow: 'Fluxo de uso',
-        howToUse: 'Como usar',
-        how1: 'Revise confiança da previsão e delta vs mercado.',
-        how2: 'Valide qualidade com calibração e backtests.',
-        how3: 'Use resultados como análise, não garantia.',
-        modelEngine: 'Motor de modelos',
-        engine1: 'Visão Ensemble para confiança e calibração equilibradas.',
-        engine2: 'Comparações CatBoost e LogReg para validar picks.',
-        engine3: 'Marcadores de força para evidenciar melhores spots.',
-        riskControls: 'Controles de risco',
-        risk1: 'Use a saída do modelo como apoio, não garantia.',
-        risk2: 'Compare probabilidades do modelo com o mercado.',
-        risk3: 'Evite lutas de sinal fraco e mantenha disciplina.',
-        startExploring: 'Seções',
-        cta1Title: 'Previsões',
-        cta1Desc: 'Compare probabilidade do modelo vs mercado',
-        cta2Title: 'Fight Lab',
-        cta2Desc: 'Picks históricos + métricas de modelo',
-        cta3Title: 'Rankings de Lutadores',
-        cta3Desc: 'Desempenho por divisão e destaques',
-        cta4Title: 'Detentores do Cinturão',
-        cta4Desc: 'Campeões e histórico de títulos',
-        cta5Title: 'Cards de Lutadores',
-        cta5Desc: 'Abra um card de dados para qualquer lutador',
-        cta6Title: 'Histórico de Eventos',
-        cta6Desc: 'Cards passados da UFC e resultados',
-        latestNews: 'Últimas notícias',
-        subscribeTitle: 'Inscreva-se para atualizações',
-        subscribeCopy: 'Receba notas de versão, novos recursos e mudanças de modelo.',
-        emailLabel: 'E-mail',
-        subscribeBtn: 'Inscrever',
-        heroDatasci: 'Construído com ciência de dados esportiva: modelagem probabilística, análise de calibração e backtesting histórico.',
-        simpleWorkflow: 'Fluxo simples para novos usuários',
-        wf1: 'Vá em <strong>Próximas Previsões</strong> e compare probabilidade do modelo vs mercado.',
-        wf2: 'Abra o <strong>Fight Lab</strong> para histórico + métricas (acurácia, F1, AUC, Brier e log loss).',
-        wf3: 'Use <strong>Rankings</strong> e <strong>Cards de Lutadores</strong> para contexto da luta.',
-        wf4: 'Use <strong>Detentores do Cinturão</strong> para campeões, histórico de títulos e vacâncias manuais.',
-        whyOpenSource: 'Por que open source',
-        storyTitle: 'Feito por fãs, melhorado pela comunidade',
-        storyText: 'Fight Prophet é open source. A comunidade pode contribuir reportando erros de dados, sugerindo recursos, melhorando diagnósticos de modelo e mantendo datasets manuais (vacâncias e países).',
-        statusInvalid: 'Digite um e-mail válido.',
-        statusNoEndpoint: 'O endpoint de inscrição ainda não está configurado.',
-        statusSubmitting: 'Enviando...',
-        statusSuccess: 'Obrigado. Você está inscrito.',
-        statusFailed: 'Falha na inscrição. Tente novamente.'
-      }
-    };
-
-    const keyToId = {
-      topbarSubtitle: 'i18n-topbar-subtitle',
-      heroLead: 'i18n-hero-lead',
-      topbarTagline: 'i18n-topbar-tagline',
-      openAppTop: 'i18n-open-app-top',
-      heroSub: 'i18n-hero-sub',
-      pill1: 'i18n-pill-1',
-      pill2: 'i18n-pill-2',
-      pill3: 'i18n-pill-3',
-      heroNote: 'i18n-hero-note',
-      openAppMain: 'i18n-open-app-main',
-      upcomingShort: 'i18n-upcoming-short',
-      platformSnapshot: 'i18n-platform-snapshot',
-      statUpcoming: 'i18n-stat-upcoming',
-      statEvents: 'i18n-stat-events',
-      statAcc: 'i18n-stat-acc',
-      statEdge: 'i18n-stat-edge',
-      statFighters: 'i18n-stat-fighters',
-      workflow: 'i18n-workflow',
-      howToUse: 'i18n-how-to-use',
-      how1: 'i18n-how-1',
-      how2: 'i18n-how-2',
-      how3: 'i18n-how-3',
-      modelEngine: 'i18n-model-engine',
-      engine1: 'i18n-engine-1',
-      engine2: 'i18n-engine-2',
-      engine3: 'i18n-engine-3',
-      riskControls: 'i18n-risk-controls',
-      risk1: 'i18n-risk-1',
-      risk2: 'i18n-risk-2',
-      risk3: 'i18n-risk-3',
-      startExploring: 'i18n-start-exploring',
-      cta1Title: 'i18n-cta-1-title',
-      cta1Desc: 'i18n-cta-1-desc',
-      cta2Title: 'i18n-cta-2-title',
-      cta2Desc: 'i18n-cta-2-desc',
-      cta3Title: 'i18n-cta-3-title',
-      cta3Desc: 'i18n-cta-3-desc',
-      cta4Title: 'i18n-cta-4-title',
-      cta4Desc: 'i18n-cta-4-desc',
-      cta5Title: 'i18n-cta-5-title',
-      cta5Desc: 'i18n-cta-5-desc',
-      cta6Title: 'i18n-cta-6-title',
-      cta6Desc: 'i18n-cta-6-desc',
-      latestNews: 'i18n-latest-news',
-      subscribeTitle: 'i18n-subscribe-title',
-      subscribeCopy: 'i18n-subscribe-copy',
-      emailLabel: 'i18n-email-label',
-      subscribeBtn: 'i18n-subscribe-btn',
-      heroDatasci: 'i18n-hero-datasci',
-      simpleWorkflow: 'i18n-simple-workflow',
-      wf1: 'i18n-wf-1',
-      wf2: 'i18n-wf-2',
-      wf3: 'i18n-wf-3',
-      wf4: 'i18n-wf-4',
-      whyOpenSource: 'i18n-why-open-source',
-      storyTitle: 'i18n-story-title',
-      storyText: 'i18n-story-text'
-    };
-
-    const statusByLang = {};
-    Object.entries(translations).forEach(([lang, pack]) => {
-      statusByLang[lang] = {
-        invalid: pack.statusInvalid,
-        noEndpoint: pack.statusNoEndpoint,
-        submitting: pack.statusSubmitting,
-        success: pack.statusSuccess,
-        failed: pack.statusFailed,
-      };
-    });
-
-    function applyLanguage(lang) {
-      const selected = translations[lang] ? lang : 'en';
-      const pack = translations[selected];
-
-      const htmlKeys = new Set(['wf1', 'wf2', 'wf3', 'wf4']);
-      Object.entries(keyToId).forEach(([key, id]) => {
-        const el = document.getElementById(id);
-        if (el && typeof pack[key] === 'string') {
-          if (htmlKeys.has(key)) {
-            el.innerHTML = pack[key];
-          } else {
-            el.textContent = pack[key];
-          }
-        }
-      });
-
-      document.querySelectorAll('[id^="i18n-live-"]').forEach((el) => {
-        el.textContent = pack.live;
-      });
-
-      document.querySelectorAll('.fp-lang-btn').forEach((btn) => {
-        btn.classList.toggle('is-active', btn.getAttribute('data-lang') === selected);
-      });
-
-      document.documentElement.lang = selected;
-      localStorage.setItem(FP_LANG_KEY, selected);
-      window.__fpLangStatus = statusByLang[selected] || statusByLang.en;
-    }
-
-    const initialLang = localStorage.getItem(FP_LANG_KEY) || 'en';
-    applyLanguage(initialLang);
-
-    document.querySelectorAll('.fp-lang-btn').forEach((btn) => {
-      btn.addEventListener('click', () => applyLanguage(btn.getAttribute('data-lang') || 'en'));
-    });
-  </script>
 
   <script type="application/ld+json" set:html={JSON.stringify(newsStructuredData)}></script>
 
@@ -671,498 +463,603 @@ const newsStructuredData = newsItems.map((item) => ({
   </script>
 
   <script>
-    const rankingsWall = document.querySelector('.fp-rankings-wall');
-    const divisionSelect = document.getElementById('fp-division-select');
-    const divisionCountDisplay = document.getElementById('fp-division-count-display');
-    const divisionButtons = Array.from(document.querySelectorAll('.fp-division-pill[data-division-target]'));
-    const divisionPanels = Array.from(document.querySelectorAll('.fp-division-block[data-division-panel]'));
+    const wall = document.querySelector('.fp-rank-wall');
+    if (wall) {
+      const genderTabs = Array.from(wall.querySelectorAll('.fp-gender-tab'));
+      const genderPanels = Array.from(wall.querySelectorAll('.fp-gender-panel'));
+      const divisionPills = Array.from(wall.querySelectorAll('.fp-division-pill'));
+      const divisionPanels = Array.from(wall.querySelectorAll('.fp-division-block'));
 
-    function setActiveDivision(slug) {
-      if (!slug) return;
-
-      rankingsWall?.classList.toggle('is-all-divisions', slug === 'all-divisions');
-
-      divisionButtons.forEach((button) => {
-        const isActive = button.getAttribute('data-division-target') === slug;
-        button.classList.toggle('is-active', isActive);
-        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-      });
-
-      divisionPanels.forEach((panel) => {
-        const isActive = slug === 'all-divisions' || panel.getAttribute('data-division-panel') === slug;
-        panel.classList.toggle('is-active', isActive);
-        panel.hidden = !isActive;
-      });
-
-      if (divisionSelect instanceof HTMLSelectElement && divisionSelect.value !== slug) {
-        divisionSelect.value = slug;
+      function setGender(gender) {
+        genderTabs.forEach((tab) => {
+          const isActive = tab.getAttribute('data-gender') === gender;
+          tab.classList.toggle('is-active', isActive);
+          tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        genderPanels.forEach((panel) => {
+          const isActive = panel.getAttribute('data-gender-panel') === gender;
+          panel.classList.toggle('is-active', isActive);
+          panel.hidden = !isActive;
+        });
       }
 
-      if (divisionCountDisplay) {
-        if (slug === 'all-divisions') {
-          divisionCountDisplay.textContent = `${divisionPanels.length} divisions`;
-        } else {
-          const activePanel = divisionPanels.find((panel) => panel.getAttribute('data-division-panel') === slug);
-          const total = Number(activePanel?.getAttribute('data-division-total') || '0');
-          const topCount = Math.min(total, 10);
-          divisionCountDisplay.textContent = `top ${topCount} of ${total}`;
-        }
+      function setDivision(gender, slug) {
+        if (!slug) return;
+        divisionPills
+          .filter((p) => p.getAttribute('data-division-gender') === gender)
+          .forEach((pill) => {
+            const isActive = pill.getAttribute('data-division-target') === slug;
+            pill.classList.toggle('is-active', isActive);
+            pill.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+          });
+        divisionPanels
+          .filter((p) => p.getAttribute('data-division-gender') === gender)
+          .forEach((panel) => {
+            const isActive = panel.getAttribute('data-division-panel') === slug;
+            panel.classList.toggle('is-active', isActive);
+            panel.hidden = !isActive;
+          });
       }
-    }
 
-    const initialDivision = rankingsWall?.getAttribute('data-default-division')
-      || divisionButtons[0]?.getAttribute('data-division-target')
-      || divisionPanels[0]?.getAttribute('data-division-panel')
-      || '';
-
-    if (initialDivision) {
-      setActiveDivision(initialDivision);
-    }
-
-    divisionButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        setActiveDivision(button.getAttribute('data-division-target') || '');
+      genderTabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          const gender = tab.getAttribute('data-gender') || 'mens';
+          setGender(gender);
+        });
       });
+
+      divisionPills.forEach((pill) => {
+        pill.addEventListener('click', () => {
+          const gender = pill.getAttribute('data-division-gender') || 'mens';
+          const slug = pill.getAttribute('data-division-target') || '';
+          setDivision(gender, slug);
+        });
+      });
+    }
+  </script>
+
+  <script>
+    const FP_LANG_KEY = 'fp_lang';
+    const translations = {
+      en: {
+        heroTitle: 'MMA predictions, rankings, and analytics — built for fans.',
+        heroSub: 'No deep stats degree required. Pick a division below, then jump into predictions, fighter cards, or the fight lab.',
+        heroNote: 'For information and education only — never financial advice.',
+        ctaOpenApp: 'See predictions',
+        ctaBrowse: 'Browse rankings ↓',
+        rankLabel: 'Fighter Rankings',
+        exploreLabel: 'Explore',
+        exploreTitle: 'Everything Fight Prophet has',
+        cta1Title: 'Predictions', cta1Desc: 'Compare model vs market probability',
+        cta2Title: 'Fight Lab', cta2Desc: 'Historical picks + model metrics',
+        cta3Title: 'Fighter Rankings', cta3Desc: 'Divisional performance and risers',
+        cta4Title: 'Belt Holders', cta4Desc: 'Champions and title history',
+        cta5Title: 'Fighter Cards', cta5Desc: 'Open a data card for any fighter',
+        cta6Title: 'Events History', cta6Desc: 'Past UFC cards and results',
+        newsLabel: 'Latest news',
+        finalEyebrow: 'Up next',
+        finalTitle: 'Compare model picks vs. market for the upcoming fights.',
+        finalCta: 'Predictions',
+      },
+      es: {
+        heroTitle: 'Predicciones, rankings y analítica MMA — para fans.',
+        heroSub: 'Sin saber de estadística. Elige una división abajo y entra a predicciones, fichas o el fight lab.',
+        heroNote: 'Solo para información y educación — nunca asesoría financiera.',
+        ctaOpenApp: 'Ver predicciones',
+        ctaBrowse: 'Ver rankings ↓',
+        rankLabel: 'Rankings de Peleadores',
+        exploreLabel: 'Explorar',
+        exploreTitle: 'Todo lo que tiene Fight Prophet',
+        cta1Title: 'Predicciones', cta1Desc: 'Compara probabilidad del modelo vs mercado',
+        cta2Title: 'Fight Lab', cta2Desc: 'Picks históricos + métricas de modelo',
+        cta3Title: 'Rankings', cta3Desc: 'Rendimiento por división y ascensos',
+        cta4Title: 'Campeones', cta4Desc: 'Cinturones e historial de títulos',
+        cta5Title: 'Tarjetas de Peleadores', cta5Desc: 'Abre una tarjeta para cualquier peleador',
+        cta6Title: 'Historial de Eventos', cta6Desc: 'Carteleras UFC pasadas',
+        newsLabel: 'Últimas noticias',
+        finalEyebrow: '¿Listo para profundizar?',
+        finalTitle: 'Abre la app completa con predicciones, diagnóstico de modelos y fichas de peleadores.',
+        finalCta: 'Abrir Fight Prophet',
+      },
+      pt: {
+        heroTitle: 'Previsões, rankings e análises de MMA — feitos para fãs.',
+        heroSub: 'Sem precisar de PhD em estatística. Escolha uma divisão, veja quem está ranqueado e abra o app para previsões e cards completos.',
+        heroNote: 'Apenas para informação e educação — nunca aconselhamento financeiro.',
+        ctaOpenApp: 'Abrir o App',
+        ctaBrowse: 'Ver rankings ↓',
+        rankLabel: 'Rankings de Lutadores',
+        exploreLabel: 'Explorar',
+        exploreTitle: 'Tudo que o Fight Prophet tem',
+        cta1Title: 'Previsões', cta1Desc: 'Compare probabilidade do modelo vs mercado',
+        cta2Title: 'Fight Lab', cta2Desc: 'Picks históricos + métricas',
+        cta3Title: 'Rankings', cta3Desc: 'Desempenho por divisão',
+        cta4Title: 'Campeões', cta4Desc: 'Cinturões e histórico',
+        cta5Title: 'Cards de Lutadores', cta5Desc: 'Abra um card para qualquer lutador',
+        cta6Title: 'Histórico de Eventos', cta6Desc: 'Cards passados da UFC',
+        newsLabel: 'Últimas notícias',
+        finalEyebrow: 'Pronto para ir mais fundo?',
+        finalTitle: 'Abra o app completo com previsões, diagnóstico de modelos e cards.',
+        finalCta: 'Abrir Fight Prophet',
+      },
+    };
+
+    const keyToId = {
+      heroTitle: 'i18n-hero-title',
+      heroSub: 'i18n-hero-sub',
+      heroNote: 'i18n-hero-note',
+      ctaOpenApp: 'i18n-cta-open-app',
+      ctaBrowse: 'i18n-cta-browse',
+      rankLabel: 'i18n-rank-label',
+      exploreLabel: 'i18n-explore-label',
+      exploreTitle: 'i18n-explore-title',
+      cta1Title: 'i18n-cta-1-title', cta1Desc: 'i18n-cta-1-desc',
+      cta2Title: 'i18n-cta-2-title', cta2Desc: 'i18n-cta-2-desc',
+      cta3Title: 'i18n-cta-3-title', cta3Desc: 'i18n-cta-3-desc',
+      cta4Title: 'i18n-cta-4-title', cta4Desc: 'i18n-cta-4-desc',
+      cta5Title: 'i18n-cta-5-title', cta5Desc: 'i18n-cta-5-desc',
+      cta6Title: 'i18n-cta-6-title', cta6Desc: 'i18n-cta-6-desc',
+      newsLabel: 'i18n-news-label',
+      finalEyebrow: 'i18n-final-eyebrow',
+      finalTitle: 'i18n-final-title',
+      finalCta: 'i18n-final-cta',
+    };
+
+    function applyLanguage(lang) {
+      const selected = translations[lang] ? lang : 'en';
+      const pack = translations[selected];
+      Object.entries(keyToId).forEach(([key, id]) => {
+        const el = document.getElementById(id);
+        if (el && typeof pack[key] === 'string') el.textContent = pack[key];
+      });
+      document.querySelectorAll('.fp-lang-btn').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.getAttribute('data-lang') === selected);
+      });
+      document.documentElement.lang = selected;
+      localStorage.setItem(FP_LANG_KEY, selected);
+    }
+
+    const initialLang = localStorage.getItem(FP_LANG_KEY) || 'en';
+    applyLanguage(initialLang);
+
+    document.querySelectorAll('.fp-lang-btn').forEach((btn) => {
+      btn.addEventListener('click', () => applyLanguage(btn.getAttribute('data-lang') || 'en'));
     });
-
-    if (divisionSelect instanceof HTMLSelectElement) {
-      divisionSelect.addEventListener('change', (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLSelectElement)) return;
-        setActiveDivision(target.value);
-      });
-    }
   </script>
 
   <style>
     .fp-home-main {
       min-width: 0;
       width: 100%;
-    }
-    .fp-visually-hidden {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
-    .fp-home-header {
       display: flex;
       flex-direction: column;
-      gap: 0.32rem;
-      padding: 0.7rem 0.85rem 0.75rem;
-      margin-bottom: 0.55rem;
-      background: linear-gradient(155deg, rgba(20, 20, 22, 0.92) 0%, rgba(40, 20, 20, 0.78) 100%);
-      border: 1px solid rgba(220, 38, 38, 0.24);
-      border-radius: 0.9rem;
-      box-shadow: 0 0 18px rgba(220, 38, 38, 0.08);
+      gap: 1.4rem;
     }
-    .fp-home-header-brand {
+
+    /* HERO */
+    .fp-hero {
+      position: relative;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 0.85rem;
-      flex-wrap: wrap;
+      text-align: center;
+      gap: 0.7rem;
+      padding: 1.6rem 1.2rem 1.4rem;
+      background:
+        radial-gradient(60% 80% at 50% 0%, rgba(220, 38, 38, 0.14), transparent 70%),
+        linear-gradient(160deg, rgba(20, 20, 22, 0.62) 0%, rgba(40, 18, 18, 0.5) 100%);
+      border: 1px solid rgba(220, 38, 38, 0.22);
+      border-radius: 1.1rem;
+      box-shadow: 0 0 22px rgba(220, 38, 38, 0.1);
+      overflow: hidden;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
     }
-    .fp-home-header-logo {
-      width: clamp(160px, 22vw, 240px);
+    .fp-hero-brand {
+      display: flex;
+      justify-content: center;
+    }
+    .fp-hero-logo {
+      width: clamp(160px, 24vw, 240px);
       height: auto;
       object-fit: contain;
-      filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.22));
-      flex-shrink: 0;
+      filter: drop-shadow(0 0 10px rgba(220, 38, 38, 0.3));
     }
-    .fp-home-header-sub {
+    .fp-hero-title {
+      margin: 0.1rem 0 0;
+      font-size: clamp(1.35rem, 3.2vw, 2.05rem);
+      font-weight: 800;
+      line-height: 1.18;
+      color: #fef2f2;
+      max-width: 28ch;
+      letter-spacing: -0.01em;
+    }
+    .fp-hero-sub {
       margin: 0;
-      font-size: clamp(0.88rem, 1.8vw, 1.05rem);
+      font-size: clamp(0.9rem, 1.6vw, 1.04rem);
       color: #d4d4d8;
-      font-weight: 600;
-      line-height: 1.4;
-      max-width: 46ch;
+      line-height: 1.55;
+      max-width: 56ch;
     }
-    .fp-home-header-note {
-      margin: 0;
-      font-size: 0.78rem;
-      color: #71717a;
+    .fp-hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      justify-content: center;
+      margin-top: 0.3rem;
     }
-    .fp-btn {
-      border: 1px solid rgba(220, 38, 38, 0.45);
-      border-radius: 0.65rem;
-      padding: 0.5rem 0.75rem;
-      text-decoration: none;
-      color: #f4f4f5;
-      background: linear-gradient(160deg, rgba(45, 24, 24, 0.65), rgba(39, 39, 42, 0.45));
-      font-weight: 650;
-      font-size: 0.9rem;
-      box-shadow: 0 0 12px rgba(220, 38, 38, 0.14);
-    }
-    .fp-btn-hero-primary {
-      min-width: 12.5rem;
-      padding: 0.9rem 1.25rem;
+    .fp-cta-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.78rem 1.3rem;
       font-size: 1rem;
       font-weight: 800;
       letter-spacing: 0.01em;
-      border-radius: 0.9rem;
-      box-shadow: 0 0 22px rgba(239, 68, 68, 0.34);
-    }
-    .fp-btn-hero-secondary {
-      padding: 0.76rem 1rem;
-      font-size: 0.95rem;
-      font-weight: 750;
-      border-radius: 0.82rem;
-    }
-    .fp-btn-primary {
-      background: linear-gradient(160deg, #ef4444, #dc2626);
       color: #ffffff;
-      border-color: rgba(248, 113, 113, 0.65);
-      box-shadow: 0 0 14px rgba(239, 68, 68, 0.35);
+      background: linear-gradient(160deg, #ef4444, #dc2626);
+      border: 1px solid rgba(248, 113, 113, 0.65);
+      border-radius: 0.8rem;
+      text-decoration: none;
+      box-shadow: 0 0 22px rgba(239, 68, 68, 0.35);
+      transition: transform 140ms ease, box-shadow 140ms ease;
     }
-    .fp-btn-secondary {
-      background: rgba(24, 24, 27, 0.85);
-      color: #f4f4f5;
-      border-color: rgba(113, 113, 122, 0.46);
-      box-shadow: none;
-      white-space: nowrap;
+    .fp-cta-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 28px rgba(239, 68, 68, 0.5);
     }
+    .fp-cta-arrow {
+      transition: transform 140ms ease;
+    }
+    .fp-cta-primary:hover .fp-cta-arrow {
+      transform: translateX(3px);
+    }
+    .fp-cta-ghost {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.78rem 1.05rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fef2f2;
+      background: rgba(24, 24, 27, 0.6);
+      border: 1px solid rgba(113, 113, 122, 0.5);
+      border-radius: 0.8rem;
+      text-decoration: none;
+    }
+    .fp-cta-ghost:hover {
+      border-color: rgba(248, 113, 113, 0.5);
+    }
+    .fp-hero-note {
+      margin: 0.3rem 0 0;
+      font-size: 0.74rem;
+      color: #71717a;
+    }
+
+    /* SECTION LABELS */
     .fp-section-label {
       font-size: 0.68rem;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
-      font-weight: 700;
-      color: #71717a;
-      margin: 0.72rem 0 0.28rem;
+      letter-spacing: 0.12em;
+      font-weight: 800;
+      color: #fca5a5;
+      margin: 0;
     }
-    .fp-section-head {
+
+    /* RANKINGS */
+    .fp-rank-section-head {
       display: flex;
       justify-content: space-between;
       align-items: end;
       gap: 0.8rem;
-      margin-bottom: 0.1rem;
+      margin-bottom: 0.6rem;
+      flex-wrap: wrap;
     }
-    .fp-section-intro {
-      margin: -0.1rem 0 1rem;
-      max-width: 68ch;
-      color: #d4d4d8;
-      line-height: 1.68;
-      font-size: 1.04rem;
-    }
-    .fp-section-intro-tight {
-      margin-bottom: 0.8rem;
-    }
-    .fp-empty-state {
-      display: grid;
-      gap: 0.6rem;
-      background: linear-gradient(150deg, rgba(22, 22, 26, 0.92), rgba(36, 36, 42, 0.78));
-      border: 1px solid rgba(113, 113, 122, 0.42);
-      border-radius: 0.9rem;
-      padding: 1rem 1.05rem;
-      color: #d4d4d8;
-      line-height: 1.55;
-    }
-    .fp-empty-state strong {
-      color: #fef2f2;
-      font-size: 1rem;
-    }
-    .fp-stats-strip {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      background: rgba(22, 22, 26, 0.88);
-      border: 1px solid rgba(113, 113, 122, 0.42);
-      border-radius: 0.9rem;
-      overflow: hidden;
-    }
-    .fp-stat-item {
-      padding: 0.62rem 0.5rem;
-      text-align: center;
-      border-right: 1px solid rgba(113, 113, 122, 0.3);
-    }
-    .fp-stat-item:last-child {
-      border-right: none;
-    }
-    .fp-stat-label {
-      margin: 0 0 0.12rem;
-      font-size: 0.62rem;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: #a1a1aa;
-      font-weight: 600;
-    }
-    .fp-stat-value {
-      margin: 0;
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: #f8fafc;
-    }
-    .fp-content-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 0.55rem;
-    }
-    .fp-panel {
-      background: linear-gradient(150deg, rgba(22, 22, 26, 0.9), rgba(36, 36, 42, 0.68));
-      border: 1px solid rgba(113, 113, 122, 0.42);
-      border-radius: 0.9rem;
-      padding: 0.78rem 0.95rem;
-    }
-    .fp-panel h2 {
-      font-size: 1.02rem;
-      margin: 0 0 0.35rem;
-    }
-    .fp-panel ul {
-      margin: 0;
-      padding-left: 1rem;
-      line-height: 1.55;
-      color: #d4d4d8;
-    }
-    .fp-cta-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 0.55rem;
-    }
-    .fp-rankings-wall {
-      display: grid;
-      gap: 0.9rem;
-    }
-    .fp-division-tools {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      margin: 0 0 0.8rem;
-      padding: 0.42rem 0.56rem;
-      border-left: 3px solid rgba(220, 38, 38, 0.55);
-      background: linear-gradient(90deg, rgba(127, 29, 29, 0.28), rgba(22, 22, 26, 0));
-      border-radius: 0.4rem;
-    }
-    .fp-division-select {
-      width: auto;
-      min-width: min(100%, 20rem);
-      flex: 1 1 16rem;
-      background: linear-gradient(160deg, rgba(127, 29, 29, 0.72), rgba(35, 20, 20, 0.92));
-      border: 1px solid rgba(248, 113, 113, 0.38);
-      color: #fef2f2;
-      border-radius: 9999px;
-      padding: 0.58rem 2.6rem 0.58rem 0.9rem;
-      font-size: 0.98rem;
+    .fp-rank-section-title {
+      margin: 0.18rem 0 0;
+      font-size: clamp(1.05rem, 2.2vw, 1.32rem);
       font-weight: 800;
-      box-shadow: 0 0 12px rgba(220, 38, 38, 0.14);
-      appearance: none;
-      -webkit-appearance: none;
-      background-image:
-        linear-gradient(45deg, transparent 50%, #fca5a5 50%),
-        linear-gradient(135deg, #fca5a5 50%, transparent 50%);
-      background-position:
-        calc(100% - 1.1rem) calc(50% - 0.14rem),
-        calc(100% - 0.78rem) calc(50% - 0.14rem);
-      background-size: 0.38rem 0.38rem, 0.38rem 0.38rem;
-      background-repeat: no-repeat;
+      color: #fef2f2;
+      letter-spacing: -0.01em;
     }
-    .fp-division-tools-count {
-      font-size: 0.7rem;
-      color: #a1a1aa;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+    .fp-rank-section-link {
+      font-size: 0.84rem;
       font-weight: 700;
-      white-space: nowrap;
+      color: #fca5a5;
+      text-decoration: none;
+      padding: 0.3rem 0;
     }
-    .fp-champ-grid {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      justify-content: stretch;
-      gap: 1rem;
-      align-items: start;
-      padding-inline: 0.2rem;
+    .fp-rank-section-link:hover {
+      color: #fef2f2;
     }
-    .fp-division-jump {
+    .fp-rank-wall {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    /* GENDER TABS */
+    .fp-gender-tabs {
+      display: inline-flex;
+      gap: 0;
+      padding: 0.22rem;
+      background: rgba(22, 22, 26, 0.85);
+      border: 1px solid rgba(113, 113, 122, 0.42);
+      border-radius: 0.7rem;
+      align-self: flex-start;
+    }
+    .fp-gender-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.42rem;
+      padding: 0.46rem 0.95rem;
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #d4d4d8;
+      background: transparent;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: background 140ms ease, color 140ms ease;
+    }
+    .fp-gender-tab:hover {
+      color: #fef2f2;
+    }
+    .fp-gender-tab.is-active {
+      background: linear-gradient(160deg, #ef4444, #dc2626);
+      color: #ffffff;
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.32);
+    }
+    .fp-gender-tab-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.4rem;
+      padding: 0.05rem 0.34rem;
+      font-size: 0.66rem;
+      font-weight: 800;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.32);
+      color: rgba(255, 255, 255, 0.85);
+    }
+    .fp-gender-tab.is-active .fp-gender-tab-count {
+      background: rgba(0, 0, 0, 0.34);
+      color: #fef2f2;
+    }
+    .fp-gender-panel {
       display: none;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+    .fp-gender-panel.is-active {
+      display: flex;
+    }
+
+    /* DIVISION PILLS */
+    .fp-division-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.36rem;
+      padding: 0.42rem;
+      background: rgba(22, 22, 26, 0.6);
+      border: 1px solid rgba(113, 113, 122, 0.32);
+      border-radius: 0.7rem;
     }
     .fp-division-pill {
       display: inline-flex;
       align-items: center;
       gap: 0.32rem;
-      background: rgba(22, 22, 26, 0.88);
-      border: 1px solid rgba(220, 38, 38, 0.28);
-      color: #fef2f2;
+      padding: 0.36rem 0.7rem;
       font-size: 0.78rem;
       font-weight: 700;
-      padding: 0.34rem 0.62rem;
-      border-radius: 9999px;
-      appearance: none;
-      -webkit-appearance: none;
-      text-align: left;
-      letter-spacing: 0.02em;
+      color: #d4d4d8;
+      background: rgba(35, 35, 40, 0.7);
+      border: 1px solid rgba(113, 113, 122, 0.32);
+      border-radius: 999px;
       cursor: pointer;
-      transition: background 140ms ease, border-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
-    }
-    .fp-division-pill.is-active {
-      background: linear-gradient(160deg, rgba(127, 29, 29, 0.72), rgba(35, 20, 20, 0.92));
-      border-color: rgba(248, 113, 113, 0.58);
-      box-shadow: 0 0 12px rgba(220, 38, 38, 0.18);
+      letter-spacing: 0.01em;
+      transition: background 140ms ease, color 140ms ease, border-color 140ms ease, transform 140ms ease;
     }
     .fp-division-pill:hover {
-      background: linear-gradient(160deg, rgba(127, 29, 29, 0.65), rgba(22, 22, 26, 0.85));
+      color: #fef2f2;
+      border-color: rgba(248, 113, 113, 0.45);
       transform: translateY(-1px);
     }
-    .fp-division-pill-count {
-      background: rgba(220, 38, 38, 0.22);
-      color: #fee2e2;
-      font-size: 0.66rem;
-      font-weight: 800;
-      padding: 0.08rem 0.36rem;
-      border-radius: 9999px;
+    .fp-division-pill.is-active {
+      background: linear-gradient(160deg, rgba(127, 29, 29, 0.85), rgba(35, 20, 20, 0.95));
+      color: #fef2f2;
+      border-color: rgba(248, 113, 113, 0.6);
+      box-shadow: 0 0 12px rgba(220, 38, 38, 0.22);
     }
+    .fp-division-pill-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.3rem;
+      padding: 0.04rem 0.34rem;
+      font-size: 0.62rem;
+      font-weight: 800;
+      background: rgba(220, 38, 38, 0.2);
+      color: #fee2e2;
+      border-radius: 999px;
+    }
+
+    /* DIVISION BLOCK */
     .fp-division-block {
-      margin: 0;
-      scroll-margin-top: 0.6rem;
       display: none;
     }
     .fp-division-block.is-active {
-      display: block;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
     }
     .fp-division-header {
       display: flex;
-      align-items: baseline;
       justify-content: space-between;
+      align-items: baseline;
       gap: 0.6rem;
-      margin: 0 0 0.8rem;
-      padding: 0.38rem 0.56rem;
-      border-left: 3px solid rgba(220, 38, 38, 0.55);
-      background: linear-gradient(90deg, rgba(127, 29, 29, 0.28), rgba(22, 22, 26, 0));
+      padding: 0.35rem 0.62rem;
+      border-left: 3px solid rgba(220, 38, 38, 0.6);
+      background: linear-gradient(90deg, rgba(127, 29, 29, 0.22), transparent);
       border-radius: 0.4rem;
-    }
-    .fp-rankings-wall:not(.is-all-divisions) .fp-division-block.is-active .fp-division-header {
-      display: none;
     }
     .fp-division-title {
       margin: 0;
-      font-size: 1rem;
+      font-size: 0.96rem;
       font-weight: 800;
       color: #fef2f2;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.01em;
     }
     .fp-division-count {
-      font-size: 0.7rem;
-      color: #a1a1aa;
-      letter-spacing: 0.06em;
+      font-size: 0.66rem;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       font-weight: 700;
+      color: #a1a1aa;
     }
-    .fp-cta-card {
+
+    /* CARD GRID — compact, FUTBIN-style */
+    .fp-card-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 0.68rem;
+      padding-inline: 0.1rem;
+    }
+    @media (max-width: 1280px) {
+      .fp-card-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    }
+    @media (max-width: 1080px) {
+      .fp-card-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    @media (max-width: 760px) {
+      .fp-card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+    }
+    @media (max-width: 460px) {
+      .fp-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    .fp-division-footer {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 0.2rem;
+    }
+    .fp-division-link {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #fca5a5;
+      text-decoration: none;
+    }
+    .fp-division-link:hover {
+      color: #fef2f2;
+    }
+
+    /* SECTIONS GRID */
+    .fp-sections-head {
+      display: flex;
+      flex-direction: column;
+      gap: 0.18rem;
+      margin-bottom: 0.5rem;
+    }
+    .fp-sections-title {
+      margin: 0;
+      font-size: clamp(1.05rem, 2.2vw, 1.32rem);
+      font-weight: 800;
+      color: #fef2f2;
+      letter-spacing: -0.01em;
+    }
+    .fp-cta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.6rem;
+    }
+    .fp-section-card {
       display: flex;
       flex-direction: column;
       gap: 0.22rem;
-      background: linear-gradient(155deg, rgba(35, 20, 20, 0.7), rgba(28, 28, 32, 0.82));
-      border: 1px solid rgba(220, 38, 38, 0.24);
-      border-radius: 0.75rem;
-      padding: 0.68rem 0.72rem;
+      padding: 0.78rem 0.85rem;
       text-decoration: none;
-      color: #e4e4e7;
-      box-shadow: 0 0 10px rgba(220, 38, 38, 0.1);
+      color: #fef2f2;
+      background: linear-gradient(155deg, rgba(35, 20, 20, 0.55), rgba(22, 22, 26, 0.85));
+      border: 1px solid rgba(220, 38, 38, 0.22);
+      border-radius: 0.75rem;
+      transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
     }
-    .fp-cta-card span {
+    .fp-section-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(248, 113, 113, 0.45);
+      box-shadow: 0 0 14px rgba(220, 38, 38, 0.18);
+    }
+    .fp-section-card strong {
+      font-size: 0.96rem;
+      font-weight: 800;
+    }
+    .fp-section-card span {
       font-size: 0.78rem;
       color: #a1a1aa;
       line-height: 1.4;
     }
-    .fp-workflow-list {
-      margin: 0.15rem 0 0;
-      padding-left: 1.2rem;
-      line-height: 1.68;
-      color: #d4d4d8;
-      font-size: 1.02rem;
-      background: linear-gradient(150deg, rgba(22, 22, 26, 0.9), rgba(36, 36, 42, 0.68));
-      border: 1px solid rgba(113, 113, 122, 0.42);
-      border-radius: 0.9rem;
-      padding: 0.78rem 0.95rem 0.78rem 1.8rem;
+    @media (max-width: 760px) {
+      .fp-cta-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
-    .fp-workflow-list li {
-      margin-bottom: 0.25rem;
+    @media (max-width: 460px) {
+      .fp-cta-grid { grid-template-columns: 1fr; }
     }
-    .fp-workflow-list strong {
-      color: #fef2f2;
-    }
-    .fp-story {
-      background: linear-gradient(150deg, rgba(35, 20, 20, 0.72), rgba(22, 22, 26, 0.90));
-      border: 1px solid rgba(220, 38, 38, 0.28);
-      border-radius: 0.9rem;
-      padding: 0.72rem 0.95rem;
-      color: #d4d4d8;
-      font-size: 0.96rem;
-      line-height: 1.55;
-      box-shadow: 0 0 14px rgba(220, 38, 38, 0.10);
-    }
-    .fp-story-title {
-      font-size: 1.04rem;
-      font-weight: 700;
-      color: #fef2f2;
-      margin: 0 0 0.22rem;
-      text-shadow: 0 0 10px rgba(220, 38, 38, 0.28);
-    }
-    .fp-story p {
-      margin: 0;
+
+    /* NEWS */
+    .fp-news-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
     }
     .fp-news-shell {
       display: grid;
-      grid-template-columns: minmax(220px, 310px) 1fr;
-      gap: 0.72rem;
-      margin-top: 0.05rem;
+      grid-template-columns: minmax(220px, 300px) 1fr;
+      gap: 0.7rem;
       align-items: stretch;
-      min-height: 432px;
+      min-height: 360px;
     }
     .fp-news-menu {
-      min-height: 432px;
-      max-height: 432px;
-      overflow-y: auto;
       display: grid;
-      grid-template-rows: repeat(3, minmax(0, 1fr));
-      grid-auto-rows: minmax(104px, 1fr);
-      gap: 0.48rem;
-      padding-right: 0.2rem;
-      align-content: stretch;
+      grid-auto-rows: minmax(78px, 1fr);
+      gap: 0.42rem;
+      max-height: 360px;
+      overflow-y: auto;
+      padding-right: 0.18rem;
     }
     .fp-news-menu-item {
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      min-height: 0;
+      gap: 0.18rem;
       text-align: left;
-      border: 1px solid rgba(220, 38, 38, 0.2);
-      border: 1px solid rgba(220, 38, 38, 0.2);
-      border-radius: 0.75rem;
-      background: linear-gradient(160deg, rgba(35, 20, 20, 0.55), rgba(22, 22, 26, 0.88));
-      color: #f4f4f5;
-      padding: 0.62rem;
+      padding: 0.55rem 0.62rem;
       cursor: pointer;
-      box-shadow: 0 0 9px rgba(220, 38, 38, 0.1);
+      border: 1px solid rgba(220, 38, 38, 0.2);
+      border-radius: 0.7rem;
+      background: linear-gradient(160deg, rgba(35, 20, 20, 0.45), rgba(22, 22, 26, 0.85));
+      color: #f4f4f5;
+      transition: border-color 140ms ease;
+    }
+    .fp-news-menu-item:hover {
+      border-color: rgba(248, 113, 113, 0.45);
     }
     .fp-news-menu-item.is-active {
-      border-color: rgba(248, 113, 113, 0.58);
-      box-shadow: 0 0 14px rgba(239, 68, 68, 0.22);
-      background: linear-gradient(160deg, rgba(75, 20, 20, 0.6), rgba(22, 22, 26, 0.9));
+      border-color: rgba(248, 113, 113, 0.6);
+      background: linear-gradient(160deg, rgba(75, 20, 20, 0.55), rgba(22, 22, 26, 0.9));
+      box-shadow: 0 0 14px rgba(239, 68, 68, 0.2);
     }
     .fp-news-menu-date {
-      display: block;
-      margin: 0 0 0.2rem;
-      font-size: 0.68rem;
-      letter-spacing: 0.06em;
+      font-size: 0.66rem;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: #fca5a5;
       font-weight: 700;
     }
     .fp-news-menu-title {
-      display: block;
       font-size: 0.82rem;
-      line-height: 1.4;
+      line-height: 1.35;
       color: #fef2f2;
-      font-weight: 650;
+      font-weight: 700;
     }
     .fp-news-menu-source {
-      display: block;
-      margin-top: 0.18rem;
-      font-size: 0.64rem;
-      letter-spacing: 0.06em;
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: #a1a1aa;
       font-weight: 700;
@@ -1170,106 +1067,107 @@ const newsStructuredData = newsItems.map((item) => ({
     .fp-news-detail {
       display: flex;
       flex-direction: column;
-      background: linear-gradient(160deg, rgba(35, 20, 20, 0.55), rgba(22, 22, 26, 0.88));
+      padding: 0.95rem 1.05rem;
+      background: linear-gradient(160deg, rgba(35, 20, 20, 0.45), rgba(22, 22, 26, 0.88));
       border: 1px solid rgba(220, 38, 38, 0.24);
-      border-radius: 0.75rem;
-      padding: 0.82rem;
-      box-shadow: 0 0 12px rgba(220, 38, 38, 0.12);
-      min-height: 432px;
+      border-radius: 0.85rem;
     }
     .fp-news-date {
-      margin: 0 0 0.2rem;
+      margin: 0 0 0.3rem;
       font-size: 0.7rem;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: #fca5a5;
       font-weight: 700;
     }
-    .fp-news-detail h2 {
-      margin: 0 0 0.3rem;
-      font-size: 0.96rem;
-      line-height: 1.35;
+    .fp-news-detail h3 {
+      margin: 0 0 0.4rem;
+      font-size: 1.04rem;
+      line-height: 1.3;
       color: #fef2f2;
+      font-weight: 800;
     }
     .fp-news-detail p {
       margin: 0;
-      color: #e4e4e7;
-      line-height: 1.5;
-      font-size: 0.85rem;
+      color: #d4d4d8;
+      line-height: 1.55;
+      font-size: 0.9rem;
     }
     .fp-news-detail-link {
       margin-top: auto;
+      align-self: flex-start;
       display: inline-flex;
-      text-decoration: none;
-      color: #fef2f2;
+      padding: 0.42rem 0.78rem;
       font-size: 0.82rem;
       font-weight: 700;
+      color: #fef2f2;
+      text-decoration: none;
       border: 1px solid rgba(248, 113, 113, 0.45);
-      border-radius: 9999px;
-      padding: 0.34rem 0.58rem;
-      background: linear-gradient(160deg, rgba(127, 29, 29, 0.72), rgba(24, 24, 27, 0.7));
+      border-radius: 999px;
+      background: linear-gradient(160deg, rgba(127, 29, 29, 0.7), rgba(24, 24, 27, 0.6));
     }
-    @media (max-width: 1180px) {
-      .fp-champ-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 0.82rem;
-      }
+    @media (max-width: 760px) {
+      .fp-news-shell { grid-template-columns: 1fr; }
+      .fp-news-menu { max-height: 240px; }
     }
-    @media (max-width: 900px) {
-      .fp-section-head {
+
+    /* FINAL CTA BANNER */
+    .fp-final-cta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.2rem;
+      background:
+        radial-gradient(80% 130% at 100% 0%, rgba(220, 38, 38, 0.22), transparent 70%),
+        linear-gradient(160deg, rgba(20, 20, 22, 0.95), rgba(40, 18, 18, 0.85));
+      border: 1px solid rgba(220, 38, 38, 0.32);
+      border-radius: 1rem;
+      box-shadow: 0 0 18px rgba(220, 38, 38, 0.14);
+    }
+    .fp-final-cta-eyebrow {
+      margin: 0;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 800;
+      color: #fca5a5;
+    }
+    .fp-final-cta-title {
+      margin: 0.18rem 0 0;
+      font-size: clamp(0.98rem, 2vw, 1.18rem);
+      font-weight: 800;
+      color: #fef2f2;
+      max-width: 48ch;
+      line-height: 1.35;
+    }
+    @media (max-width: 760px) {
+      .fp-final-cta {
         flex-direction: column;
         align-items: flex-start;
-      }
-      .fp-cta-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .fp-home-header-brand {
-        gap: 0.55rem;
-      }
-      .fp-home-header-logo {
-        width: clamp(130px, 40vw, 200px);
-      }
-      .fp-content-grid {
-        grid-template-columns: 1fr;
-      }
-      .fp-news-shell {
-        grid-template-columns: 1fr;
-      }
-      .fp-news-menu {
-        min-height: 240px;
-        max-height: 240px;
-        grid-template-rows: none;
-        grid-auto-rows: minmax(72px, auto);
-      }
-      .fp-stats-strip {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .fp-stat-item {
-        border-right: none;
-        border-bottom: 1px solid rgba(113, 113, 122, 0.3);
-      }
-      .fp-subscribe-wrap {
-        grid-template-columns: 1fr;
-      }
-      .fp-subscribe-logo {
-        max-width: 180px;
-      }
-      .fp-btn {
-        font-size: 0.84rem;
-        padding: 0.46rem 0.68rem;
+        gap: 0.7rem;
       }
     }
-    @media (max-width: 620px) {
-      .fp-cta-grid {
-        grid-template-columns: 1fr;
-      }
-      .fp-champ-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .fp-division-header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
+
+    /* EMPTY STATE */
+    .fp-empty-state {
+      display: grid;
+      gap: 0.55rem;
+      padding: 1.1rem 1.2rem;
+      background: linear-gradient(150deg, rgba(22, 22, 26, 0.92), rgba(36, 36, 42, 0.78));
+      border: 1px solid rgba(113, 113, 122, 0.42);
+      border-radius: 0.9rem;
+      color: #d4d4d8;
+      line-height: 1.55;
+    }
+    .fp-empty-state strong {
+      color: #fef2f2;
+      font-size: 1rem;
+    }
+    .fp-empty-line {
+      margin: 0.5rem 0;
+      color: #a1a1aa;
+      font-size: 0.88rem;
     }
   </style>
 </BaseLayout>
