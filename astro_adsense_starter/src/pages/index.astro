@@ -9,7 +9,8 @@ import { getAllRankedFighterCards, getHomepageGoatCards, getHomepageRankingsDebu
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
 const withPage = (slug: string) => buildAppPageUrl(appUrl, slug);
 const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'https://fightprophet.com').replace(/\/$/, '');
-const rankingsPageUrl = '/#fp-rankings';
+const rankingsPageUrl = '/rankings';
+const rankingsAnchorUrl = '/#fp-rankings';
 const predictionsAppUrl = withPage('predictions');
 
 const runtimeEnv = runtimeEnvFromLocals(Astro.locals);
@@ -57,6 +58,41 @@ function slugify(input: string): string {
     .replace(/^-+|-+$/g, '')
     .slice(0, 72) || 'mma-news';
 }
+
+interface RankingDeck {
+  slug: string;
+  label: string;
+  title: string;
+  note: string;
+  countLabel: string;
+  fighters: typeof topGoats;
+}
+
+const rankingDecks: RankingDeck[] = [
+  ...(topGoats.length > 0
+    ? [{
+        slug: 'goat-list',
+        label: 'GOAT List',
+        title: 'GOAT List',
+        note: 'A pound-for-pound style snapshot built from the latest model-wide ranking feed. Tap any category below to swap the deck.',
+        countLabel: `${topGoats.length} featured fighters`,
+        fighters: topGoats,
+      }]
+    : []),
+  ...rankedDivisions
+    .filter((group) => group.fighters.length > 0)
+    .map((group) => ({
+      slug: `division-${slugify(group.weight_class || 'division')}`,
+      label: group.weight_class,
+      title: group.weight_class,
+      note: `Current ranking deck for ${group.weight_class}. Click around and the cards reshuffle into the new division.`,
+      countLabel: `${group.fighters.length} ranked fighters`,
+      fighters: group.fighters,
+    })),
+];
+
+const initialDeckSlug = rankingDecks[0]?.slug || '';
+const hasRankingDecks = rankingDecks.length > 0;
 
 function parseRssItems(xml: string, source: string, limit = 12): NewsItem[] {
   const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, limit);
@@ -162,7 +198,7 @@ const newsStructuredData = newsItems.map((item) => ({
           <span id="i18n-cta-open-app">See predictions</span>
           <span class="fp-cta-arrow" aria-hidden="true">→</span>
         </a>
-        <a class="fp-cta-ghost" href="#fp-rankings" id="i18n-cta-browse">Browse rankings ↓</a>
+        <a class="fp-cta-ghost" href={rankingsAnchorUrl} id="i18n-cta-browse">Browse rankings ↓</a>
       </div>
       <p class="fp-hero-note" id="i18n-hero-note">For information and education only — not financial advice. Our predictions and estimates can be wrong.</p>
     </header>
@@ -172,41 +208,70 @@ const newsStructuredData = newsItems.map((item) => ({
       <div class="fp-rank-section-head">
         <div>
           <p class="fp-section-label" id="i18n-rank-label">GOAT Board</p>
-          <h2 class="fp-rank-section-title" id="i18n-rank-title">
-            {topGoats.length
-              ? `Top ${topGoats.length} global contenders across ${rankedDivisions.length} divisions`
-              : 'Live GOAT board'}
-          </h2>
+          <h2 class="fp-rank-section-title" id="i18n-rank-title">GOAT List</h2>
         </div>
-        <a class="fp-rank-section-link" href={rankingsPageUrl}>All divisions →</a>
+        <a class="fp-rank-section-link" href={rankingsPageUrl}>GOAT list →</a>
       </div>
 
-      {topGoats.length > 0 ? (
-        <div class="fp-goat-board">
-          <p class="fp-rank-note">Built from the latest model-wide UFC ranking snapshot. Full divisional tables still live in the rankings page.</p>
-          <div class="fp-card-grid">
-            {topGoats.map((c) => (
-              <FighterCard
-                name={c.name}
-                fighterId={c.fighter_id}
-                country={c.country}
-                weightClass={c.weight_class}
-                isChampion={c.is_champion ?? false}
-                finishRate={c.finish_rate ?? null}
-                subRate={c.sub_rate ?? null}
-                winStreak={c.win_streak ?? null}
-                lossStreak={c.loss_streak ?? null}
-                wins={c.wins ?? null}
-                losses={c.losses ?? null}
-                rank={c.global_rank ?? c.rank ?? null}
-                compact={true}
-                appUrl={appUrl}
-              />
+      {hasRankingDecks ? (
+        <div class="fp-rank-wall" data-initial-division={initialDeckSlug}>
+          <p class="fp-rank-note">Start on the GOAT list, then click any category pill to swap the deck and reveal a different set of fighter cards.</p>
+
+          <div class="fp-division-pills" role="toolbar" aria-label="Ranking categories">
+            {rankingDecks.map((deck, idx) => (
+              <button
+                type="button"
+                class={`fp-division-pill${idx === 0 ? ' is-active' : ''}`}
+                data-division-target={deck.slug}
+                aria-pressed={idx === 0 ? 'true' : 'false'}
+              >
+                <span>{deck.label}</span>
+                <span class="fp-division-pill-count">{deck.fighters.length}</span>
+              </button>
             ))}
           </div>
+
+          <div class="fp-division-panels">
+            {rankingDecks.map((deck, idx) => (
+              <section
+                class={`fp-division-block${idx === 0 ? ' is-active' : ''}`}
+                data-division-panel={deck.slug}
+                hidden={idx !== 0}
+              >
+                <div class="fp-division-header">
+                  <h3 class="fp-division-title">{deck.title}</h3>
+                  <span class="fp-division-count">{deck.countLabel}</span>
+                </div>
+                <p class="fp-division-description">{deck.note}</p>
+                <div class="fp-card-grid">
+                  {deck.fighters.map((c, cardIdx) => (
+                    <div class="fp-card-shell" style={`--card-index:${cardIdx};`}>
+                      <FighterCard
+                        name={c.name}
+                        fighterId={c.fighter_id}
+                        country={c.country}
+                        weightClass={c.weight_class}
+                        isChampion={c.is_champion ?? false}
+                        finishRate={c.finish_rate ?? null}
+                        subRate={c.sub_rate ?? null}
+                        winStreak={c.win_streak ?? null}
+                        lossStreak={c.loss_streak ?? null}
+                        wins={c.wins ?? null}
+                        losses={c.losses ?? null}
+                        rank={c.global_rank ?? c.rank ?? null}
+                        compact={true}
+                        appUrl={appUrl}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+
           <div class="fp-division-footer">
             <a class="fp-division-link" href={rankingsPageUrl}>
-              See every division →
+              See full rankings →
             </a>
           </div>
         </div>
@@ -339,54 +404,86 @@ const newsStructuredData = newsItems.map((item) => ({
   <script>
     const wall = document.querySelector('.fp-rank-wall');
     if (wall) {
-      const genderTabs = Array.from(wall.querySelectorAll('.fp-gender-tab'));
-      const genderPanels = Array.from(wall.querySelectorAll('.fp-gender-panel'));
       const divisionPills = Array.from(wall.querySelectorAll('.fp-division-pill'));
       const divisionPanels = Array.from(wall.querySelectorAll('.fp-division-block'));
+      const panelHost = wall.querySelector('.fp-division-panels');
+      let activeSlug = wall.getAttribute('data-initial-division') || divisionPanels[0]?.getAttribute('data-division-panel') || '';
+      let cleanupTimer = 0;
 
-      function setGender(gender) {
-        genderTabs.forEach((tab) => {
-          const isActive = tab.getAttribute('data-gender') === gender;
-          tab.classList.toggle('is-active', isActive);
-          tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
-        });
-        genderPanels.forEach((panel) => {
-          const isActive = panel.getAttribute('data-gender-panel') === gender;
-          panel.classList.toggle('is-active', isActive);
-          panel.hidden = !isActive;
+      function syncPills(slug) {
+        divisionPills.forEach((pill) => {
+          const isActive = pill.getAttribute('data-division-target') === slug;
+          pill.classList.toggle('is-active', isActive);
+          pill.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
       }
 
-      function setDivision(gender, slug) {
+      function clearPanelState(panel) {
+        panel.classList.remove('is-entering', 'is-leaving');
+      }
+
+      function setDivision(slug) {
         if (!slug) return;
-        divisionPills
-          .filter((p) => p.getAttribute('data-division-gender') === gender)
-          .forEach((pill) => {
-            const isActive = pill.getAttribute('data-division-target') === slug;
-            pill.classList.toggle('is-active', isActive);
-            pill.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-          });
-        divisionPanels
-          .filter((p) => p.getAttribute('data-division-gender') === gender)
-          .forEach((panel) => {
-            const isActive = panel.getAttribute('data-division-panel') === slug;
-            panel.classList.toggle('is-active', isActive);
-            panel.hidden = !isActive;
-          });
+        if (slug === activeSlug) return;
+
+        const current = divisionPanels.find((panel) => panel.getAttribute('data-division-panel') === activeSlug);
+        const next = divisionPanels.find((panel) => panel.getAttribute('data-division-panel') === slug);
+        if (!next) return;
+
+        activeSlug = slug;
+        syncPills(slug);
+
+        if (cleanupTimer) window.clearTimeout(cleanupTimer);
+
+        const lockedHeight = Math.max(current?.offsetHeight || 0, next.offsetHeight || 0);
+        if (panelHost && lockedHeight) panelHost.style.minHeight = `${lockedHeight}px`;
+
+        divisionPanels.forEach((panel) => {
+          if (panel !== current && panel !== next) {
+            clearPanelState(panel);
+            panel.classList.remove('is-active');
+            panel.hidden = true;
+          }
+        });
+
+        next.hidden = false;
+        next.classList.add('is-active');
+        clearPanelState(next);
+        void next.offsetWidth;
+        next.classList.add('is-entering');
+
+        if (current && current !== next) {
+          current.hidden = false;
+          current.classList.add('is-active');
+          clearPanelState(current);
+          void current.offsetWidth;
+          current.classList.add('is-leaving');
+        }
+
+        cleanupTimer = window.setTimeout(() => {
+          if (current && current !== next) {
+            clearPanelState(current);
+            current.classList.remove('is-active');
+            current.hidden = true;
+          }
+          clearPanelState(next);
+          next.classList.add('is-active');
+          panelHost?.style.removeProperty('min-height');
+        }, 720);
       }
 
-      genderTabs.forEach((tab) => {
-        tab.addEventListener('click', () => {
-          const gender = tab.getAttribute('data-gender') || 'mens';
-          setGender(gender);
-        });
-      });
+      syncPills(activeSlug);
+      const initialPanel = divisionPanels.find((panel) => panel.getAttribute('data-division-panel') === activeSlug);
+      if (initialPanel) {
+        initialPanel.hidden = false;
+        initialPanel.classList.add('is-active', 'is-entering');
+        window.setTimeout(() => clearPanelState(initialPanel), 720);
+      }
 
       divisionPills.forEach((pill) => {
         pill.addEventListener('click', () => {
-          const gender = pill.getAttribute('data-division-gender') || 'mens';
           const slug = pill.getAttribute('data-division-target') || '';
-          setDivision(gender, slug);
+          setDivision(slug);
         });
       });
     }
@@ -649,74 +746,12 @@ const newsStructuredData = newsItems.map((item) => ({
       flex-direction: column;
       gap: 0.85rem;
     }
-    .fp-goat-board {
-      display: flex;
-      flex-direction: column;
-      gap: 0.85rem;
-    }
     .fp-rank-note {
       margin: 0;
       color: #d4d4d8;
       font-size: 0.92rem;
       line-height: 1.55;
       max-width: 72ch;
-    }
-
-    /* GENDER TABS */
-    .fp-gender-tabs {
-      display: inline-flex;
-      gap: 0;
-      padding: 0.22rem;
-      background: rgba(22, 22, 26, 0.85);
-      border: 1px solid rgba(113, 113, 122, 0.42);
-      border-radius: 0.7rem;
-      align-self: flex-start;
-    }
-    .fp-gender-tab {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.42rem;
-      padding: 0.46rem 0.95rem;
-      font-size: 0.86rem;
-      font-weight: 700;
-      color: #d4d4d8;
-      background: transparent;
-      border: none;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      transition: background 140ms ease, color 140ms ease;
-    }
-    .fp-gender-tab:hover {
-      color: #fef2f2;
-    }
-    .fp-gender-tab.is-active {
-      background: linear-gradient(160deg, #ef4444, #dc2626);
-      color: #ffffff;
-      box-shadow: 0 0 12px rgba(239, 68, 68, 0.32);
-    }
-    .fp-gender-tab-count {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 1.4rem;
-      padding: 0.05rem 0.34rem;
-      font-size: 0.66rem;
-      font-weight: 800;
-      border-radius: 999px;
-      background: rgba(0, 0, 0, 0.32);
-      color: rgba(255, 255, 255, 0.85);
-    }
-    .fp-gender-tab.is-active .fp-gender-tab-count {
-      background: rgba(0, 0, 0, 0.34);
-      color: #fef2f2;
-    }
-    .fp-gender-panel {
-      display: none;
-      flex-direction: column;
-      gap: 0.7rem;
-    }
-    .fp-gender-panel.is-active {
-      display: flex;
     }
 
     /* DIVISION PILLS */
@@ -767,15 +802,35 @@ const newsStructuredData = newsItems.map((item) => ({
       color: #fee2e2;
       border-radius: 999px;
     }
+    .fp-division-panels {
+      position: relative;
+      transition: min-height 220ms ease;
+    }
 
     /* DIVISION BLOCK */
     .fp-division-block {
       display: none;
+      opacity: 0;
     }
-    .fp-division-block.is-active {
+    .fp-division-block.is-active,
+    .fp-division-block.is-entering,
+    .fp-division-block.is-leaving {
       display: flex;
       flex-direction: column;
-      gap: 0.55rem;
+      gap: 0.62rem;
+    }
+    .fp-division-block.is-active,
+    .fp-division-block.is-entering {
+      opacity: 1;
+    }
+    .fp-division-block.is-entering {
+      animation: fpDeckIn 420ms cubic-bezier(0.18, 0.89, 0.32, 1.18);
+    }
+    .fp-division-block.is-leaving {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      animation: fpDeckOut 320ms ease both;
     }
     .fp-division-header {
       display: flex;
@@ -801,6 +856,13 @@ const newsStructuredData = newsItems.map((item) => ({
       font-weight: 700;
       color: #a1a1aa;
     }
+    .fp-division-description {
+      margin: 0;
+      color: #bfbfc8;
+      font-size: 0.86rem;
+      line-height: 1.55;
+      max-width: 68ch;
+    }
 
     /* CARD GRID — compact, FUTBIN-style */
     .fp-card-grid {
@@ -821,6 +883,21 @@ const newsStructuredData = newsItems.map((item) => ({
     @media (max-width: 460px) {
       .fp-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
+    .fp-card-shell {
+      --card-tilt: 0deg;
+    }
+    .fp-card-shell:nth-child(4n + 1) { --card-tilt: -2deg; }
+    .fp-card-shell:nth-child(4n + 2) { --card-tilt: 1.6deg; }
+    .fp-card-shell:nth-child(4n + 3) { --card-tilt: -1.2deg; }
+    .fp-card-shell:nth-child(4n + 4) { --card-tilt: 2.1deg; }
+    .fp-division-block.is-entering .fp-card-shell {
+      animation: fpCardDeal 620ms cubic-bezier(0.18, 0.89, 0.32, 1.18) both;
+      animation-delay: calc(var(--card-index, 0) * 45ms);
+    }
+    .fp-division-block.is-leaving .fp-card-shell {
+      animation: fpCardCollect 240ms ease both;
+      animation-delay: calc(var(--card-index, 0) * 18ms);
+    }
     .fp-division-footer {
       display: flex;
       justify-content: flex-end;
@@ -834,6 +911,53 @@ const newsStructuredData = newsItems.map((item) => ({
     }
     .fp-division-link:hover {
       color: #fef2f2;
+    }
+    @keyframes fpDeckIn {
+      0% {
+        opacity: 0;
+        transform: translateY(12px) scale(0.985);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    @keyframes fpDeckOut {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.985);
+      }
+    }
+    @keyframes fpCardDeal {
+      0% {
+        opacity: 0;
+        transform: translate3d(0, -28px, 0) scale(0.8) rotate(calc(var(--card-tilt) * 3));
+        filter: blur(6px);
+      }
+      65% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1) rotate(var(--card-tilt));
+        filter: blur(0);
+      }
+    }
+    @keyframes fpCardCollect {
+      0% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1) rotate(var(--card-tilt));
+        filter: blur(0);
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(0, 18px, 0) scale(0.84) rotate(calc(var(--card-tilt) * 4));
+        filter: blur(4px);
+      }
     }
 
     /* SECTIONS GRID */
