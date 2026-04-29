@@ -323,6 +323,8 @@ By using this dashboard, you acknowledge and agree to the following:
     "page.upcoming.all_events": "All Events",
     "page.upcoming.filter_event": "Filter by event",
     "page.upcoming.total_fights": "Total Fights",
+    "page.upcoming.upcoming_fights": "Upcoming",
+    "page.upcoming.analyzed_fights": "Analyzed",
     "page.upcoming.events": "Events",
     "page.upcoming.strong_signals": "Strong Signals",
     "page.upcoming.recommended_bets": "Value Flags",
@@ -416,6 +418,8 @@ Usa la barra lateral para navegar:
         "page.upcoming.all_events": "Todos los eventos",
         "page.upcoming.filter_event": "Filtrar por evento",
         "page.upcoming.total_fights": "Total de peleas",
+        "page.upcoming.upcoming_fights": "Próximas",
+        "page.upcoming.analyzed_fights": "Analizadas",
         "page.upcoming.events": "Eventos",
         "page.upcoming.strong_signals": "Señales fuertes",
         "page.upcoming.recommended_bets": "Señales de valor",
@@ -505,6 +509,8 @@ Use a barra lateral para navegar:
         "page.upcoming.all_events": "Todos os eventos",
         "page.upcoming.filter_event": "Filtrar por evento",
         "page.upcoming.total_fights": "Total de lutas",
+        "page.upcoming.upcoming_fights": "Próximas",
+        "page.upcoming.analyzed_fights": "Analisadas",
         "page.upcoming.events": "Eventos",
         "page.upcoming.strong_signals": "Sinais fortes",
         "page.upcoming.recommended_bets": "Sinais de valor",
@@ -3396,6 +3402,32 @@ st.markdown(
         line-height: 1.03;
         letter-spacing: 0.01em;
     }
+    .kpi-card-value--stack {
+        display: flex;
+        flex-direction: column;
+        gap: 0.18rem;
+        line-height: 1.05;
+    }
+    .kpi-card-value-line {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 0.36rem;
+        flex-wrap: wrap;
+    }
+    .kpi-card-value-line strong {
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+    }
+    .kpi-card-value-line span {
+        color: #a1a1aa;
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }
 
     .result-badge {
         display: inline-block;
@@ -4476,16 +4508,18 @@ def _render_kpi_card(
     icon: str | None = None,
     accent: str = "#38bdf8",
     compact: bool = False,
+    value_is_html: bool = False,
 ) -> None:
     card_class = "kpi-card kpi-card--compact" if compact else "kpi-card"
     label_class = "kpi-card-label kpi-card-label--large" if compact else "kpi-card-label"
     icon_markup = _icon_markup(icon, default_size=14)
+    value_markup = value if value_is_html else escape(value)
     st.markdown(
         (
             f'<div class="{card_class}" style="--kpi-accent: {escape(accent)};">'
             f'<div class="kpi-card-icon">{icon_markup}</div>'
             f'<div class="{label_class}">{escape(label)}</div>'
-            f'<div class="kpi-card-value">{escape(value)}</div>'
+            f'<div class="kpi-card-value">{value_markup}</div>'
             "</div>"
         ),
         unsafe_allow_html=True,
@@ -5377,9 +5411,19 @@ def page_upcoming() -> None:
         "CatBoost": FOLDER_UPCOMING_CATBOOST,
         "LogReg": FOLDER_UPCOMING_LOGREG,
     }
+    stats_folder_map = {
+        "Ensemble": FOLDER_STATS_ENSEMBLE,
+        "CatBoost": FOLDER_STATS_CATBOOST,
+        "LogReg": FOLDER_STATS_LOGREG,
+    }
 
     selected_folder = folder_map.get(model_view, FOLDER_UPCOMING_CATBOOST)
     df_upcoming = _load_prepared_upcoming_cards(selected_folder, ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
+    df_stats = _read_parquet(
+        stats_folder_map.get(model_view, FOLDER_STATS_CATBOOST),
+        ACTIVE_PARQUET_BASE,
+        ACTIVE_PREFIX,
+    )
 
     if df_upcoming.empty:
         st.info(t("page.upcoming.no_data"))
@@ -5408,15 +5452,32 @@ def page_upcoming() -> None:
     else:
         df_show = df_upcoming[df_upcoming["event_name"] == selected_event].copy()
 
+    analyzed_fights_total = None
+    if not df_stats.empty:
+        analyzed_fights_total = df_stats.iloc[0].get("total_fights")
+    analyzed_fights_display = "—"
+    if analyzed_fights_total is not None and not pd.isna(analyzed_fights_total):
+        try:
+            analyzed_fights_display = f"{int(float(analyzed_fights_total)):,}"
+        except Exception:
+            analyzed_fights_display = str(analyzed_fights_total)
+    fights_value_html = (
+        "<div class='kpi-card-value--stack'>"
+        f"<div class='kpi-card-value-line'><strong>{len(df_show):,}</strong><span>{escape(t('page.upcoming.upcoming_fights'))}</span></div>"
+        f"<div class='kpi-card-value-line'><strong>{escape(analyzed_fights_display)}</strong><span>{escape(t('page.upcoming.analyzed_fights'))}</span></div>"
+        "</div>"
+    )
+
     # Quick stats
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         _render_kpi_card(
             t("page.upcoming.total_fights"),
-            str(len(df_show)),
+            fights_value_html,
             icon=_png_icon_html("b91c1c-fights-emoji.png", size=46, extra_class="fp-inline-emoji--kpi", label="Total fights")
             or _inline_emoji_html("⚔️", extra_class="fp-inline-emoji--kpi"),
             accent="#ef4444",
+            value_is_html=True,
         )
     with col2:
         _render_kpi_card(
