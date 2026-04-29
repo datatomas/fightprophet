@@ -3132,6 +3132,9 @@ st.markdown(
     .fp-inline-goat.fp-inline-emoji--kpi {
         filter: brightness(1.18) saturate(1.18) contrast(1.1) drop-shadow(0 0 10px rgba(248, 113, 113, 0.24));
     }
+    .fp-inline-goat.fp-inline-emoji--kpi-heavy {
+        filter: brightness(1.26) saturate(1.24) contrast(1.18) drop-shadow(0 0 12px rgba(248, 113, 113, 0.28));
+    }
     .fp-inline-emoji {
         display: inline-flex;
         align-items: center;
@@ -3150,6 +3153,10 @@ st.markdown(
     .fp-inline-emoji--kpi {
         font-size: 1.95rem;
         filter: drop-shadow(0 0 10px rgba(248, 113, 113, 0.24));
+    }
+    .fp-inline-emoji--kpi-heavy {
+        font-size: 2.08rem;
+        filter: drop-shadow(0 0 12px rgba(248, 113, 113, 0.28));
     }
     .fp-inline-emoji--versus {
         font-size: 1.7rem;
@@ -5007,7 +5014,7 @@ def _ui_copy_pack() -> dict[str, object]:
                 "Signals are generated from historical outcomes and feature engineering — outputs are probabilistic, not guarantees.",
             ],
             "model_picker_intro": "Available model views:",
-            "model_picker_recommendation": "Recommendation: start with **Ensemble** for the best overall default view.",
+            "model_picker_recommendation": "Recommendation: start with **CatBoost** for the best overall default view.",
             "risk_intro": "Responsible-use guardrails:",
             "risk_points": [
                 "No guaranteed outcomes, no lock picks, no sure-profit claims.",
@@ -5764,7 +5771,7 @@ def page_historical() -> None:
             _render_kpi_card(
                 "Total Predictions",
                 f"{int(float(row.get('total_fights', 0))):,}",
-                icon=_png_icon_html("b91c1c-predictions-emoji-rail.png", size=46, extra_class="fp-inline-emoji--kpi", label="Total predictions")
+                icon=_png_icon_html("b91c1c-predictions-emoji-rail.png", size=52, extra_class="fp-inline-emoji--kpi fp-inline-emoji--kpi-heavy", label="Total predictions")
                 or _goat_icon_html(),
                 accent="#ef4444",
             )
@@ -5772,7 +5779,7 @@ def page_historical() -> None:
             _render_kpi_card(
                 "Events Covered",
                 f"{int(float(row.get('events_covered', 0)))}",
-                icon=_png_icon_html("b91c1c-events-emoji-rail.png", size=46, extra_class="fp-inline-emoji--kpi", label="Events covered")
+                icon=_png_icon_html("b91c1c-events-emoji-rail.png", size=52, extra_class="fp-inline-emoji--kpi fp-inline-emoji--kpi-heavy", label="Events covered")
                 or _goat_icon_html(),
                 accent="#3b82f6",
             )
