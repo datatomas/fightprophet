@@ -68,7 +68,11 @@ interface RankingDeck {
   fighters: typeof topGoats;
 }
 
-const rankingDecks: RankingDeck[] = [
+interface RankingDeckExt extends RankingDeck {
+  rerank: boolean;
+}
+
+const rankingDecks: RankingDeckExt[] = [
   ...(topGoats.length > 0
     ? [{
         slug: 'goat-list',
@@ -77,6 +81,7 @@ const rankingDecks: RankingDeck[] = [
         note: 'A pound-for-pound style snapshot built from the latest model-wide ranking feed. Tap any category below to swap the deck.',
         countLabel: `${topGoats.length} featured fighters`,
         fighters: topGoats,
+        rerank: false,
       }]
     : []),
   ...rankedDivisions
@@ -88,6 +93,7 @@ const rankingDecks: RankingDeck[] = [
       note: `Current ranking deck for ${group.weight_class}. Click around and the cards reshuffle into the new division.`,
       countLabel: `${group.fighters.length} ranked fighters`,
       fighters: group.fighters,
+      rerank: true,
     })),
 ];
 
@@ -213,8 +219,14 @@ const newsStructuredData = newsItems.map((item) => ({
       </div>
 
       {hasRankingDecks ? (
-        <div class="fp-rank-wall" data-initial-division={initialDeckSlug}>
+        <div class="fp-rank-wall" data-initial-division={initialDeckSlug} data-status-filter="active">
           <p class="fp-rank-note">Start on the GOAT list, then click any category pill to swap the deck and reveal a different set of fighter cards.</p>
+
+          <div class="fp-status-toggle" role="radiogroup" aria-label="Fighter status filter">
+            <button type="button" class="fp-status-btn is-active" data-status-target="active" aria-pressed="true">Active</button>
+            <button type="button" class="fp-status-btn" data-status-target="inactive" aria-pressed="false">Inactive</button>
+            <button type="button" class="fp-status-btn" data-status-target="all" aria-pressed="false">All</button>
+          </div>
 
           <div class="fp-division-pills" role="toolbar" aria-label="Ranking categories">
             {rankingDecks.map((deck, idx) => (
@@ -225,7 +237,7 @@ const newsStructuredData = newsItems.map((item) => ({
                 aria-pressed={idx === 0 ? 'true' : 'false'}
               >
                 <span>{deck.label}</span>
-                <span class="fp-division-pill-count">{deck.fighters.length}</span>
+                <span class="fp-division-pill-count" data-pill-count>{deck.fighters.length}</span>
               </button>
             ))}
           </div>
@@ -235,16 +247,21 @@ const newsStructuredData = newsItems.map((item) => ({
               <section
                 class={`fp-division-block${idx === 0 ? ' is-active' : ''}`}
                 data-division-panel={deck.slug}
+                data-rerank={deck.rerank ? 'true' : 'false'}
                 hidden={idx !== 0}
               >
                 <div class="fp-division-header">
                   <h3 class="fp-division-title">{deck.title}</h3>
-                  <span class="fp-division-count">{deck.countLabel}</span>
+                  <span class="fp-division-count" data-deck-count>{deck.countLabel}</span>
                 </div>
                 <p class="fp-division-description">{deck.note}</p>
                 <div class="fp-card-grid">
                   {deck.fighters.map((c, cardIdx) => (
-                    <div class="fp-card-shell" style={`--card-index:${cardIdx};`}>
+                    <div
+                      class="fp-card-shell"
+                      style={`--card-index:${cardIdx};`}
+                      data-fighter-status={c.fighter_status || 'active'}
+                    >
                       <FighterCard
                         name={c.name}
                         fighterId={c.fighter_id}
@@ -265,6 +282,7 @@ const newsStructuredData = newsItems.map((item) => ({
                     </div>
                   ))}
                 </div>
+                <p class="fp-division-empty" hidden>No fighters match this filter.</p>
               </section>
             ))}
           </div>
@@ -407,8 +425,56 @@ const newsStructuredData = newsItems.map((item) => ({
       const divisionPills = Array.from(wall.querySelectorAll('.fp-division-pill'));
       const divisionPanels = Array.from(wall.querySelectorAll('.fp-division-block'));
       const panelHost = wall.querySelector('.fp-division-panels');
+      const statusButtons = Array.from(wall.querySelectorAll('.fp-status-btn'));
       let activeSlug = wall.getAttribute('data-initial-division') || divisionPanels[0]?.getAttribute('data-division-panel') || '';
+      let activeStatus = wall.getAttribute('data-status-filter') || 'active';
       let cleanupTimer = 0;
+
+      function applyStatusFilter(status) {
+        activeStatus = status || 'active';
+        wall.setAttribute('data-status-filter', activeStatus);
+
+        statusButtons.forEach((btn) => {
+          const isOn = btn.getAttribute('data-status-target') === activeStatus;
+          btn.classList.toggle('is-active', isOn);
+          btn.setAttribute('aria-pressed', isOn ? 'true' : 'false');
+        });
+
+        divisionPanels.forEach((panel) => {
+          const shells = Array.from(panel.querySelectorAll('.fp-card-shell'));
+          const rerank = panel.getAttribute('data-rerank') === 'true';
+          let visibleCount = 0;
+
+          shells.forEach((shell) => {
+            const shellStatus = (shell.getAttribute('data-fighter-status') || 'active').toLowerCase();
+            const matches = activeStatus === 'all' || shellStatus === activeStatus;
+            shell.hidden = !matches;
+            if (!matches) return;
+            visibleCount += 1;
+
+            // Re-number division-rank text inside visible cards so "1, 4, 5" becomes "1, 2, 3"
+            // when an inactive fighter at rank 2/3 was hidden. Only applies to per-division
+            // decks where rank is 1..N; the GOAT list keeps its original sub-rank.
+            if (rerank) {
+              const sub = shell.querySelector('.fp-card-rating-sub');
+              if (sub && sub.textContent) {
+                sub.textContent = sub.textContent.replace(/#\d+\s*$/, '#' + visibleCount);
+              }
+            }
+          });
+
+          const deckCountEl = panel.querySelector('[data-deck-count]');
+          if (deckCountEl) {
+            deckCountEl.textContent = visibleCount + (visibleCount === 1 ? ' fighter' : ' fighters');
+          }
+          const emptyEl = panel.querySelector('.fp-division-empty');
+          if (emptyEl) emptyEl.hidden = visibleCount > 0;
+
+          const slug = panel.getAttribute('data-division-panel') || '';
+          const pillCountEl = wall.querySelector('.fp-division-pill[data-division-target="' + slug + '"] [data-pill-count]');
+          if (pillCountEl) pillCountEl.textContent = String(visibleCount);
+        });
+      }
 
       function syncPills(slug) {
         divisionPills.forEach((pill) => {
@@ -486,6 +552,16 @@ const newsStructuredData = newsItems.map((item) => ({
           setDivision(slug);
         });
       });
+
+      statusButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const target = btn.getAttribute('data-status-target') || 'active';
+          if (target === activeStatus) return;
+          applyStatusFilter(target);
+        });
+      });
+
+      applyStatusFilter(activeStatus);
     }
   </script>
 
@@ -752,6 +828,45 @@ const newsStructuredData = newsItems.map((item) => ({
       font-size: 0.92rem;
       line-height: 1.55;
       max-width: 72ch;
+    }
+
+    /* STATUS TOGGLE (active / inactive / all) */
+    .fp-status-toggle {
+      display: inline-flex;
+      gap: 0.32rem;
+      padding: 0.3rem;
+      background: rgba(22, 22, 26, 0.6);
+      border: 1px solid rgba(113, 113, 122, 0.32);
+      border-radius: 999px;
+      align-self: flex-start;
+    }
+    .fp-status-btn {
+      padding: 0.34rem 0.78rem;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #d4d4d8;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
+    }
+    .fp-status-btn:hover {
+      color: #fef2f2;
+      border-color: rgba(248, 113, 113, 0.4);
+    }
+    .fp-status-btn.is-active {
+      color: #fef2f2;
+      background: linear-gradient(160deg, rgba(127, 29, 29, 0.85), rgba(35, 20, 20, 0.95));
+      border-color: rgba(248, 113, 113, 0.6);
+      box-shadow: 0 0 12px rgba(220, 38, 38, 0.22);
+    }
+    .fp-division-empty {
+      margin: 0.6rem 0 0;
+      font-size: 0.86rem;
+      color: #a1a1aa;
     }
 
     /* DIVISION PILLS */
