@@ -4498,6 +4498,9 @@ def _render_kpi_card(
 
 
 def _render_betting_signals_guide() -> None:
+    strong_icon = _signal_icon("STRONG")
+    medium_icon = _signal_icon("MEDIUM")
+    low_icon = _signal_icon("LOW")
     guide_html = (
         '<section class="fp-guide-shell">'
         '<div class="fp-guide-header">'
@@ -4508,15 +4511,15 @@ def _render_betting_signals_guide() -> None:
         '</div>'
         '<div class="fp-guide-grid">'
         '<div class="fp-guide-item fp-guide-item--strong">'
-        f'<div class="fp-guide-label">{_png_icon_html("b91c1c-signals-emoji.png", size=16, extra_class="fp-inline-emoji--guide", label="Strong signal") or _inline_emoji_html("🟢", extra_class="fp-inline-emoji--guide")} STRONG</div>'
+        f'<div class="fp-guide-label">{strong_icon} STRONG</div>'
         '<div class="fp-guide-copy">Higher-confidence signal based on model edge and agreement; shortlist first.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--medium">'
-        f'<div class="fp-guide-label">{_png_icon_html("b91c1c-signals-mid-emoji.png", size=16, extra_class="fp-inline-emoji--guide", label="Mid signal") or _inline_emoji_html("🟡", extra_class="fp-inline-emoji--guide")} MEDIUM</div>'
+        f'<div class="fp-guide-label">{medium_icon} MEDIUM</div>'
         '<div class="fp-guide-copy">Possible value, but needs extra checks like injuries, style matchup, and line movement.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--weak">'
-        f'<div class="fp-guide-label">{_png_icon_html("b91c1c-signals-low-emoji.png", size=16, extra_class="fp-inline-emoji--guide", label="Low signal") or _inline_emoji_html("⚪", extra_class="fp-inline-emoji--guide")} WEAK</div>'
+        f'<div class="fp-guide-label">{low_icon} LOW</div>'
         '<div class="fp-guide-copy">Low edge or noisy setup; usually a pass.</div>'
         '</div>'
         '<div class="fp-guide-item fp-guide-item--recommended">'
