@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "wrangler dev --config wrangler.preview.toml"
+    "preview": "astro preview"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.2.2",
