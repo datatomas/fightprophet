@@ -127,7 +127,7 @@ const divisionLabel = weightClass.trim();
 const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(losses)}` : '';
 ---
 
-<a class={`fp-card ${isChampion ? 'is-champ' : 'is-default'}${compact ? ' is-compact' : ''}`} href={profileUrl} target="_blank" rel="noopener" data-fighter-id={fighterId}>
+<a class={`fp-card ${isChampion ? 'is-champ' : 'is-default'}${compact ? ' is-compact' : ''}`} href={profileUrl} data-fighter-id={fighterId}>
   <div class="fp-card-chrome" aria-hidden="true">
     <span class="fp-card-corner fp-card-corner--tl"></span>
     <span class="fp-card-corner fp-card-corner--tr"></span>

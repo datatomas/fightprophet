@@ -92,6 +92,13 @@ const isActive = (href: string) => {
 
     <!-- Backdrop (mobile only) -->
     <div class="fp-rail-backdrop" id="fp-rail-backdrop" hidden></div>
+    <div class="fp-app-transition" id="fp-app-transition" aria-hidden="true" hidden>
+      <div class="fp-app-transition-card">
+        <div class="fp-app-transition-spinner" aria-hidden="true"></div>
+        <strong>Opening Fight Prophet App</strong>
+        <span>Loading predictions, rankings, and fighter data…</span>
+      </div>
+    </div>
 
     <!-- Left rail -->
     <aside class="fp-app-rail-shell" id="fp-app-rail-shell" aria-label="Site navigation">
@@ -115,11 +122,11 @@ const isActive = (href: string) => {
         <!-- App nav — Home (rankings) is the entry point; the rest open the Streamlit app -->
         <nav class="fp-app-rail-nav" aria-label="App sections">
           <a class={`fp-app-rail-nav-link${isActive('/') ? ' is-active is-primary-nav' : ''}`} href="/"><span class="fp-app-rail-nav-copy"><img src={rankingsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Home &amp; Rankings</span></span></a>
-          <a class="fp-app-rail-nav-link" href={withPage('predictions')} target="_blank" rel="noopener noreferrer"><span class="fp-app-rail-nav-copy"><img src={predictionsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Predictions</span></span></a>
-          <a class="fp-app-rail-nav-link" href={withPage('fighter-card')} target="_blank" rel="noopener noreferrer"><span class="fp-app-rail-nav-copy"><img src={fighterCardsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Fighter Cards</span></span></a>
-          <a class="fp-app-rail-nav-link" href={withPage('belt-holders')} target="_blank" rel="noopener noreferrer"><span class="fp-app-rail-nav-copy"><img src={beltEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Belt Holders</span></span></a>
-          <a class="fp-app-rail-nav-link" href={withPage('events-history')} target="_blank" rel="noopener noreferrer"><span class="fp-app-rail-nav-copy"><img src={eventsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Events History</span></span></a>
-          <a class="fp-app-rail-nav-link" href={withPage('fight-lab')} target="_blank" rel="noopener noreferrer"><span class="fp-app-rail-nav-copy"><img src={labEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Fight Lab</span></span></a>
+          <a class="fp-app-rail-nav-link" href={withPage('predictions')}><span class="fp-app-rail-nav-copy"><img src={predictionsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Predictions</span></span></a>
+          <a class="fp-app-rail-nav-link" href={withPage('fighter-card')}><span class="fp-app-rail-nav-copy"><img src={fighterCardsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Fighter Cards</span></span></a>
+          <a class="fp-app-rail-nav-link" href={withPage('belt-holders')}><span class="fp-app-rail-nav-copy"><img src={beltEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Belt Holders</span></span></a>
+          <a class="fp-app-rail-nav-link" href={withPage('events-history')}><span class="fp-app-rail-nav-copy"><img src={eventsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Events History</span></span></a>
+          <a class="fp-app-rail-nav-link" href={withPage('fight-lab')}><span class="fp-app-rail-nav-copy"><img src={labEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Fight Lab</span></span></a>
           <a class={`fp-app-rail-nav-link${isActive('/terms/') ? ' is-active' : ''}`} href="/terms/"><span class="fp-app-rail-nav-copy"><img src={termsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Terms &amp; Conditions</span></span></a>
         </nav>
 
@@ -159,12 +166,12 @@ const isActive = (href: string) => {
       <footer class="fp-site-footer">
         <nav class="fp-site-footer-nav" aria-label="Site sections">
           <a href="/">Home</a>
-          <a href={withPage('predictions')} target="_blank" rel="noopener noreferrer">Predictions</a>
-          <a href={withPage('fight-lab')} target="_blank" rel="noopener noreferrer">Fight Lab</a>
+          <a href={withPage('predictions')}>Predictions</a>
+          <a href={withPage('fight-lab')}>Fight Lab</a>
           <a href="/#fp-rankings">Rankings</a>
-          <a href={withPage('belt-holders')} target="_blank" rel="noopener noreferrer">Belt Holders</a>
-          <a href={withPage('fighter-card')} target="_blank" rel="noopener noreferrer">Fighter Cards</a>
-          <a href={withPage('events-history')} target="_blank" rel="noopener noreferrer">Events History</a>
+          <a href={withPage('belt-holders')}>Belt Holders</a>
+          <a href={withPage('fighter-card')}>Fighter Cards</a>
+          <a href={withPage('events-history')}>Events History</a>
           <a href="/privacy/">Privacy</a>
           <a href="/terms/">Terms</a>
         </nav>
@@ -175,7 +182,7 @@ const isActive = (href: string) => {
   </body>
 </html>
 
-<script>
+<script is:inline define:vars={{ appUrl }}>
   (() => {
     const RAIL_WIDTH = 260;
     const DESKTOP_BP = 901;
@@ -186,9 +193,51 @@ const isActive = (href: string) => {
     const toggle = document.getElementById('fp-rail-toggle') as HTMLButtonElement | null;
     const closeBtn = document.getElementById('fp-rail-close') as HTMLButtonElement | null;
     const backdrop = document.getElementById('fp-rail-backdrop') as HTMLElement | null;
+    const transition = document.getElementById('fp-app-transition') as HTMLElement | null;
     const body = document.body;
+    const appOrigin = (() => {
+      try {
+        return new URL(appUrl).origin;
+      } catch {
+        return '';
+      }
+    })();
+    let warmStarted = false;
 
     const isMobile = () => window.innerWidth < DESKTOP_BP;
+    const canWarm = () => Boolean(appOrigin);
+    const warmApp = () => {
+      if (!canWarm() || warmStarted) return;
+      warmStarted = true;
+      try {
+        fetch(appOrigin + '/_stcore/health', {
+          mode: 'no-cors',
+          credentials: 'omit',
+          cache: 'no-store',
+          keepalive: true,
+        }).catch(() => {});
+      } catch {
+        // no-op
+      }
+    };
+    const showAppTransition = () => {
+      if (!transition) return;
+      transition.hidden = false;
+      transition.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(() => {
+        transition.dataset.visible = 'true';
+      });
+    };
+    const isPrimaryNavClick = (event: MouseEvent) =>
+      event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
+    const isAppLink = (anchor: HTMLAnchorElement) => {
+      if (!canWarm()) return false;
+      try {
+        return new URL(anchor.href, window.location.href).origin === appOrigin;
+      } catch {
+        return false;
+      }
+    };
 
     const setOpen = (open: boolean) => {
       if (!rail) return;
@@ -242,6 +291,20 @@ const isActive = (href: string) => {
         const lang = btn.dataset.lang || 'en';
         localStorage.setItem(FP_LANG_KEY, lang);
         initLangButtons(lang);
+      });
+    });
+
+    document.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((anchor) => {
+      if (!isAppLink(anchor)) return;
+
+      const earlyWarm = () => warmApp();
+      anchor.addEventListener('mouseenter', earlyWarm, { passive: true });
+      anchor.addEventListener('focus', earlyWarm, { passive: true });
+      anchor.addEventListener('touchstart', earlyWarm, { passive: true });
+      anchor.addEventListener('click', (event) => {
+        warmApp();
+        if (!isPrimaryNavClick(event)) return;
+        showAppTransition();
       });
     });
   })();
@@ -331,6 +394,63 @@ const isActive = (href: string) => {
     background: rgba(0, 0, 0, 0.55);
     backdrop-filter: blur(2px);
     z-index: 50;
+  }
+
+  .fp-app-transition {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: grid;
+    place-items: center;
+    padding: 1.5rem;
+    background: rgba(9, 9, 11, 0.3);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    transition: opacity 180ms ease;
+    pointer-events: none;
+  }
+
+  .fp-app-transition[data-visible="true"] {
+    opacity: 1;
+  }
+
+  .fp-app-transition-card {
+    display: grid;
+    gap: 0.45rem;
+    min-width: min(92vw, 320px);
+    padding: 1rem 1.05rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(248, 113, 113, 0.34);
+    background: linear-gradient(155deg, rgba(18, 18, 22, 0.94), rgba(45, 18, 18, 0.88));
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34), 0 0 28px rgba(220, 38, 38, 0.14);
+    color: #f4f4f5;
+    text-align: center;
+  }
+
+  .fp-app-transition-card strong {
+    font-size: 0.96rem;
+    letter-spacing: 0.02em;
+  }
+
+  .fp-app-transition-card span {
+    font-size: 0.84rem;
+    color: #d4d4d8;
+  }
+
+  .fp-app-transition-spinner {
+    width: 1.8rem;
+    height: 1.8rem;
+    margin: 0 auto 0.1rem;
+    border-radius: 999px;
+    border: 2px solid rgba(255, 255, 255, 0.16);
+    border-top-color: #f87171;
+    animation: fp-app-transition-spin 700ms linear infinite;
+  }
+
+  @keyframes fp-app-transition-spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   /* ── Close button (inside rail, mobile only) ──────────────────────── */
