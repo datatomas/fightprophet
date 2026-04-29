@@ -7071,11 +7071,13 @@ def page_rankings() -> None:
     else:
         df_show = df_rank.copy()
 
-    # Status filter (default: active only)
-    status_view = st.selectbox(
+    # Status filter (default: active only) — horizontal radio for a button-like feel
+    status_view = st.radio(
         "Fighter status",
         ["Active", "Inactive", "All"],
         index=0,
+        horizontal=True,
+        help="Hide inactive fighters from the rankings (default), show only inactive, or show everyone.",
     )
     if "fighter_status" in df_show.columns:
         status_norm = df_show["fighter_status"].astype(str).str.strip().str.lower()
@@ -7084,9 +7086,17 @@ def page_rankings() -> None:
         elif status_view == "Inactive":
             df_show = df_show[status_norm == "inactive"]
 
-    # Top-N slider
+    # Re-rank within each weight class after the status filter so the displayed
+    # `#` column has no gaps. Without this, dropping rank #2 / #3 (e.g. they're
+    # inactive) leaves the table showing 1, 4, 5… which reads like a regression.
+    if "rank" in df_show.columns and "weight_class" in df_show.columns and not df_show.empty:
+        df_show = df_show.sort_values(["weight_class", "rank"], kind="mergesort")
+        df_show["rank"] = df_show.groupby("weight_class").cumcount() + 1
+
+    # Top-N slider — bound the slider safely when a class has very few entries.
     max_rank = int(df_show["rank"].max()) if "rank" in df_show.columns and not df_show.empty else 50
-    top_n = st.slider("Show top N per class", min_value=5, max_value=min(max_rank, 100), value=15)
+    slider_max = max(5, min(max_rank, 100))
+    top_n = st.slider("Show top N per class", min_value=5, max_value=slider_max, value=min(15, slider_max))
     df_show = df_show[df_show["rank"] <= top_n]
 
     # Quick stats
