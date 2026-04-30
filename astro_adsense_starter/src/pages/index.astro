@@ -196,8 +196,9 @@ const newsStructuredData = newsItems.map((item) => ({
       <div class="fp-hero-brand">
         <img src="/branding/fightprophet_logo_white.png" alt="Fight Prophet" class="fp-hero-logo" loading="eager" />
       </div>
+      <p class="fp-hero-eyebrow" id="i18n-hero-eyebrow">Pioneering MMA Intelligence</p>
       <h1 class="fp-hero-title" id="i18n-hero-title">AI-powered MMA rankings, stats, and fight predictions.</h1>
-      <p class="fp-hero-sub" id="i18n-hero-sub">Built for fans by fans. Machine-learning models help turn fight data into simple picks and rankings.</p>
+      <p class="fp-hero-sub" id="i18n-hero-sub">Built for fans by fans. Fight Prophet helps pioneer MMA intelligence by turning fight data and machine learning into simple picks and rankings.</p>
       <div class="fp-hero-ctas">
         <a class="fp-cta-primary" href={predictionsAppUrl}>
           <span id="i18n-cta-open-app">See predictions</span>
@@ -619,8 +620,9 @@ const newsStructuredData = newsItems.map((item) => ({
     const FP_LANG_KEY = 'fp_lang';
     const translations = {
       en: {
+        heroEyebrow: 'Pioneering MMA Intelligence',
         heroTitle: 'AI-powered MMA rankings, stats, and fight predictions.',
-        heroSub: 'Built for fans by fans. Machine-learning models help turn fight data into simple picks and rankings.',
+        heroSub: 'Built for fans by fans. Fight Prophet helps pioneer MMA intelligence by turning fight data and machine learning into simple picks and rankings.',
         heroNote: 'For information and education only — not financial advice. Our predictions and estimates can be wrong.',
         ctaOpenApp: 'See predictions',
         ctaBrowse: 'Browse rankings ↓',
@@ -639,8 +641,9 @@ const newsStructuredData = newsItems.map((item) => ({
         finalCta: 'Predictions',
       },
       es: {
+        heroEyebrow: 'Pioneros en inteligencia MMA',
         heroTitle: 'Rankings, estadísticas y predicciones de MMA con IA.',
-        heroSub: 'Hecho por fans para fans. Modelos de machine learning convierten la data de pelea en picks y rankings fáciles de entender.',
+        heroSub: 'Hecho por fans para fans. Fight Prophet ayuda a impulsar la inteligencia MMA convirtiendo datos de pelea y machine learning en picks y rankings fáciles de entender.',
         heroNote: 'Solo para información y educación — no es asesoría financiera. Nuestras predicciones y estimaciones pueden estar equivocadas.',
         ctaOpenApp: 'Ver predicciones',
         ctaBrowse: 'Ver rankings ↓',
@@ -659,8 +662,9 @@ const newsStructuredData = newsItems.map((item) => ({
         finalCta: 'Abrir Fight Prophet',
       },
       pt: {
+        heroEyebrow: 'Pioneiros em inteligência MMA',
         heroTitle: 'Rankings, estatísticas e previsões de MMA com IA.',
-        heroSub: 'Feito por fãs para fãs. Modelos de machine learning transformam dados de luta em picks e rankings fáceis de entender.',
+        heroSub: 'Feito por fãs para fãs. O Fight Prophet ajuda a impulsionar a inteligência MMA ao transformar dados de luta e machine learning em picks e rankings fáceis de entender.',
         heroNote: 'Apenas para informação e educação — não é aconselhamento financeiro. Nossas previsões e estimativas podem estar erradas.',
         ctaOpenApp: 'Abrir o App',
         ctaBrowse: 'Ver rankings ↓',
@@ -681,6 +685,7 @@ const newsStructuredData = newsItems.map((item) => ({
     };
 
     const keyToId = {
+      heroEyebrow: 'i18n-hero-eyebrow',
       heroTitle: 'i18n-hero-title',
       heroSub: 'i18n-hero-sub',
       heroNote: 'i18n-hero-note',
@@ -760,6 +765,14 @@ const newsStructuredData = newsItems.map((item) => ({
       height: auto;
       object-fit: contain;
       filter: drop-shadow(0 0 10px rgba(220, 38, 38, 0.3));
+    }
+    .fp-hero-eyebrow {
+      margin: -0.05rem 0 0;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #fca5a5;
     }
     .fp-hero-title {
       margin: 0.1rem 0 0;
