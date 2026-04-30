@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import AdSlot from '../components/AdSlot.astro';
 import FighterCard from '../components/FighterCard.astro';
 import { buildAppPageUrl } from '../lib/app-url';
-import { runtimeEnvFromLocals } from '../lib/country-master';
+import { runtimeEnvFromLocals, getCountryMasterIndex } from '../lib/country-master';
 import { getAllRankedFighterCards, getHomepageGoatCards, getHomepageRankingsDebug, groupRankedFightersByDivision } from '../lib/champions';
 
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
@@ -13,12 +13,13 @@ const rankingsAnchorUrl = '/#fp-rankings';
 const predictionsAppUrl = withPage('predictions');
 
 const runtimeEnv = runtimeEnvFromLocals(Astro.locals);
+Astro.locals.countryMaster = await getCountryMasterIndex(runtimeEnv);
 const allRankedFighters = await getAllRankedFighterCards(runtimeEnv);
 const homepageGoats = await getHomepageGoatCards(runtimeEnv);
 const homepageRankingsDebug = getHomepageRankingsDebug(runtimeEnv);
 const rankedDivisions = groupRankedFightersByDivision(allRankedFighters);
 const totalRankedFighters = allRankedFighters.length;
-const goatPreviewLimit = 12;
+const goatPreviewLimit = 10;
 const topGoats = homepageGoats.slice(0, goatPreviewLimit);
 
 interface NewsItem {
@@ -1041,34 +1042,26 @@ const newsStructuredData = newsItems.map((item) => ({
       max-width: 68ch;
     }
 
-    /* CARD GRID — compact, FUTBIN-style */
+    /* CARD GRID — 5 across at desktop so the GOAT 10 wraps as 5+5 */
     .fp-card-grid {
       display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 0.68rem;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.7rem;
       padding-inline: 0.1rem;
     }
-    @media (max-width: 1280px) {
-      .fp-card-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-    }
-    @media (max-width: 1080px) {
-      .fp-card-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    @media (max-width: 1024px) {
+      .fp-card-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.6rem; }
     }
     @media (max-width: 760px) {
       .fp-card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
     }
     @media (max-width: 460px) {
-      .fp-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .fp-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.45rem; }
     }
     .fp-card-shell {
-      --card-tilt: 0deg;
-      contain: layout paint;
+      contain: layout;
       will-change: transform, opacity;
     }
-    .fp-card-shell:nth-child(4n + 1) { --card-tilt: -2deg; }
-    .fp-card-shell:nth-child(4n + 2) { --card-tilt: 1.6deg; }
-    .fp-card-shell:nth-child(4n + 3) { --card-tilt: -1.2deg; }
-    .fp-card-shell:nth-child(4n + 4) { --card-tilt: 2.1deg; }
     .fp-division-block.is-entering .fp-card-shell {
       animation: fpCardDeal 220ms ease-out both;
       animation-delay: calc(var(--card-index, 0) * 14ms);
@@ -1113,11 +1106,11 @@ const newsStructuredData = newsItems.map((item) => ({
     @keyframes fpCardDeal {
       0% {
         opacity: 0;
-        transform: translate3d(0, 8px, 0) scale(0.97) rotate(var(--card-tilt));
+        transform: translate3d(0, 8px, 0) scale(0.97);
       }
       100% {
         opacity: 1;
-        transform: translate3d(0, 0, 0) scale(1) rotate(var(--card-tilt));
+        transform: translate3d(0, 0, 0) scale(1);
       }
     }
 
