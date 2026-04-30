@@ -4380,75 +4380,90 @@ _FIGHTER_CARD_DIVISION_ABBREV = {
 
 _FIGHTER_CARD_CSS = """
 <style>
-.fp-card{position:relative;display:flex;flex-direction:column;width:100%;max-width:252px;margin-inline:auto;aspect-ratio:5/7;min-height:292px;border-radius:1.1rem;padding:0.7rem 0.7rem 0.78rem;overflow:hidden;isolation:isolate;color:#fef2f2;font-family:Inter,system-ui,sans-serif;text-decoration:none;clip-path:polygon(11% 0,89% 0,100% 7%,100% 93%,89% 100%,11% 100%,0 93%,0 7%);transition:transform 120ms ease,box-shadow 120ms ease;}
+.fp-card{position:relative;display:flex;flex-direction:column;width:100%;max-width:252px;margin-inline:auto;aspect-ratio:59/86;min-height:188px;border-radius:0.42rem;padding:0.34rem 0.36rem 0.36rem;overflow:hidden;isolation:isolate;color:#fef2f2;font-family:Inter,system-ui,sans-serif;text-decoration:none;transition:transform 120ms ease,box-shadow 120ms ease,filter 120ms ease;}
 .fp-card::before{content:'';position:absolute;inset:0;border-radius:inherit;z-index:-1;}
-.fp-card::after{content:'';position:absolute;inset:0.32rem;border-radius:0.9rem;border:1px solid transparent;pointer-events:none;z-index:0;clip-path:polygon(9% 0,91% 0,100% 8%,100% 92%,91% 100%,9% 100%,0 92%,0 8%);}
-.fp-card.is-champ::before{background:radial-gradient(120% 80% at 50% 0%,rgba(255,239,170,0.58),transparent 58%),radial-gradient(90% 64% at 50% 40%,rgba(255,248,220,0.14),transparent 70%),linear-gradient(160deg,#f8de76 0%,#c69218 35%,#765105 68%,#312000 100%);box-shadow:inset 0 0 0 1.5px rgba(255,235,150,0.55),0 0 18px rgba(245,158,11,0.32);}
-.fp-card.is-default::before{background:radial-gradient(120% 80% at 50% 0%,rgba(184,194,219,0.36),transparent 60%),radial-gradient(75% 56% at 50% 38%,rgba(255,255,255,0.08),transparent 72%),linear-gradient(160deg,#343b47 0%,#1b1f26 54%,#090b0f 100%);box-shadow:inset 0 0 0 1px rgba(220,38,38,0.32),0 0 12px rgba(220,38,38,0.16);}
-.fp-card.is-champ::after{border-color:rgba(255,244,180,0.56);box-shadow:inset 0 0 0 1px rgba(77,50,0,0.22),inset 0 0 18px rgba(255,238,160,0.2);}
-.fp-card.is-default::after{border-color:rgba(250,204,21,0.22);box-shadow:inset 0 0 0 1px rgba(248,113,113,0.1),inset 0 0 16px rgba(148,163,184,0.09);}
-.fp-card:hover{transform:translateY(-2px);}
-.fp-card--compact{max-width:220px;min-height:250px;padding:0.62rem 0.62rem 0.68rem;}
-.fp-card--compact .fp-card-portrait-silhouette{width:3.65rem;height:3.65rem;}
-.fp-card--compact .fp-card-initials{font-size:1.92rem;}
-.fp-card--compact .fp-card-name{font-size:0.92rem;margin:0 0 0.34rem;}
-.fp-card--compact .fp-card-country{font-size:0.64rem;}
-.fp-card--compact .fp-card-flag{font-size:1.34rem;padding:0.2rem 0.4rem;}
-.fp-card--compact .fp-card-stat-val{min-width:2rem;font-size:0.76rem;}
-.fp-card-crown{position:absolute;top:0.46rem;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;justify-content:center;line-height:1;z-index:3;text-shadow:0 0 6px rgba(0,0,0,0.55);}
-.fp-card-chrome{position:absolute;inset:0;z-index:1;pointer-events:none;}
-.fp-card-corner{position:absolute;width:1.15rem;height:1.15rem;border:1px solid rgba(255,255,255,0.16);background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.2),transparent 70%);transform:rotate(45deg);box-shadow:inset 0 0 10px rgba(255,255,255,0.08);}
-.fp-card.is-champ .fp-card-corner{border-color:rgba(255,244,180,0.38);background:radial-gradient(circle at 30% 30%,rgba(255,244,180,0.24),transparent 72%);}
-.fp-card-corner--tl{top:0.9rem;left:0.5rem;}
-.fp-card-corner--tr{top:0.9rem;right:0.5rem;}
-.fp-card-corner--bl{bottom:1rem;left:0.5rem;}
-.fp-card-corner--br{bottom:1rem;right:0.5rem;}
-.fp-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:0.4rem;position:relative;z-index:2;}
-.fp-card-rating{display:flex;flex-direction:column;align-items:center;line-height:1;gap:0.05rem;background:rgba(7,10,16,0.28);padding:0.2rem 0.34rem 0.24rem;border-radius:0.55rem;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.07);}
-.fp-card-rating-num{font-size:1.05rem;font-weight:800;letter-spacing:0.02em;text-shadow:0 1px 2px rgba(0,0,0,0.55);}
-.fp-card.is-champ .fp-card-rating-num{color:#1f1300;text-shadow:0 1px 0 rgba(255,235,150,0.6);}
-.fp-card.is-default .fp-card-rating-num{color:#fef2f2;}
-.fp-card-rating-pos{font-size:0.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;}
-.fp-card.is-champ .fp-card-rating-pos{color:rgba(31,19,0,0.8);}
-.fp-card.is-default .fp-card-rating-pos{color:rgba(255,255,255,0.78);}
-.fp-card-flag{font-size:1.56rem;line-height:1;background:rgba(0,0,0,0.34);border-radius:999px;padding:0.24rem 0.44rem;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.08);}
-.fp-card-portrait{position:relative;display:flex;align-items:center;justify-content:center;flex:1;margin:0.42rem 0 0.42rem;border-radius:1rem 1rem 0.85rem 0.85rem;background:radial-gradient(circle at 50% 30%,rgba(255,255,255,0.16),transparent 52%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(0,0,0,0.04));box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06),inset 0 -18px 28px rgba(0,0,0,0.22);overflow:hidden;z-index:2;}
-.fp-card-portrait-silhouette{display:inline-flex;align-items:center;justify-content:center;width:4.2rem;height:4.2rem;opacity:0.16;line-height:1;filter:blur(0.35px);}
-.fp-card.is-champ .fp-card-portrait-silhouette{opacity:0.22;}
-.fp-card-initials{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.15rem;font-weight:800;letter-spacing:0.07em;text-shadow:0 2px 10px rgba(0,0,0,0.75);}
-.fp-card.is-champ .fp-card-initials{color:rgba(31,19,0,0.92);}
-.fp-card.is-default .fp-card-initials{color:rgba(255,255,255,0.92);}
-.fp-card-name{font-size:0.98rem;font-weight:800;letter-spacing:0.01em;text-align:center;line-height:1.12;margin:0 0 0.44rem;word-break:break-word;position:relative;z-index:2;padding:0.28rem 0.45rem;border-radius:999px;background:rgba(5,7,12,0.24);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.05);}
-.fp-card.is-champ .fp-card-name{color:#1f1300;}
-.fp-card.is-default .fp-card-name{color:#fef2f2;}
-.fp-card-meta{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0.28rem 0.36rem;margin:-0.08rem 0 0.34rem;min-height:1rem;position:relative;z-index:2;}
-.fp-card-division{max-width:100%;font-size:0.58rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.fp-card-badge{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:0.16rem 0.42rem;font-size:0.54rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;}
-.fp-card.is-champ .fp-card-division{color:rgba(31,19,0,0.82);}
-.fp-card.is-default .fp-card-division{color:rgba(255,255,255,0.72);}
-.fp-card.is-champ .fp-card-badge{background:rgba(31,19,0,0.14);color:rgba(31,19,0,0.92);box-shadow:inset 0 0 0 1px rgba(31,19,0,0.18);}
-.fp-card.is-default .fp-card-badge{background:rgba(220,38,38,0.2);color:rgba(255,228,228,0.95);box-shadow:inset 0 0 0 1px rgba(248,113,113,0.22);}
-.fp-card-badge--active,.fp-card.is-champ .fp-card-badge--active,.fp-card.is-default .fp-card-badge--active{background:rgba(34,197,94,0.16);color:#bbf7d0;box-shadow:inset 0 0 0 1px rgba(34,197,94,0.28);}
-.fp-card-badge--inactive,.fp-card.is-champ .fp-card-badge--inactive,.fp-card.is-default .fp-card-badge--inactive{background:rgba(244,63,94,0.16);color:#fecdd3;box-shadow:inset 0 0 0 1px rgba(244,63,94,0.28);}
-.fp-card-country{display:flex;align-items:center;justify-content:center;gap:0.34rem;margin:-0.05rem 0 0.38rem;font-size:0.72rem;font-weight:700;line-height:1.05;min-height:1rem;position:relative;z-index:2;}
-.fp-card-country-flag{font-size:1.18rem;line-height:1;}
-.fp-card-country-full,.fp-card-country-short{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.fp-card-country-short{display:none;letter-spacing:0.05em;text-transform:uppercase;}
-.fp-card.is-champ .fp-card-country{color:rgba(31,19,0,0.84);}
-.fp-card.is-default .fp-card-country{color:rgba(255,255,255,0.82);}
-.fp-card-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.22rem 0.32rem;background:linear-gradient(180deg,rgba(0,0,0,0.26),rgba(0,0,0,0.42)),repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 7px,transparent 7px 14px);border-radius:0.72rem;padding:0.38rem 0.46rem;position:relative;z-index:2;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06);}
-.fp-card.is-champ .fp-card-stats{background:rgba(31,19,0,0.28);}
-.fp-card-stat{display:flex;align-items:center;justify-content:space-between;gap:0.25rem;line-height:1;padding:0.14rem 0.18rem;border-radius:0.42rem;background:rgba(255,255,255,0.05);}
-.fp-card.is-champ .fp-card-stat{background:rgba(31,19,0,0.16);}
-.fp-card-stat-label{font-size:0.56rem;font-weight:800;letter-spacing:0.08em;}
-.fp-card-stat-label .fp-inline-goat{vertical-align:-2px;}
-.fp-card-stat-icon{filter:brightness(1.14) saturate(1.1) contrast(1.08);}
-.fp-card.is-champ .fp-card-stat-label{color:rgba(31,19,0,0.72);}
-.fp-card.is-default .fp-card-stat-label{color:rgba(255,255,255,0.72);}
-.fp-card-stat-val{display:inline-flex;align-items:center;justify-content:center;min-width:2.2rem;padding:0.16rem 0.28rem;border-radius:999px;font-size:0.82rem;font-weight:900;letter-spacing:0.01em;background:rgba(7,10,16,0.34);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.08);}
-.fp-card.is-champ .fp-card-stat-val{color:rgba(31,19,0,0.96);background:rgba(255,248,220,0.28);box-shadow:inset 0 0 0 1px rgba(77,50,0,0.12);}
-.fp-card.is-default .fp-card-stat-val{color:rgba(255,255,255,0.96);}
-@media (max-width:640px){.fp-card-country-full{display:none;}.fp-card-country-short{display:inline;}}
+.fp-card-frame{position:absolute;inset:0.18rem;border-radius:0.28rem;z-index:0;pointer-events:none;}
+.fp-card.is-default::before{background:linear-gradient(160deg,#ef4444 0%,#b91c1c 35%,#7f1d1d 70%,#2a0808 100%);}
+.fp-card.is-default .fp-card-frame{background:radial-gradient(110% 80% at 50% 0%,rgba(220,38,38,0.18),transparent 70%),linear-gradient(180deg,#1a0c0c 0%,#100808 100%);border:1px solid rgba(185,28,28,0.7);box-shadow:inset 0 0 0 1px rgba(0,0,0,0.55),inset 0 0 18px rgba(0,0,0,0.5);}
+.fp-card.is-champ::before{background:linear-gradient(160deg,#ffe27a 0%,#d09312 30%,#6c4404 60%,#2a1908 100%);}
+.fp-card.is-champ .fp-card-frame{background:radial-gradient(110% 80% at 50% 0%,rgba(255,240,170,0.28),transparent 70%),linear-gradient(180deg,#4a311a 0%,#1c1207 100%);border:1px solid rgba(255,240,170,0.72);box-shadow:inset 0 0 0 1px rgba(0,0,0,0.45),inset 0 0 22px rgba(255,220,140,0.18);}
+.fp-card:hover{transform:translateY(-2px) scale(1.01);}
+.fp-card.is-default:hover{box-shadow:0 0 18px rgba(255,180,80,0.34);}
+.fp-card.is-champ:hover{box-shadow:0 0 22px rgba(255,220,130,0.55);}
+
+/* TOP ROW: rating chip on left, flag on right */
+.fp-card-top{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:0.32rem;margin:0 0 0.18rem;min-height:1.5rem;}
+.fp-card-rating{position:relative;display:inline-flex;flex-direction:row;align-items:center;gap:0.34rem;padding:0.2rem 0.46rem;background:rgba(0,0,0,0.55);border:1px solid rgba(185,28,28,0.65);border-radius:0.42rem;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.4);line-height:1;min-width:0;flex-shrink:1;overflow:hidden;}
+.fp-card.is-champ .fp-card-rating{background:linear-gradient(180deg,rgba(255,240,170,0.92),rgba(180,120,30,0.85));border-color:rgba(255,240,170,0.85);}
+.fp-card-rating-num{font-size:0.86rem;font-weight:900;color:#fee2e2;text-shadow:0 1px 2px rgba(0,0,0,0.6);}
+.fp-card.is-champ .fp-card-rating-num{color:#1a0e00;text-shadow:0 1px 0 rgba(255,240,170,0.55);}
+.fp-card-rating-pos{font-size:0.48rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:rgba(252,165,165,0.92);}
+.fp-card.is-champ .fp-card-rating-pos{color:rgba(31,19,0,0.78);}
+.fp-card-rating-sub{margin:0;padding:0.1rem 0.32rem;font-size:0.48rem;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;border-radius:999px;color:rgba(254,226,226,0.95);background:rgba(0,0,0,0.4);box-shadow:inset 0 0 0 1px rgba(185,28,28,0.45);white-space:nowrap;}
+.fp-card.is-champ .fp-card-rating-sub{color:rgba(31,19,0,0.92);background:rgba(255,240,200,0.45);box-shadow:inset 0 0 0 1px rgba(77,50,0,0.18);}
+.fp-card-flag{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.55rem;line-height:1;background:rgba(0,0,0,0.45);border:1px solid rgba(185,28,28,0.6);border-radius:999px;padding:0.18rem 0.5rem;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06);}
+.fp-card.is-champ .fp-card-flag{border-color:rgba(255,220,140,0.55);}
+
+/* NAME BANNER */
+.fp-card-banner{position:relative;z-index:2;padding:0.18rem 0.32rem;background:linear-gradient(180deg,#ef4444 0%,#b91c1c 60%,#7f1d1d 100%);border:1px solid rgba(248,113,113,0.65);border-radius:0.22rem;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.22),0 1px 0 rgba(0,0,0,0.3);text-align:center;}
+.fp-card.is-champ .fp-card-banner{background:linear-gradient(180deg,#fff0a8 0%,#d6a32a 50%,#8a5905 100%);border-color:rgba(255,235,170,0.6);}
+.fp-card-name{display:block;margin:0;font-size:0.7rem;font-weight:900;letter-spacing:0.01em;line-height:1.1;color:#fff5f5;text-shadow:0 1px 0 rgba(0,0,0,0.4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fp-card.is-champ .fp-card-name{color:#1a0e00;text-shadow:0 1px 0 rgba(255,230,160,0.55);}
+
+/* PORTRAIT */
+.fp-card-portrait{position:relative;z-index:2;flex:1 1 auto;display:flex;align-items:center;justify-content:center;margin:0 0.04rem;border:1.5px solid rgba(185,28,28,0.75);border-radius:0.16rem;background:radial-gradient(circle at 50% 35%,rgba(248,113,113,0.16),transparent 56%),linear-gradient(180deg,#2a1010 0%,#0f0606 100%);box-shadow:inset 0 0 0 1px rgba(0,0,0,0.5),inset 0 -10px 18px rgba(0,0,0,0.45);overflow:hidden;min-height:64px;}
+.fp-card.is-champ .fp-card-portrait{border-color:rgba(255,240,170,0.85);background:radial-gradient(circle at 50% 35%,rgba(255,240,200,0.24),transparent 58%),linear-gradient(180deg,#4a3214 0%,#1a1108 100%);}
+.fp-card-portrait-silhouette{display:inline-flex;align-items:center;justify-content:center;font-size:2.6rem;opacity:0.18;line-height:1;filter:blur(0.35px);}
+.fp-card.is-champ .fp-card-portrait-silhouette{opacity:0.24;}
+.fp-card-initials{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;letter-spacing:0.06em;color:rgba(254,226,226,0.95);text-shadow:0 2px 6px rgba(0,0,0,0.7);}
+.fp-card.is-champ .fp-card-initials{color:rgba(255,240,200,0.95);}
+.fp-card-crown{position:absolute;top:0.18rem;left:0.22rem;font-size:0.78rem;line-height:1;z-index:3;display:inline-flex;align-items:center;justify-content:center;text-shadow:0 0 4px rgba(0,0,0,0.6);}
+
+/* TYPE BAR */
+.fp-card-type-bar{position:relative;z-index:2;margin:0.18rem 0 0.14rem;padding:0.2rem 0.26rem;background:linear-gradient(180deg,#3a1414 0%,#180808 100%);border-top:1px solid rgba(185,28,28,0.65);border-bottom:1px solid rgba(185,28,28,0.65);font-size:0.58rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:rgba(252,165,165,0.95);text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.fp-card.is-champ .fp-card-type-bar{background:linear-gradient(180deg,#3c2a14 0%,#1a1107 100%);border-top-color:rgba(255,220,140,0.55);border-bottom-color:rgba(255,220,140,0.55);color:rgba(255,240,180,0.95);}
+
+/* DESC + ATK/DEF */
+.fp-card-desc{position:relative;z-index:2;background:linear-gradient(180deg,rgba(185,28,28,0.12),rgba(0,0,0,0.22));border:1px solid rgba(185,28,28,0.32);border-radius:0.2rem;padding:0.26rem 0.3rem 0.3rem;display:flex;flex-direction:column;gap:0.22rem;}
+.fp-card.is-champ .fp-card-desc{background:linear-gradient(180deg,rgba(255,240,170,0.14),rgba(40,24,4,0.32));border-color:rgba(255,240,170,0.36);}
+.fp-card-stat-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.12rem 0.42rem;font-size:0.7rem;}
+.fp-card-stat{display:flex;align-items:center;justify-content:space-between;gap:0.24rem;line-height:1;}
+.fp-card-stat em{font-style:normal;font-weight:800;letter-spacing:0.08em;color:rgba(252,165,165,0.92);}
+.fp-card-stat b{font-weight:900;color:#fef2f2;font-size:0.82rem;}
+.fp-card.is-champ .fp-card-stat em{color:rgba(255,240,180,0.92);}
+.fp-card.is-champ .fp-card-stat b{color:#fff5d6;}
+.fp-card-atkdef{display:flex;align-items:center;justify-content:flex-end;gap:0.4rem;padding-top:0.2rem;border-top:1px solid rgba(185,28,28,0.4);font-size:0.8rem;font-weight:900;letter-spacing:0.04em;}
+.fp-card.is-champ .fp-card-atkdef{border-top-color:rgba(255,220,140,0.32);}
+.fp-card-atk{color:#ff9a9a;}
+.fp-card-def{color:#cbd5ff;}
+.fp-card-sep{color:rgba(252,165,165,0.65);}
+.fp-card.is-champ .fp-card-atk{color:#ffb38a;}
+.fp-card.is-champ .fp-card-def{color:#9ec9ff;}
+.fp-card.is-champ .fp-card-sep{color:rgba(255,220,140,0.6);}
+.fp-card-country-fallback{display:none;}
+
+/* COMPACT */
+.fp-card.is-compact{max-width:220px;aspect-ratio:59/86;min-height:152px;padding:0.26rem 0.28rem 0.28rem;border-radius:0.36rem;}
+.fp-card.is-compact .fp-card-frame{inset:0.14rem;border-radius:0.24rem;}
+.fp-card.is-compact .fp-card-top{margin:0 0 0.14rem;min-height:1.3rem;gap:0.24rem;}
+.fp-card.is-compact .fp-card-banner{padding:0.14rem 0.26rem;}
+.fp-card.is-compact .fp-card-name{font-size:0.6rem;}
+.fp-card.is-compact .fp-card-portrait{min-height:56px;}
+.fp-card.is-compact .fp-card-portrait-silhouette{font-size:2rem;}
+.fp-card.is-compact .fp-card-initials{font-size:1.05rem;}
+.fp-card.is-compact .fp-card-crown{font-size:0.64rem;top:0.12rem;left:0.18rem;}
+.fp-card.is-compact .fp-card-flag{font-size:1.1rem;padding:0.1rem 0.32rem;}
+.fp-card.is-compact .fp-card-rating{padding:0.12rem 0.32rem;gap:0.22rem;border-radius:0.32rem;}
+.fp-card.is-compact .fp-card-rating-num{font-size:0.7rem;}
+.fp-card.is-compact .fp-card-rating-pos{font-size:0.4rem;}
+.fp-card.is-compact .fp-card-rating-sub{font-size:0.42rem;padding:0.08rem 0.26rem;}
+.fp-card.is-compact .fp-card-type-bar{margin:0.12rem 0 0.1rem;padding:0.14rem 0.2rem;font-size:0.5rem;letter-spacing:0.06em;}
+.fp-card.is-compact .fp-card-desc{padding:0.18rem 0.22rem 0.2rem;gap:0.16rem;}
+.fp-card.is-compact .fp-card-stat-row{font-size:0.58rem;gap:0.08rem 0.3rem;}
+.fp-card.is-compact .fp-card-stat b{font-size:0.7rem;}
+.fp-card.is-compact .fp-card-atkdef{font-size:0.7rem;padding-top:0.16rem;gap:0.32rem;}
+
+@media (max-width:640px){.fp-card-name{font-size:0.64rem;}.fp-card-stat-row{font-size:0.6rem;}.fp-card-stat b{font-size:0.7rem;}.fp-card-atkdef{font-size:0.7rem;}}
 </style>
 """
 
@@ -4561,6 +4576,17 @@ def _fighter_card_country_short(country: str) -> str:
     return _shared_country_short_label(country)
 
 
+def _fighter_card_text(value: object) -> str:
+    if value is None:
+        return ""
+    try:
+        if pd.isna(value):
+            return ""
+    except (TypeError, ValueError):
+        pass
+    return str(value).strip()
+
+
 def _build_fighter_card_html(
     *,
     name: str,
@@ -4577,14 +4603,14 @@ def _build_fighter_card_html(
     compact: bool = False,
     href: str = "",
 ) -> str:
-    """Build a FUTBIN-style fighter card matching FighterCard.astro."""
-    initials = _fighter_card_initials(name)
-    wc_abbr = _fighter_card_division_abbrev(weight_class)
-    division_label = (weight_class or "").strip()
-    flag = _fighter_card_flag(country)
-    country_short = _fighter_card_country_short(country)
-    status_raw = str(fighter_status or "").strip().lower()
-    status_label = "Inactive" if status_raw == "inactive" else ("Active" if status_raw else "")
+    """Build a fighter card that mirrors astro_adsense_starter/src/components/FighterCard.astro."""
+    name_txt = _fighter_card_text(name) or "Fighter"
+    country_txt = _fighter_card_text(country)
+    division_label = _fighter_card_text(weight_class)
+    initials = _fighter_card_initials(name_txt)
+    wc_abbr = _fighter_card_division_abbrev(division_label)
+    flag = _fighter_card_flag(country_txt)
+    country_short = _fighter_card_country_short(country_txt)
     wins_txt = _fighter_card_fmt_int(wins)
     losses_txt = _fighter_card_fmt_int(losses)
     record_label = (
@@ -4594,75 +4620,51 @@ def _build_fighter_card_html(
     )
     card_classes = ["fp-card", "is-champ" if is_champion else "is-default"]
     if compact:
-        card_classes.append("fp-card--compact")
+        card_classes.append("is-compact")
     crown_html = (
-        f"<span class='fp-card-crown' aria-label='Current champion'>{_goat_icon_html(size=18, label='Current champion')}</span>"
+        "<span class='fp-card-crown' aria-label='Current champion'>👑</span>"
         if is_champion
         else ""
     )
     flag_html = (
-        f"<span class='fp-card-flag' title='{escape(country)}'>{flag}</span>" if flag else ""
+        f"<span class='fp-card-flag' title='{escape(country_txt)}'>{flag}</span>" if flag else ""
     )
     pos_html = f"<span class='fp-card-rating-pos'>{escape(wc_abbr)}</span>" if wc_abbr else ""
-    meta_html = (
-        "<div class='fp-card-meta'>"
-        + (f"<span class='fp-card-division'>{escape(division_label)}</span>" if division_label else "")
-        + ("<span class='fp-card-badge'>Champion</span>" if is_champion else "")
-        + (
-            f"<span class='fp-card-badge fp-card-badge--{'inactive' if status_label == 'Inactive' else 'active'}'>{escape(status_label)}</span>"
-            if status_label else ""
-        )
-        + "</div>"
-        if division_label or is_champion or status_label
-        else ""
-    )
-    country_html = (
-        "<div class='fp-card-country'>"
-        + (f"<span class='fp-card-country-flag' aria-hidden='true'>{flag}</span>" if flag else "")
-        + f"<span class='fp-card-country-full'>{escape(country)}</span>"
-        + f"<span class='fp-card-country-short'>{escape(country_short)}</span>"
-        + "</div>"
-        if country
-        else ""
-    )
-    win_streak_label = (
-        _png_icon_html("b91c1c-correct-emoji.png", size=13, extra_class="fp-card-stat-icon", label="Win streak")
-        or "W"
-    )
-    loss_streak_label = (
-        _png_icon_html("b91c1c-incorrect-emoji.png", size=13, extra_class="fp-card-stat-icon", label="Loss streak")
-        or "L"
-    )
+    type_line = " / ".join(part for part in [division_label or "MMA Fighter", country_txt] if part)
     tag = "a" if href else "div"
     href_attr = f" href='{escape(href, quote=True)}'" if href else ""
     rel_attr = " target='_self'" if href else ""
 
     return (
         f"<{tag} class='{' '.join(card_classes)}'{href_attr}{rel_attr}>"
-        f"{crown_html}"
-        "<div class='fp-card-chrome' aria-hidden='true'>"
-        "<span class='fp-card-corner fp-card-corner--tl'></span>"
-        "<span class='fp-card-corner fp-card-corner--tr'></span>"
-        "<span class='fp-card-corner fp-card-corner--bl'></span>"
-        "<span class='fp-card-corner fp-card-corner--br'></span>"
-        "</div>"
+        "<div class='fp-card-frame' aria-hidden='true'></div>"
         "<div class='fp-card-top'>"
         f"<div class='fp-card-rating'><span class='fp-card-rating-num'>{escape(record_label)}</span>{pos_html}</div>"
         f"{flag_html}"
         "</div>"
-        "<div class='fp-card-portrait' aria-hidden='true'>"
-        f"<span class='fp-card-portrait-silhouette'>{_goat_icon_html(size=28, label='Fighter card')}</span>"
-        f"<span class='fp-card-initials'>{escape(initials)}</span>"
+        "<header class='fp-card-banner'>"
+        f"<span class='fp-card-name'>{escape(name_txt)}</span>"
+        "</header>"
+        "<div class='fp-card-portrait'>"
+        "<span class='fp-card-portrait-silhouette' aria-hidden='true'>👤</span>"
+        f"<span class='fp-card-initials' aria-hidden='true'>{escape(initials)}</span>"
+        f"{crown_html}"
         "</div>"
-        f"<div class='fp-card-name'>{escape(name)}</div>"
-        f"{meta_html}"
-        f"{country_html}"
-        "<div class='fp-card-stats'>"
-        f"<div class='fp-card-stat'><span class='fp-card-stat-label'>FIN</span><span class='fp-card-stat-val'>{_fighter_card_fmt_pct(finish_rate)}</span></div>"
-        f"<div class='fp-card-stat'><span class='fp-card-stat-label'>SUB</span><span class='fp-card-stat-val'>{_fighter_card_fmt_pct(sub_rate)}</span></div>"
-        f"<div class='fp-card-stat'><span class='fp-card-stat-label'>{win_streak_label}</span><span class='fp-card-stat-val'>{_fighter_card_fmt_int(win_streak)}</span></div>"
-        f"<div class='fp-card-stat'><span class='fp-card-stat-label'>{loss_streak_label}</span><span class='fp-card-stat-val'>{_fighter_card_fmt_int(loss_streak)}</span></div>"
+        f"<div class='fp-card-type-bar'>[ {escape(type_line)} ]</div>"
+        "<div class='fp-card-desc'>"
+        "<div class='fp-card-stat-row'>"
+        f"<span class='fp-card-stat'><em>FIN</em><b>{_fighter_card_fmt_pct(finish_rate)}</b></span>"
+        f"<span class='fp-card-stat'><em>SUB</em><b>{_fighter_card_fmt_pct(sub_rate)}</b></span>"
+        f"<span class='fp-card-stat'><em>W★</em><b>{_fighter_card_fmt_int(win_streak)}</b></span>"
+        f"<span class='fp-card-stat'><em>L✗</em><b>{_fighter_card_fmt_int(loss_streak)}</b></span>"
         "</div>"
+        "<div class='fp-card-atkdef'>"
+        f"<span class='fp-card-atk'>ATK/{wins_txt}</span>"
+        "<span class='fp-card-sep'>·</span>"
+        f"<span class='fp-card-def'>DEF/{losses_txt}</span>"
+        "</div>"
+        "</div>"
+        f"<span class='fp-card-country-fallback' aria-hidden='true' data-country='{escape(country_short, quote=True)}'></span>"
         f"</{tag}>"
     )
 
