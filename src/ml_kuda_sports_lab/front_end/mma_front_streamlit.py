@@ -3437,6 +3437,83 @@ st.markdown(
         letter-spacing: 0.07em;
         text-transform: uppercase;
     }
+    .kpi-strip {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0;
+        margin: 0 0 0.65rem;
+        background: linear-gradient(145deg, rgba(28, 28, 32, 0.92), rgba(39, 39, 42, 0.76));
+        border: 1px solid rgba(248, 113, 113, 0.16);
+        border-top: 2px solid var(--fp-red-border-mid);
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 18px rgba(0,0,0,0.2), 0 0 14px var(--fp-red-glow-soft);
+    }
+    .kpi-strip-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 118px;
+        padding: 0.85rem 0.8rem 0.78rem;
+        text-align: center;
+        border-right: 1px solid rgba(248, 113, 113, 0.12);
+        background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0));
+    }
+    .kpi-strip-item:last-child {
+        border-right: 0;
+    }
+    .kpi-strip-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 48px;
+        margin-bottom: 0.28rem;
+        line-height: 1;
+        color: #cbd5e1;
+    }
+    .kpi-strip-label {
+        color: #d4d4d8;
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.18rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .kpi-strip-value {
+        color: #ffffff;
+        font-size: 1.14rem;
+        font-weight: 800;
+        line-height: 1.04;
+        letter-spacing: 0.01em;
+    }
+    .kpi-strip-value--stack {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        width: 100%;
+    }
+    .kpi-strip-value-line {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 0.36rem;
+        flex-wrap: wrap;
+    }
+    .kpi-strip-value-line strong {
+        color: #ffffff;
+        font-size: 1.04rem;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+    }
+    .kpi-strip-value-line span {
+        color: #a1a1aa;
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }
 
     .result-badge {
         display: inline-block;
@@ -3821,6 +3898,24 @@ st.markdown(
 
     /* ── KPI cards: slightly smaller on mobile ── */
     @media (max-width: 640px) {
+        .kpi-strip {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+        .kpi-strip-item {
+            min-height: 102px !important;
+            padding: 0.68rem 0.58rem 0.62rem !important;
+            border-right: 1px solid rgba(248, 113, 113, 0.12) !important;
+            border-bottom: 1px solid rgba(248, 113, 113, 0.12) !important;
+        }
+        .kpi-strip-item:nth-child(2n) {
+            border-right: 0 !important;
+        }
+        .kpi-strip-item:nth-last-child(-n+2) {
+            border-bottom: 0 !important;
+        }
+        .kpi-strip-value {
+            font-size: 1.0rem !important;
+        }
         .kpi-card {
             min-height: 82px !important;
             padding: 0.55rem 0.58rem !important;
@@ -4542,6 +4637,26 @@ def _render_kpi_card(
             f'<div class="kpi-card-value">{value_markup}</div>'
             "</div>"
         ),
+        unsafe_allow_html=True,
+    )
+
+
+def _render_kpi_strip(items: list[dict[str, object]]) -> None:
+    parts: list[str] = []
+    for item in items:
+        label = escape(str(item.get("label", "") or ""))
+        icon_markup = str(item.get("icon") or "")
+        value = str(item.get("value") or "")
+        value_class = "kpi-strip-value kpi-strip-value--stack" if item.get("value_is_html") else "kpi-strip-value"
+        parts.append(
+            '<div class="kpi-strip-item">'
+            f'<div class="kpi-strip-icon">{icon_markup}</div>'
+            f'<div class="kpi-strip-label">{label}</div>'
+            f'<div class="{value_class}">{value if item.get("value_is_html") else escape(value)}</div>'
+            '</div>'
+        )
+    st.markdown(
+        f'<div class="kpi-strip">{"".join(parts)}</div>',
         unsafe_allow_html=True,
     )
 
@@ -5482,49 +5597,41 @@ def page_upcoming() -> None:
         except Exception:
             analyzed_fights_display = str(analyzed_fights_total)
     fights_value_html = (
-        "<div class='kpi-card-value--stack'>"
-        f"<div class='kpi-card-value-line'><strong>{len(df_show):,}</strong><span>{escape(t('page.upcoming.upcoming_fights'))}</span></div>"
-        f"<div class='kpi-card-value-line'><strong>{escape(analyzed_fights_display)}</strong><span>{escape(t('page.upcoming.analyzed_fights'))}</span></div>"
+        "<div class='kpi-strip-value--stack'>"
+        f"<div class='kpi-strip-value-line'><strong>{len(df_show):,}</strong><span>{escape(t('page.upcoming.upcoming_fights'))}</span></div>"
+        f"<div class='kpi-strip-value-line'><strong>{escape(analyzed_fights_display)}</strong><span>{escape(t('page.upcoming.analyzed_fights'))}</span></div>"
         "</div>"
     )
 
-    # Quick stats
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        _render_kpi_card(
-            t("page.upcoming.total_fights"),
-            fights_value_html,
-            icon=_png_icon_html("b91c1c-fights-emoji.png", size=46, extra_class="fp-inline-emoji--kpi", label="Total fights")
-            or _inline_emoji_html("⚔️", extra_class="fp-inline-emoji--kpi"),
-            accent="#ef4444",
-            value_is_html=True,
-        )
-    with col2:
-        _render_kpi_card(
-            t("page.upcoming.events"),
-            str(df_show["event_name"].nunique()),
-            icon=_png_icon_html("b91c1c-events-emoji-rail.png", size=46, extra_class="fp-inline-emoji--kpi", label="Events")
-            or _inline_emoji_html("📅", extra_class="fp-inline-emoji--kpi"),
-            accent="#22c55e",
-        )
     strong = (df_show["signal_strength"] == "STRONG").sum() if "signal_strength" in df_show else 0
-    with col3:
-        _render_kpi_card(
-            t("page.upcoming.strong_signals"),
-            str(int(strong)),
-            icon=_png_icon_html("b91c1c-signals-emoji.png", size=46, extra_class="fp-inline-emoji--kpi", label="Strong signals")
-            or _inline_emoji_html("🟢", extra_class="fp-inline-emoji--kpi"),
-            accent="#f59e0b",
-        )
     recommended = df_show["recommended_bet"].sum() if "recommended_bet" in df_show else 0
-    with col4:
-        _render_kpi_card(
-            t("page.upcoming.recommended_bets"),
-            str(int(recommended)),
-            icon=_png_icon_html("b91c1c-bets-emoji.png", size=46, extra_class="fp-inline-emoji--kpi", label="Recommended bets")
+    _render_kpi_strip([
+        {
+            "label": t("page.upcoming.total_fights"),
+            "value": fights_value_html,
+            "icon": _png_icon_html("b91c1c-fights-emoji.png", size=46, extra_class="fp-inline-emoji--kpi", label="Total fights")
+            or _inline_emoji_html("⚔️", extra_class="fp-inline-emoji--kpi"),
+            "value_is_html": True,
+        },
+        {
+            "label": t("page.upcoming.events"),
+            "value": str(df_show["event_name"].nunique()),
+            "icon": _png_icon_html("b91c1c-events-emoji-rail.png", size=46, extra_class="fp-inline-emoji--kpi", label="Events")
+            or _inline_emoji_html("📅", extra_class="fp-inline-emoji--kpi"),
+        },
+        {
+            "label": t("page.upcoming.strong_signals"),
+            "value": str(int(strong)),
+            "icon": _png_icon_html("b91c1c-signals-emoji.png", size=46, extra_class="fp-inline-emoji--kpi", label="Strong signals")
+            or _inline_emoji_html("🟢", extra_class="fp-inline-emoji--kpi"),
+        },
+        {
+            "label": t("page.upcoming.recommended_bets"),
+            "value": str(int(recommended)),
+            "icon": _png_icon_html("b91c1c-bets-emoji.png", size=46, extra_class="fp-inline-emoji--kpi", label="Recommended bets")
             or _inline_emoji_html("✅", extra_class="fp-inline-emoji--kpi"),
-            accent="#8b5cf6",
-        )
+        },
+    ])
 
     _render_betting_signals_guide()
 
