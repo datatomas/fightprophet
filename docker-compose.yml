@@ -16,6 +16,7 @@
 #      -> mma_gold_catboost_tune_sunday
 #      -> mma_gold_catboost_train_tuned
 #      -> mma_parquets_dashboard
+#      -> mma_buttondown_weekly_email
 #      -> duckdb_disaster_clone_weekly (last)
 # 5) Enforce order with depends_on: condition: service_completed_successfully and restart: "no"
 #    so each next step starts only after previous exits successfully.
@@ -406,7 +407,7 @@ services:
     image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-duckdb:latest
     profiles: ["sunday"]
     depends_on:
-      mma_parquets_dashboard:
+      mma_buttondown_weekly_email:
         condition: service_completed_successfully
     volumes:
       - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
@@ -616,6 +617,30 @@ services:
       --prefix mma/diamond
       --parquet-base az://fightprophet-dashboard
       --status-overrides-json /workspace/datasets/manual_overrides/fighter_status_overrides.json
+    restart: "no"
+
+  mma_buttondown_weekly_email:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-gold-etl:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      mma_parquets_dashboard:
+        condition: service_completed_successfully
+    environment:
+      - PYTHONPATH=/workspace/src
+      - BUTTONDOWN_ENABLED=${BUTTONDOWN_ENABLED:-false}
+      - BUTTONDOWN_API_KEY=${BUTTONDOWN_API_KEY:-}
+      - BUTTONDOWN_EMAIL_STATUS=${BUTTONDOWN_EMAIL_STATUS:-draft}
+      - BUTTONDOWN_CONFIRM_SEND=${BUTTONDOWN_CONFIRM_SEND:-false}
+      - BUTTONDOWN_DRY_RUN=${BUTTONDOWN_DRY_RUN:-false}
+      - BUTTONDOWN_SKIP_DUPLICATES=${BUTTONDOWN_SKIP_DUPLICATES:-true}
+      - BUTTONDOWN_API_VERSION=${BUTTONDOWN_API_VERSION:-2026-04-01}
+      - PUBLIC_APP_URL=${PUBLIC_APP_URL:-https://app.fightprophet.com}
+      - NEWSLETTER_TIMEZONE=${NEWSLETTER_TIMEZONE:-America/Bogota}
+    volumes:
+      - ${ML_REPO_ROOT:-/home/ares/Documents/gitrepos/ml_kuda_sports_lab}:/workspace:ro
+    command: >
+      python3 -m ml_kuda_sports_lab.etl.gold.mma_buttondown_weekly_email
     restart: "no"
 
   mma_parquets_dashboard_manual:
