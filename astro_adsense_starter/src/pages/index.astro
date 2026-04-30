@@ -248,11 +248,12 @@ const newsStructuredData = newsItems.map((item) => ({
                 class={`fp-division-block${idx === 0 ? ' is-active' : ''}`}
                 data-division-panel={deck.slug}
                 data-rerank={deck.rerank ? 'true' : 'false'}
+                data-deck-kind={deck.slug === 'goat-list' ? 'goat' : 'division'}
                 hidden={idx !== 0}
               >
                 <div class="fp-division-header">
                   <h3 class="fp-division-title">{deck.title}</h3>
-                  <span class="fp-division-count" data-deck-count>{deck.countLabel}</span>
+                  <span class="fp-division-count" data-deck-count data-original-count={deck.countLabel}>{deck.countLabel}</span>
                 </div>
                 <p class="fp-division-description">{deck.note}</p>
                 <div class="fp-card-grid">
@@ -261,6 +262,8 @@ const newsStructuredData = newsItems.map((item) => ({
                       class="fp-card-shell"
                       style={`--card-index:${cardIdx};`}
                       data-fighter-status={c.fighter_status || 'active'}
+                      data-global-rank={c.global_rank ?? ''}
+                      data-division-rank={c.rank ?? ''}
                     >
                       <FighterCard
                         name={c.name}
@@ -430,6 +433,18 @@ const newsStructuredData = newsItems.map((item) => ({
       let activeStatus = wall.getAttribute('data-status-filter') || 'active';
       let cleanupTimer = 0;
 
+      function ensureRatingSub(shell) {
+        const rating = shell.querySelector('.fp-card-rating');
+        if (!rating) return null;
+        let sub = rating.querySelector('.fp-card-rating-sub');
+        if (!sub) {
+          sub = document.createElement('span');
+          sub.className = 'fp-card-rating-sub';
+          rating.appendChild(sub);
+        }
+        return sub;
+      }
+
       function applyStatusFilter(status) {
         activeStatus = status || 'active';
         wall.setAttribute('data-status-filter', activeStatus);
@@ -443,6 +458,7 @@ const newsStructuredData = newsItems.map((item) => ({
         divisionPanels.forEach((panel) => {
           const shells = Array.from(panel.querySelectorAll('.fp-card-shell'));
           const rerank = panel.getAttribute('data-rerank') === 'true';
+          const deckKind = panel.getAttribute('data-deck-kind') || 'division';
           let visibleCount = 0;
 
           shells.forEach((shell) => {
@@ -451,21 +467,61 @@ const newsStructuredData = newsItems.map((item) => ({
             shell.hidden = !matches;
             if (!matches) return;
             visibleCount += 1;
+            const num = shell.querySelector('.fp-card-rating-num');
+            const pos = shell.querySelector('.fp-card-rating-pos');
+            const sub = ensureRatingSub(shell);
+            if (sub && !shell.dataset.originalSubText && sub.textContent) {
+              shell.dataset.originalSubText = sub.textContent.trim();
+            }
+            const originalSubText = shell.dataset.originalSubText || '';
+            const globalRank = Number.parseInt(shell.getAttribute('data-global-rank') || '', 10);
+            const divisionRank = Number.parseInt(shell.getAttribute('data-division-rank') || '', 10);
+            const subPrefix = originalSubText.replace(/#\d+\s*$/, '').trim();
 
-            // Re-number division-rank text inside visible cards so "1, 4, 5" becomes "1, 2, 3"
-            // when an inactive fighter at rank 2/3 was hidden. Only applies to per-division
-            // decks where rank is 1..N; the GOAT list keeps its original sub-rank.
-            if (rerank) {
-              const sub = shell.querySelector('.fp-card-rating-sub');
-              if (sub && sub.textContent) {
-                sub.textContent = sub.textContent.replace(/#\d+\s*$/, '#' + visibleCount);
+            if (deckKind === 'goat') {
+              if (num && Number.isFinite(globalRank)) {
+                num.textContent = activeStatus === 'all' ? `#${globalRank}` : `#${visibleCount}`;
               }
+              if (pos) {
+                pos.textContent = activeStatus === 'all'
+                  ? 'P4P'
+                  : activeStatus === 'active'
+                    ? 'ACTIVE'
+                    : 'INACTIVE';
+              }
+              if (sub) {
+                if (activeStatus === 'all' || !Number.isFinite(globalRank)) {
+                  sub.textContent = '';
+                  sub.hidden = true;
+                } else {
+                  sub.textContent = `P4P #${globalRank}`;
+                  sub.hidden = false;
+                }
+              }
+              return;
+            }
+
+            if (num && Number.isFinite(globalRank)) {
+              num.textContent = `#${globalRank}`;
+            }
+            if (pos) {
+              pos.textContent = 'P4P';
+            }
+            if (sub && Number.isFinite(divisionRank)) {
+              const divisionVisibleRank = activeStatus === 'all' || !rerank ? divisionRank : visibleCount;
+              sub.textContent = subPrefix ? `${subPrefix} #${divisionVisibleRank}` : `#${divisionVisibleRank}`;
+              sub.hidden = false;
             }
           });
 
           const deckCountEl = panel.querySelector('[data-deck-count]');
           if (deckCountEl) {
-            deckCountEl.textContent = visibleCount + (visibleCount === 1 ? ' fighter' : ' fighters');
+            if (activeStatus === 'all') {
+              deckCountEl.textContent = deckCountEl.getAttribute('data-original-count') || `${visibleCount} fighters`;
+            } else {
+              const label = activeStatus === 'active' ? 'active fighter' : 'inactive fighter';
+              deckCountEl.textContent = `${visibleCount} ${label}${visibleCount === 1 ? '' : 's'}`;
+            }
           }
           const emptyEl = panel.querySelector('.fp-division-empty');
           if (emptyEl) emptyEl.hidden = visibleCount > 0;
