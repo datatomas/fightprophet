@@ -127,10 +127,44 @@ def _inject_marketing_handoff_bridge() -> None:
                 } catch (e) {}
               }
 
+              function plainLeftClick(event) {
+                return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
+              }
+
+              function shouldStayInCurrentTab(anchor, url) {
+                if (!anchor || !url) return false;
+                if (anchor.classList && anchor.classList.contains('fp-site-shell-link')) return true;
+                return url.origin === win.location.origin && (
+                  url.searchParams.has('page') ||
+                  url.searchParams.has('fighter') ||
+                  url.pathname === win.location.pathname
+                );
+              }
+
               primeMarketingOrigin();
 
               if (win.__fpSiteHandoffBound) return;
               win.__fpSiteHandoffBound = true;
+
+              doc.addEventListener('click', function(event) {
+                if (!plainLeftClick(event)) return;
+                var target = event.target;
+                if (!target || !target.closest) return;
+                var anchor = target.closest('a[href]');
+                if (!anchor) return;
+                var rawHref = anchor.getAttribute('href') || '';
+                if (!rawHref || rawHref.indexOf('mailto:') === 0 || rawHref.charAt(0) === '#') return;
+                var url;
+                try {
+                  url = new URL(anchor.href || rawHref, win.location.href);
+                } catch (e) {
+                  return;
+                }
+                if (!shouldStayInCurrentTab(anchor, url)) return;
+                event.preventDefault();
+                anchor.setAttribute('target', '_self');
+                win.location.assign(url.href);
+              }, true);
 
               doc.addEventListener('pointerdown', function(event) {
                 var target = event.target;
@@ -639,7 +673,7 @@ def _render_sidebar_lang_switch(current_lang: str, page_slug: str) -> str:
         label = _LANG_BUTTONS[lang_code]
         title = escape(_LANG_CODE_TO_LABEL.get(lang_code, lang_code))
         links.append(
-            f'<a class="{classes}" href="{escape(href, quote=True)}" title="{title}" aria-label="{title}">{escape(label)}</a>'
+            f'<a class="{classes}" href="{escape(href, quote=True)}" target="_self" title="{title}" aria-label="{title}">{escape(label)}</a>'
         )
     st.markdown(
         '<div class="fp-sidebar-lang-switch" aria-label="Language selector">'
@@ -4139,7 +4173,7 @@ def _render_site_shell_link(label: str, href: str, icon_slug: str, *, is_active:
         classes += " is-active"
     icon_class = _nav_icon_class(icon_slug)
     return (
-        f'<a class="{classes}" href="{escape(href, quote=True)}">'
+        f'<a class="{classes}" href="{escape(href, quote=True)}" target="_self">'
         f'<span class="fp-sidebar-nav-copy"><span class="fp-sidebar-nav-icon fp-sidebar-nav-icon--{escape(icon_class)}" aria-hidden="true"></span><span>{escape(label)}</span></span>'
         "</a>"
     )
@@ -4319,7 +4353,7 @@ def _fighter_profile_link(name: object) -> str:
     if not txt or txt in {"Draw", "No Contest", "—"}:
         return escape(txt or "")
     href = _fighter_profile_href(txt)
-    return f'<a href="{escape(href, quote=True)}">{escape(txt)}</a>' if href else escape(txt)
+    return f'<a href="{escape(href, quote=True)}" target="_self">{escape(txt)}</a>' if href else escape(txt)
 
 
 def _fighter_profile_href(name: object) -> str:
@@ -5598,10 +5632,10 @@ def page_home() -> None:
                 rankings, belt holders, and fighter cards in one place.
                 <br /><br />
                 The home page has moved to
-                <a href="https://fightprophet.com" target="_blank" rel="noopener noreferrer">fightprophet.com</a>.
+                <a href="https://fightprophet.com" target="_self">fightprophet.com</a>.
                 Use the sidebar to navigate directly to Upcoming Predictions, Fight Lab, Rankings, and more.
             </p>
-            <a href="https://fightprophet.com" target="_blank" rel="noopener noreferrer">Visit fightprophet.com</a>
+            <a href="https://fightprophet.com" target="_self">Visit fightprophet.com</a>
         </div>
         """,
         unsafe_allow_html=True,
@@ -5638,7 +5672,7 @@ def page_terms() -> None:
     st.info(redirect_title_map.get(lang, redirect_title_map["en"]))
     st.caption(redirect_body_map.get(lang, redirect_body_map["en"]))
     st.markdown(
-        f'<a class="fp-sidebar-nav-link fp-site-shell-link" href="{escape(_MARKETING_TERMS_URL, quote=True)}">'
+        f'<a class="fp-sidebar-nav-link fp-site-shell-link" href="{escape(_MARKETING_TERMS_URL, quote=True)}" target="_self">'
         f'<span class="fp-sidebar-nav-copy"><span class="fp-sidebar-nav-icon fp-sidebar-nav-icon--terms" aria-hidden="true"></span>'
         f'<span>{escape(redirect_cta_map.get(lang, redirect_cta_map["en"]))}</span></span></a>',
         unsafe_allow_html=True,
@@ -7446,7 +7480,7 @@ def page_rankings() -> None:
         if "Fighter" in tbl.columns:
             tbl["Fighter"] = tbl["Fighter"].apply(
                 lambda name: (
-                    f'<a href="?page=fighter-card&fighter={quote_plus(str(name))}">{escape(str(name))}</a>'
+                    f'<a href="?page=fighter-card&fighter={quote_plus(str(name))}" target="_self">{escape(str(name))}</a>'
                     if pd.notna(name)
                     else ""
                 )
@@ -7930,7 +7964,7 @@ def page_fighter_profile() -> None:
     if "Opponent" in df_show.columns:
         df_show["Opponent"] = df_show["Opponent"].apply(
             lambda name: (
-                f'<a href="?page=fighter-card&fighter={quote_plus(str(name))}">{escape(str(name))}</a>'
+                f'<a href="?page=fighter-card&fighter={quote_plus(str(name))}" target="_self">{escape(str(name))}</a>'
                 if pd.notna(name) and str(name).strip()
                 else ""
             )
