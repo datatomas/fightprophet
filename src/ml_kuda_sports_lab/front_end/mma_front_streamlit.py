@@ -4248,6 +4248,8 @@ _FIGHTER_CARD_CSS = """
 .fp-card.is-default .fp-card-division{color:rgba(255,255,255,0.72);}
 .fp-card.is-champ .fp-card-badge{background:rgba(31,19,0,0.14);color:rgba(31,19,0,0.92);box-shadow:inset 0 0 0 1px rgba(31,19,0,0.18);}
 .fp-card.is-default .fp-card-badge{background:rgba(220,38,38,0.2);color:rgba(255,228,228,0.95);box-shadow:inset 0 0 0 1px rgba(248,113,113,0.22);}
+.fp-card-badge--active,.fp-card.is-champ .fp-card-badge--active,.fp-card.is-default .fp-card-badge--active{background:rgba(34,197,94,0.16);color:#bbf7d0;box-shadow:inset 0 0 0 1px rgba(34,197,94,0.28);}
+.fp-card-badge--inactive,.fp-card.is-champ .fp-card-badge--inactive,.fp-card.is-default .fp-card-badge--inactive{background:rgba(244,63,94,0.16);color:#fecdd3;box-shadow:inset 0 0 0 1px rgba(244,63,94,0.28);}
 .fp-card-country{display:flex;align-items:center;justify-content:center;gap:0.34rem;margin:-0.05rem 0 0.38rem;font-size:0.72rem;font-weight:700;line-height:1.05;min-height:1rem;position:relative;z-index:2;}
 .fp-card-country-flag{font-size:1.18rem;line-height:1;}
 .fp-card-country-full,.fp-card-country-short{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -4385,6 +4387,7 @@ def _build_fighter_card_html(
     country: str = "",
     weight_class: str = "",
     is_champion: bool = False,
+    fighter_status: str = "",
     finish_rate: object = None,
     sub_rate: object = None,
     win_streak: object = None,
@@ -4400,6 +4403,8 @@ def _build_fighter_card_html(
     division_label = (weight_class or "").strip()
     flag = _fighter_card_flag(country)
     country_short = _fighter_card_country_short(country)
+    status_raw = str(fighter_status or "").strip().lower()
+    status_label = "Inactive" if status_raw == "inactive" else ("Active" if status_raw else "")
     wins_txt = _fighter_card_fmt_int(wins)
     losses_txt = _fighter_card_fmt_int(losses)
     record_label = (
@@ -4423,8 +4428,12 @@ def _build_fighter_card_html(
         "<div class='fp-card-meta'>"
         + (f"<span class='fp-card-division'>{escape(division_label)}</span>" if division_label else "")
         + ("<span class='fp-card-badge'>Champion</span>" if is_champion else "")
+        + (
+            f"<span class='fp-card-badge fp-card-badge--{'inactive' if status_label == 'Inactive' else 'active'}'>{escape(status_label)}</span>"
+            if status_label else ""
+        )
         + "</div>"
-        if division_label or is_champion
+        if division_label or is_champion or status_label
         else ""
     )
     country_html = (
@@ -4484,6 +4493,7 @@ def _render_fighter_card_html(
     country: str = "",
     weight_class: str = "",
     is_champion: bool = False,
+    fighter_status: str = "",
     finish_rate: object = None,
     sub_rate: object = None,
     win_streak: object = None,
@@ -4499,6 +4509,7 @@ def _render_fighter_card_html(
         country=country,
         weight_class=weight_class,
         is_champion=is_champion,
+        fighter_status=fighter_status,
         finish_rate=finish_rate,
         sub_rate=sub_rate,
         win_streak=win_streak,
@@ -7394,6 +7405,7 @@ def page_fighter_profile() -> None:
             country=country_header,
             weight_class=fighter_weight_class,
             is_champion=is_current_champion,
+            fighter_status=str(p.get("fighter_status", "") or ""),
             finish_rate=finish_rate_card_value,
             sub_rate=sub_rate_card_value,
             win_streak=p.get("win_streak"),
