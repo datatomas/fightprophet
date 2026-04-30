@@ -1524,6 +1524,7 @@ def _fighter_card_stats_map(base: str, prefix: str = "") -> dict[str, dict[str, 
             "loss_streak": _pick(row, ["loss_streak", "fighter_loss_streak"]),
             "wins": _pick(row, ["wins", "wins_count", "fighter_wins"]),
             "losses": _pick(row, ["losses", "losses_count", "fighter_losses"]),
+            "fighter_status": _pick(row, ["fighter_status", "status"]),
         }
         payload_score = _score(payload)
         if payload_score == 0:
@@ -4391,7 +4392,7 @@ _FIGHTER_CARD_CSS = """
 .fp-card.is-default:hover{box-shadow:0 0 18px rgba(255,180,80,0.34);}
 .fp-card.is-champ:hover{box-shadow:0 0 22px rgba(255,220,130,0.55);}
 
-/* TOP ROW: rating chip on left, flag on right */
+/* TOP ROW: rating chip on left, status + flag on right */
 .fp-card-top{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:0.32rem;margin:0 0 0.18rem;min-height:1.5rem;}
 .fp-card-rating{position:relative;display:inline-flex;flex-direction:row;align-items:center;gap:0.34rem;padding:0.2rem 0.46rem;background:rgba(0,0,0,0.55);border:1px solid rgba(185,28,28,0.65);border-radius:0.42rem;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.4);line-height:1;min-width:0;flex-shrink:1;overflow:hidden;}
 .fp-card.is-champ .fp-card-rating{background:linear-gradient(180deg,rgba(255,240,170,0.92),rgba(180,120,30,0.85));border-color:rgba(255,240,170,0.85);}
@@ -4401,6 +4402,12 @@ _FIGHTER_CARD_CSS = """
 .fp-card.is-champ .fp-card-rating-pos{color:rgba(31,19,0,0.78);}
 .fp-card-rating-sub{margin:0;padding:0.1rem 0.32rem;font-size:0.48rem;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;border-radius:999px;color:rgba(254,226,226,0.95);background:rgba(0,0,0,0.4);box-shadow:inset 0 0 0 1px rgba(185,28,28,0.45);white-space:nowrap;}
 .fp-card.is-champ .fp-card-rating-sub{color:rgba(31,19,0,0.92);background:rgba(255,240,200,0.45);box-shadow:inset 0 0 0 1px rgba(77,50,0,0.18);}
+.fp-card-top-right{display:inline-flex;align-items:center;justify-content:flex-end;gap:0.22rem;min-width:0;flex-shrink:0;}
+.fp-card-status{display:inline-flex;align-items:center;justify-content:center;padding:0.12rem 0.34rem;border-radius:999px;border:1px solid rgba(255,255,255,0.14);background:rgba(0,0,0,0.42);font-size:0.5rem;font-weight:900;line-height:1;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.04);}
+.fp-card-status--active{color:#bbf7d0;border-color:rgba(34,197,94,0.42);background:rgba(20,83,45,0.52);}
+.fp-card-status--inactive{color:#fecaca;border-color:rgba(248,113,113,0.5);background:rgba(69,10,10,0.62);}
+.fp-card.is-champ .fp-card-status--active{color:#14532d;background:rgba(187,247,208,0.8);border-color:rgba(22,101,52,0.36);}
+.fp-card.is-champ .fp-card-status--inactive{color:#7f1d1d;background:rgba(254,202,202,0.84);border-color:rgba(127,29,29,0.34);}
 .fp-card-flag{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.55rem;line-height:1;background:rgba(0,0,0,0.45);border:1px solid rgba(185,28,28,0.6);border-radius:999px;padding:0.18rem 0.5rem;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06);}
 .fp-card.is-champ .fp-card-flag{border-color:rgba(255,220,140,0.55);}
 
@@ -4452,6 +4459,8 @@ _FIGHTER_CARD_CSS = """
 .fp-card.is-compact .fp-card-portrait-silhouette{font-size:2rem;}
 .fp-card.is-compact .fp-card-initials{font-size:1.05rem;}
 .fp-card.is-compact .fp-card-crown{font-size:0.64rem;top:0.12rem;left:0.18rem;}
+.fp-card.is-compact .fp-card-top-right{gap:0.14rem;}
+.fp-card.is-compact .fp-card-status{font-size:0.4rem;padding:0.08rem 0.22rem;letter-spacing:0.06em;}
 .fp-card.is-compact .fp-card-flag{font-size:1.1rem;padding:0.1rem 0.32rem;}
 .fp-card.is-compact .fp-card-rating{padding:0.12rem 0.32rem;gap:0.22rem;border-radius:0.32rem;}
 .fp-card.is-compact .fp-card-rating-num{font-size:0.7rem;}
@@ -4587,6 +4596,11 @@ def _fighter_card_text(value: object) -> str:
     return str(value).strip()
 
 
+def _fighter_card_status(value: object) -> str:
+    status = _fighter_card_text(value).lower()
+    return status if status in {"active", "inactive"} else ""
+
+
 def _build_fighter_card_html(
     *,
     name: str,
@@ -4611,6 +4625,8 @@ def _build_fighter_card_html(
     wc_abbr = _fighter_card_division_abbrev(division_label)
     flag = _fighter_card_flag(country_txt)
     country_short = _fighter_card_country_short(country_txt)
+    status = _fighter_card_status(fighter_status)
+    status_label = status.title() if status else ""
     wins_txt = _fighter_card_fmt_int(wins)
     losses_txt = _fighter_card_fmt_int(losses)
     record_label = (
@@ -4629,6 +4645,16 @@ def _build_fighter_card_html(
     flag_html = (
         f"<span class='fp-card-flag' title='{escape(country_txt)}'>{flag}</span>" if flag else ""
     )
+    status_html = (
+        f"<span class='fp-card-status fp-card-status--{escape(status, quote=True)}'>{escape(status_label)}</span>"
+        if status
+        else ""
+    )
+    top_right_html = (
+        f"<div class='fp-card-top-right'>{status_html}{flag_html}</div>"
+        if status_html or flag_html
+        else ""
+    )
     pos_html = f"<span class='fp-card-rating-pos'>{escape(wc_abbr)}</span>" if wc_abbr else ""
     type_line = " / ".join(part for part in [division_label or "MMA Fighter", country_txt] if part)
     tag = "a" if href else "div"
@@ -4640,7 +4666,7 @@ def _build_fighter_card_html(
         "<div class='fp-card-frame' aria-hidden='true'></div>"
         "<div class='fp-card-top'>"
         f"<div class='fp-card-rating'><span class='fp-card-rating-num'>{escape(record_label)}</span>{pos_html}</div>"
-        f"{flag_html}"
+        f"{top_right_html}"
         "</div>"
         "<header class='fp-card-banner'>"
         f"<span class='fp-card-name'>{escape(name_txt)}</span>"
@@ -5803,6 +5829,12 @@ def _render_fight_card(row: pd.Series) -> None:
     opponent_country_name = _resolve_fighter_country(opponent, fighter_id=opponent_id_val, country=opponent_country)
     fighter_is_champ = _to_boolish(row.get("fighter_is_champion")) or _to_boolish(fighter_identity.get("is_champion"))
     opponent_is_champ = _to_boolish(row.get("opponent_is_champion")) or _to_boolish(opponent_identity.get("is_champion"))
+    fighter_status = _value_from_candidates(row, ["fighter_status", "fighter_fighter_status"])
+    if not _fighter_card_status(fighter_status):
+        fighter_status = fighter_profile.get("fighter_status")
+    opponent_status = _value_from_candidates(row, ["opponent_status", "opp_fighter_status", "opponent_fighter_status"])
+    if not _fighter_card_status(opponent_status):
+        opponent_status = opponent_profile.get("fighter_status")
     fighter_finish = _value_from_candidates(row, ["fighter_finish_rate", "finish_rate_win_shrunk", "finish_rate"])
     if fighter_finish is None or pd.isna(fighter_finish):
         fighter_finish = fighter_profile.get("finish_rate")
@@ -5919,6 +5951,7 @@ def _render_fight_card(row: pd.Series) -> None:
         country=fighter_country_name,
         weight_class=fighter_weight,
         is_champion=fighter_is_champ,
+        fighter_status=fighter_status,
         finish_rate=fighter_finish,
         sub_rate=fighter_sub,
         win_streak=fighter_win_streak,
@@ -5933,6 +5966,7 @@ def _render_fight_card(row: pd.Series) -> None:
         country=opponent_country_name,
         weight_class=opponent_weight,
         is_champion=opponent_is_champ,
+        fighter_status=opponent_status,
         finish_rate=opponent_finish,
         sub_rate=opponent_sub,
         win_streak=opponent_win_streak,
