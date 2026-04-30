@@ -3514,6 +3514,78 @@ st.markdown(
         letter-spacing: 0.07em;
         text-transform: uppercase;
     }
+    .fp-model-guide {
+        margin: 0.28rem 0 0.9rem;
+        padding: 0.95rem 1rem 1rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(248, 113, 113, 0.18);
+        background:
+            radial-gradient(120% 90% at 0% 0%, rgba(220, 38, 38, 0.12), transparent 55%),
+            linear-gradient(145deg, rgba(28, 28, 32, 0.92), rgba(39, 39, 42, 0.76));
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 18px rgba(0,0,0,0.2), 0 0 14px var(--fp-red-glow-soft);
+    }
+    .fp-model-guide-eyebrow {
+        color: #fca5a5;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 0.34rem;
+    }
+    .fp-model-guide-title {
+        color: #fef2f2;
+        font-size: 1.02rem;
+        font-weight: 800;
+        line-height: 1.18;
+        letter-spacing: -0.01em;
+        margin-bottom: 0.34rem;
+    }
+    .fp-model-guide-copy {
+        color: #d4d4d8;
+        font-size: 0.84rem;
+        line-height: 1.52;
+        margin-bottom: 0.7rem;
+        max-width: 76ch;
+    }
+    .fp-model-guide-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.58rem;
+        margin-bottom: 0.7rem;
+    }
+    .fp-model-guide-item {
+        padding: 0.68rem 0.72rem;
+        border-radius: 0.82rem;
+        border: 1px solid rgba(248, 113, 113, 0.12);
+        background: rgba(255,255,255,0.025);
+    }
+    .fp-model-guide-item-label {
+        color: #ffffff;
+        font-size: 0.74rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 0.22rem;
+    }
+    .fp-model-guide-item-copy {
+        color: #cbd5e1;
+        font-size: 0.76rem;
+        line-height: 1.45;
+    }
+    .fp-model-guide-reco {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.38rem 0.62rem;
+        border-radius: 999px;
+        background: rgba(34, 197, 94, 0.12);
+        border: 1px solid rgba(34, 197, 94, 0.22);
+        color: #bbf7d0;
+        font-size: 0.74rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
 
     .result-badge {
         display: inline-block;
@@ -3898,6 +3970,19 @@ st.markdown(
 
     /* ── KPI cards: slightly smaller on mobile ── */
     @media (max-width: 640px) {
+        .fp-model-guide {
+            padding: 0.82rem 0.84rem 0.88rem !important;
+        }
+        .fp-model-guide-grid {
+            grid-template-columns: 1fr !important;
+            gap: 0.48rem !important;
+        }
+        .fp-model-guide-title {
+            font-size: 0.94rem !important;
+        }
+        .fp-model-guide-copy {
+            font-size: 0.8rem !important;
+        }
         .kpi-strip {
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         }
@@ -5179,8 +5264,10 @@ def _ui_copy_pack() -> dict[str, object]:
                 "**LogReg**: interpretable baseline that stabilizes directional probability checks.",
                 "Signals are generated from historical outcomes and feature engineering — outputs are probabilistic, not guarantees.",
             ],
-            "model_picker_intro": "Available model views:",
-            "model_picker_recommendation": "Recommendation: start with **CatBoost** for the best overall default view.",
+            "model_picker_title": "Welcome to Fight Prophet predictions",
+            "model_picker_intro": "Fight Prophet uses machine learning trained on previous UFC fights to estimate how matchups may play out. Start with CatBoost for the clearest default view, then compare it with the other models if you want a second opinion.",
+            "model_picker_models_label": "Available model views",
+            "model_picker_recommendation": "Best starting point: CatBoost",
             "risk_intro": "Responsible-use guardrails:",
             "risk_points": [
                 "No guaranteed outcomes, no lock picks, no sure-profit claims.",
@@ -5215,8 +5302,10 @@ def _ui_copy_pack() -> dict[str, object]:
                 "**LogReg**: baseline interpretable para validar dirección de probabilidades.",
                 "Las señales son probabilísticas, no garantías de resultado.",
             ],
-            "model_picker_intro": "Modelos disponibles:",
-            "model_picker_recommendation": "Recomendación: empieza con **CatBoost** como vista general por defecto.",
+            "model_picker_title": "Bienvenido a las predicciones de Fight Prophet",
+            "model_picker_intro": "Fight Prophet usa machine learning entrenado con peleas previas de UFC para estimar cómo puede desarrollarse cada combate. Empieza con CatBoost como vista más clara por defecto y luego compara con los otros modelos si quieres una segunda opinión.",
+            "model_picker_models_label": "Modelos disponibles",
+            "model_picker_recommendation": "Mejor punto de partida: CatBoost",
             "risk_intro": "Reglas de uso responsable:",
             "risk_points": [
                 "Sin resultados garantizados, sin picks seguros, sin promesas de ganancia.",
@@ -5251,8 +5340,10 @@ def _ui_copy_pack() -> dict[str, object]:
                 "**LogReg**: baseline interpretável para checar direção das probabilidades.",
                 "Os sinais são probabilísticos e não garantem resultados.",
             ],
-            "model_picker_intro": "Modelos disponíveis:",
-            "model_picker_recommendation": "Recomendação: comece com **CatBoost** como melhor visão padrão.",
+            "model_picker_title": "Bem-vindo às previsões do Fight Prophet",
+            "model_picker_intro": "O Fight Prophet usa machine learning treinado com lutas anteriores do UFC para estimar como cada confronto pode se desenrolar. Comece com CatBoost como visão padrão mais clara e depois compare com os outros modelos se quiser uma segunda opinião.",
+            "model_picker_models_label": "Modelos disponíveis",
+            "model_picker_recommendation": "Melhor ponto de partida: CatBoost",
             "risk_intro": "Regras de uso responsável:",
             "risk_points": [
                 "Sem resultados garantidos, sem picks certos, sem promessa de lucro.",
@@ -5276,14 +5367,38 @@ def _render_model_picker_help() -> None:
     copy_pack = _ui_copy_pack()
     engine_points = copy_pack.get("engine_points", [])
     model_points = [str(point) for point in engine_points[:3]]
-    intro = str(copy_pack.get("model_picker_intro", "Available model views:"))
-    recommendation = str(
+    title = str(copy_pack.get("model_picker_title", "Welcome to Fight Prophet predictions"))
+    intro = str(
         copy_pack.get(
-            "model_picker_recommendation",
-            "Recommendation: start with **Ensemble** for the best overall default view.",
+            "model_picker_intro",
+            "Fight Prophet uses machine learning trained on previous UFC fights to estimate how matchups may play out.",
         )
     )
-    st.caption("  \n".join([intro, *model_points, recommendation]))
+    models_label = str(copy_pack.get("model_picker_models_label", "Available model views"))
+    recommendation = str(copy_pack.get("model_picker_recommendation", "Best starting point: CatBoost"))
+    parts: list[str] = []
+    for point in model_points:
+        label, _, desc = point.replace("**", "").partition(":")
+        parts.append(
+            "<div class='fp-model-guide-item'>"
+            f"<div class='fp-model-guide-item-label'>{escape(label.strip())}</div>"
+            f"<div class='fp-model-guide-item-copy'>{escape(desc.strip() or label.strip())}</div>"
+            "</div>"
+        )
+    st.markdown(
+        (
+            "<div class='fp-model-guide'>"
+            f"<div class='fp-model-guide-eyebrow'>{escape(models_label)}</div>"
+            f"<div class='fp-model-guide-title'>{escape(title)}</div>"
+            f"<div class='fp-model-guide-copy'>{escape(intro)}</div>"
+            "<div class='fp-model-guide-grid'>"
+            f"{''.join(parts)}"
+            "</div>"
+            f"<div class='fp-model-guide-reco'>{escape(recommendation)}</div>"
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
 
 
 def _terms_copy_pack() -> dict[str, object]:
