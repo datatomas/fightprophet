@@ -7684,9 +7684,19 @@ def page_fighter_profile() -> None:
         with s1:
             _render_fighter_meta_card("Bonuses Won", _bonuses_won, icon=_goat_icon_html(), accent="#f59e0b")
         with s2:
-            _render_fighter_meta_card("Longest Win Streak", _longest_win, icon=_goat_icon_html(), accent="#22c55e")
+            _render_fighter_meta_card(
+                "Longest Win Streak",
+                _longest_win,
+                icon=_png_icon_html("b91c1c-correct-emoji.png", size=18, label="Longest win streak"),
+                accent="#22c55e",
+            )
         with s3:
-            _render_fighter_meta_card("Longest Loss Streak", _longest_loss, icon=_goat_icon_html(), accent="#ef4444")
+            _render_fighter_meta_card(
+                "Longest Loss Streak",
+                _longest_loss,
+                icon=_png_icon_html("b91c1c-incorrect-emoji.png", size=18, label="Longest loss streak"),
+                accent="#ef4444",
+            )
 
     st.markdown("<div style='height: 0.55rem;'></div>", unsafe_allow_html=True)
 
