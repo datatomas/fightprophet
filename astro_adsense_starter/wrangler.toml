@@ -7,4 +7,4 @@ pages_build_output_dir = "./dist"
 [vars]
 PUBLIC_SITE_URL = "https://fightprophet.com"
 PUBLIC_APP_URL = "https://app.fightprophet.com"
-
+PUBLIC_BUTTONDOWN_SUBSCRIBE_URL = "https://buttondown.com/api/emails/embed-subscribe/fightprophet"

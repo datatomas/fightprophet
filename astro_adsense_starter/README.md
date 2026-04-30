@@ -18,7 +18,7 @@ Copy `.env.example` to `.env` and set:
 - `PUBLIC_ADSENSE_ENABLED=true` only after privacy/consent setup is ready
 - `PUBLIC_SITE_URL=https://yourdomain.com`
 - `PUBLIC_APP_URL=https://app.fightprophet.com`
-- `PUBLIC_SUBSCRIBE_ENDPOINT=https://<your-azure-endpoint>`
+- `PUBLIC_BUTTONDOWN_SUBSCRIBE_URL=https://buttondown.com/api/emails/embed-subscribe/fightprophet`
 
 ## 3) Replace placeholders
 
@@ -90,23 +90,9 @@ Ad revenue is paid by Google to your AdSense account and then to your configured
 The home page now includes:
 
 - **Open Fight Prophet App** button (uses `PUBLIC_APP_URL`)
-- **Subscribe for updates** form (POSTs JSON to `PUBLIC_SUBSCRIBE_ENDPOINT`)
+- **Fight Prophet Weekly** form (POSTs to Buttondown via `PUBLIC_BUTTONDOWN_SUBSCRIBE_URL`)
 
-Subscription payload shape:
-
-```json
-{
-	"email": "user@example.com",
-	"source": "fightprophet-astro"
-}
-```
-
-Recommended Azure target options for `PUBLIC_SUBSCRIBE_ENDPOINT`:
-
-1. **Azure Function (HTTP trigger) + Table Storage** (best control)
-2. **Logic App HTTP endpoint + Blob/Table sink** (fastest no-code)
-
-Return HTTP `200`/`201` for success so the UI shows confirmation.
+No Azure subscription endpoint is required for newsletter capture. Buttondown stores subscribers, handles unsubscribe flows, and provides the hosted archive at `https://buttondown.com/fightprophet`.
 
 ## 7) Compliance checklist
 
@@ -142,7 +128,7 @@ PUBLIC_SITE_URL=${PUBLIC_SITE_URL:-https://fightprophet.com}
 PUBLIC_APP_URL=$PUBLIC_APP_URL
 PUBLIC_ADSENSE_CLIENT=$PUBLIC_ADSENSE_CLIENT
 PUBLIC_ADSENSE_ENABLED=$PUBLIC_ADSENSE_ENABLED
-PUBLIC_SUBSCRIBE_ENDPOINT=$PUBLIC_SUBSCRIBE_ENDPOINT
+PUBLIC_BUTTONDOWN_SUBSCRIBE_URL=${PUBLIC_BUTTONDOWN_SUBSCRIBE_URL:-https://buttondown.com/api/emails/embed-subscribe/fightprophet}
 EOF
 npm run build
 npm run preview

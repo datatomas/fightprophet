@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import AdSlot from '../components/AdSlot.astro';
 import FighterCard from '../components/FighterCard.astro';
+import NewsletterSignup from '../components/NewsletterSignup.astro';
 import { buildAppPageUrl } from '../lib/app-url';
 import { runtimeEnvFromLocals, getCountryMasterIndex } from '../lib/country-master';
 import { getAllRankedFighterCards, getHomepageGoatCards, getHomepageRankingsDebug, groupRankedFightersByDivision } from '../lib/champions';
@@ -338,6 +339,8 @@ const newsStructuredData = newsItems.map((item) => ({
       </div>
     </section>
 
+    <NewsletterSignup />
+
     <!-- LATEST NEWS -->
     {newsItems.length > 0 && (
       <section class="fp-news-section">
@@ -636,6 +639,10 @@ const newsStructuredData = newsItems.map((item) => ({
         cta5Title: 'Fighter Cards', cta5Desc: 'Open a data card for any fighter',
         cta6Title: 'Events History', cta6Desc: 'Past UFC cards and results',
         newsLabel: 'Latest news',
+        newsletterLabel: 'Fight Prophet Weekly',
+        newsletterCopy: 'Weekly MMA predictions, ranking movement, fighter-card updates, and model notes from Uppercut Analytics.',
+        newsletterInputLabel: 'Email address',
+        newsletterSubmit: 'Subscribe',
         finalEyebrow: 'Up next',
         finalTitle: 'Compare model picks vs. market for the upcoming fights.',
         finalCta: 'Predictions',
@@ -657,6 +664,10 @@ const newsStructuredData = newsItems.map((item) => ({
         cta5Title: 'Tarjetas de Peleadores', cta5Desc: 'Abre una tarjeta para cualquier peleador',
         cta6Title: 'Historial de Eventos', cta6Desc: 'Carteleras UFC pasadas',
         newsLabel: 'Últimas noticias',
+        newsletterLabel: 'Fight Prophet Weekly',
+        newsletterCopy: 'Predicciones de MMA, movimientos en rankings, fichas de peleadores y notas del modelo cada semana por Uppercut Analytics.',
+        newsletterInputLabel: 'Correo electrónico',
+        newsletterSubmit: 'Suscribirme',
         finalEyebrow: '¿Listo para profundizar?',
         finalTitle: 'Abre la app completa con predicciones, diagnóstico de modelos y fichas de peleadores.',
         finalCta: 'Abrir Fight Prophet',
@@ -678,6 +689,10 @@ const newsStructuredData = newsItems.map((item) => ({
         cta5Title: 'Cards de Lutadores', cta5Desc: 'Abra um card para qualquer lutador',
         cta6Title: 'Histórico de Eventos', cta6Desc: 'Cards passados da UFC',
         newsLabel: 'Últimas notícias',
+        newsletterLabel: 'Fight Prophet Weekly',
+        newsletterCopy: 'Previsões de MMA, movimentos nos rankings, cards de lutadores e notas do modelo toda semana pela Uppercut Analytics.',
+        newsletterInputLabel: 'Email',
+        newsletterSubmit: 'Assinar',
         finalEyebrow: 'Pronto para ir mais fundo?',
         finalTitle: 'Abra o app completo com previsões, diagnóstico de modelos e cards.',
         finalCta: 'Abrir Fight Prophet',
@@ -701,6 +716,10 @@ const newsStructuredData = newsItems.map((item) => ({
       cta5Title: 'i18n-cta-5-title', cta5Desc: 'i18n-cta-5-desc',
       cta6Title: 'i18n-cta-6-title', cta6Desc: 'i18n-cta-6-desc',
       newsLabel: 'i18n-news-label',
+      newsletterLabel: 'i18n-newsletter-label',
+      newsletterCopy: 'i18n-newsletter-copy',
+      newsletterInputLabel: 'i18n-newsletter-input-label',
+      newsletterSubmit: 'i18n-newsletter-submit',
       finalEyebrow: 'i18n-final-eyebrow',
       finalTitle: 'i18n-final-title',
       finalCta: 'i18n-final-cta',
