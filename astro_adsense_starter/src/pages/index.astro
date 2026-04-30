@@ -9,7 +9,6 @@ import { getAllRankedFighterCards, getHomepageGoatCards, getHomepageRankingsDebu
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
 const withPage = (slug: string) => buildAppPageUrl(appUrl, slug);
 const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'https://fightprophet.com').replace(/\/$/, '');
-const rankingsPageUrl = '/rankings';
 const rankingsAnchorUrl = '/#fp-rankings';
 const predictionsAppUrl = withPage('predictions');
 
@@ -290,11 +289,6 @@ const newsStructuredData = newsItems.map((item) => ({
             ))}
           </div>
 
-          <div class="fp-division-footer">
-            <a class="fp-division-link" href={rankingsPageUrl}>
-              See full rankings →
-            </a>
-          </div>
         </div>
       ) : (
         <div class="fp-empty-state">
@@ -303,7 +297,7 @@ const newsStructuredData = newsItems.map((item) => ({
           <code class="fp-empty-debug">
             Azure account: {homepageRankingsDebug.hasAzureAccount ? 'yes' : 'no'} · key: {homepageRankingsDebug.hasAzureKey ? 'yes' : 'no'} · blob: {homepageRankingsDebug.blobPath}
           </code>
-          <a class="fp-cta-primary" href={rankingsPageUrl}>See all categories →</a>
+          <a class="fp-cta-primary" href={rankingsAnchorUrl}>Try rankings again →</a>
         </div>
       )}
     </section>
@@ -323,7 +317,7 @@ const newsStructuredData = newsItems.map((item) => ({
           <strong id="i18n-cta-2-title">Fight Lab</strong>
           <span id="i18n-cta-2-desc">Historical picks + model metrics</span>
         </a>
-        <a class="fp-section-card" href={rankingsPageUrl}>
+        <a class="fp-section-card" href={withPage('rankings')}>
           <strong id="i18n-cta-3-title">Fighter Rankings</strong>
           <span id="i18n-cta-3-desc">Every division in one place</span>
         </a>
