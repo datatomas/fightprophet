@@ -782,7 +782,8 @@ def main() -> None:
 
         if r1 == "draw" or r2 == "draw":
             outcome = "draw"
-            # streak reset
+            # Draws are official results and should break current win/loss
+            # streaks. Only no-contests are transparent to streak continuity.
             s1.win_streak = 0
             s1.loss_streak = 0
             s2.win_streak = 0
@@ -1139,12 +1140,10 @@ def main() -> None:
                 s2.has_won_title = True
 
         else:
-            # no contest / unknown
+            # No contest / unknown: adjust points lightly, but do not reset streaks.
+            # Current win/loss streaks should be broken only by the opposite
+            # decisive result, not by no-contests.
             outcome = "nc"
-            s1.win_streak = 0
-            s1.loss_streak = 0
-            s2.win_streak = 0
-            s2.loss_streak = 0
 
             # NC should slightly take a fighter down
             loss1 = (c_med * nc_class_share)
@@ -1156,10 +1155,6 @@ def main() -> None:
             s2.ncs += 1
 
             # overall
-            os1.win_streak = 0
-            os1.loss_streak = 0
-            os2.win_streak = 0
-            os2.loss_streak = 0
             oloss1 = (o_med * nc_class_share)
             oloss2 = (o_med * nc_class_share)
             os1.points = float(max(base_points, op1_before - oloss1))

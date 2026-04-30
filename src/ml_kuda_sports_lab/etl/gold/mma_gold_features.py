@@ -205,9 +205,84 @@ def main() -> None:
         FROM fights_norm
     ),
 
-    prefight_base AS (
+    ordered_fights AS (
         SELECT
             f.*,
+            ROW_NUMBER() OVER (
+                PARTITION BY organization, fighter_id
+                ORDER BY event_date, event_url, round, time, fight_id
+            ) AS fighter_seq
+        FROM fights_norm f
+    ),
+
+    streak_events AS (
+        SELECT
+            organization,
+            fighter_id,
+            fight_id,
+            fighter_seq,
+            lower(coalesce(result, '')) AS result,
+            SUM(CASE WHEN lower(coalesce(result, '')) = 'win' THEN 0 ELSE 1 END)
+                OVER (
+                    PARTITION BY organization, fighter_id
+                    ORDER BY fighter_seq
+                    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                ) AS win_break_group,
+            SUM(CASE WHEN lower(coalesce(result, '')) = 'loss' THEN 0 ELSE 1 END)
+                OVER (
+                    PARTITION BY organization, fighter_id
+                    ORDER BY fighter_seq
+                    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                ) AS loss_break_group
+        FROM ordered_fights
+        -- No-contests are transparent to streaks. Draws are official results,
+        -- so they remain here and break both win and loss streaks.
+        WHERE lower(coalesce(result, '')) IN ('win', 'loss', 'draw')
+    ),
+
+    streak_context AS (
+        SELECT
+            f.organization,
+            f.fighter_id,
+            f.fight_id,
+            COALESCE(MAX(se.win_break_group), 0) AS win_break_group_entering,
+            COALESCE(MAX(se.loss_break_group), 0) AS loss_break_group_entering
+        FROM ordered_fights f
+        LEFT JOIN streak_events se
+               ON se.organization = f.organization
+              AND se.fighter_id = f.fighter_id
+              AND se.fighter_seq < f.fighter_seq
+        GROUP BY 1, 2, 3
+    ),
+
+    streak_entering AS (
+        SELECT
+            f.organization,
+            f.fighter_id,
+            f.fight_id,
+            COUNT(*) FILTER (
+                WHERE se.result = 'win'
+                  AND se.win_break_group = sc.win_break_group_entering
+            ) AS win_streak_entering,
+            COUNT(*) FILTER (
+                WHERE se.result = 'loss'
+                  AND se.loss_break_group = sc.loss_break_group_entering
+            ) AS loss_streak_entering
+        FROM ordered_fights f
+        LEFT JOIN streak_context sc
+               ON sc.organization = f.organization
+              AND sc.fighter_id = f.fighter_id
+              AND sc.fight_id = f.fight_id
+        LEFT JOIN streak_events se
+               ON se.organization = f.organization
+              AND se.fighter_id = f.fighter_id
+              AND se.fighter_seq < f.fighter_seq
+        GROUP BY 1, 2, 3
+    ),
+
+    prefight_base AS (
+        SELECT
+            f.* EXCLUDE (fighter_seq),
 
             -- === No-leakage inactivity and streak features ===
             MAX(CAST(f.event_date AS DATE)) OVER w_all AS fighter_last_fight_date,
@@ -221,8 +296,8 @@ def main() -> None:
                 THEN 'inactive'
                 ELSE 'active'
             END AS fighter_status,
-            SUM(CASE WHEN result = 'win' THEN 1 ELSE 0 END) OVER w_streak AS win_streak_entering,
-            SUM(CASE WHEN result = 'loss' THEN 1 ELSE 0 END) OVER w_streak AS loss_streak_entering,
+            COALESCE(se.win_streak_entering, 0) AS win_streak_entering,
+            COALESCE(se.loss_streak_entering, 0) AS loss_streak_entering,
 
             -- === Record / form (career-to-date, excluding current fight) ===
             COUNT(*) FILTER (WHERE result IN ('win','loss')) OVER w_all AS fights_count,
@@ -313,28 +388,27 @@ def main() -> None:
             CAST(SUM(CASE WHEN result='loss' AND method_category IN ('KO_TKO','SUB') THEN 1 ELSE 0 END) OVER w_all AS DOUBLE)
                 / NULLIF(SUM(CASE WHEN result='loss' THEN 1 ELSE 0 END) OVER w_all, 0) AS finish_loss_rate
 
-        FROM fights_norm f
+        FROM ordered_fights f
+        LEFT JOIN streak_entering se
+               ON se.organization = f.organization
+              AND se.fighter_id = f.fighter_id
+              AND se.fight_id = f.fight_id
 
         WINDOW
             w_all AS (
-                PARTITION BY organization, fighter_id
-                ORDER BY event_date, event_url, round, time, fight_id
+                PARTITION BY f.organization, f.fighter_id
+                ORDER BY f.event_date, f.event_url, f.round, f.time, f.fight_id
                 ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
             ),
             w_last3 AS (
-                PARTITION BY organization, fighter_id
-                ORDER BY event_date, event_url, round, time, fight_id
+                PARTITION BY f.organization, f.fighter_id
+                ORDER BY f.event_date, f.event_url, f.round, f.time, f.fight_id
                 ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING
             ),
             w_last5 AS (
-                PARTITION BY organization, fighter_id
-                ORDER BY event_date, event_url, round, time, fight_id
+                PARTITION BY f.organization, f.fighter_id
+                ORDER BY f.event_date, f.event_url, f.round, f.time, f.fight_id
                 ROWS BETWEEN 5 PRECEDING AND 1 PRECEDING
-            ),
-            w_streak AS (
-                PARTITION BY organization, fighter_id
-                ORDER BY event_date, event_url, round, time, fight_id
-                ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
             )
     ),
 
