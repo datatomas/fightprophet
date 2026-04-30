@@ -5,7 +5,10 @@
 # 4) Sunday ML + publish order MUST be strictly sequential (DuckDB-safe, no concurrent writers):
 #    mma_manual_title_vacates_load
 #      -> mma_manual_title_vacates_upload
-#      -> ws_ufc_events_recent ... mma_silver_schema ... mma_gold_features
+#      -> ws_ufc_events_recent ... mma_silver_schema
+#      -> mma_gold_fighter_status   (canonical active/inactive; overrides JSON
+#                                    cascades into silver.fighters here)
+#      -> mma_gold_features
 #      -> mma_gold_ranking
 #      -> mma_gold_belt_holders
 #      -> mma_manual_fighter_countries_sync
@@ -219,12 +222,36 @@ services:
       --csv-path /workspace/datasets/manual_overrides/ufc_fighter_manual_country.csv
     restart: "no"
 
-  mma_gold_features:
+  mma_gold_fighter_status:
     image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-gold-etl:latest
     entrypoint: []
     profiles: ["sunday"]
     depends_on:
       mma_silver_schema:
+        condition: service_completed_successfully
+    environment:
+      - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
+    volumes:
+      - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+      - ${ML_REPO_ROOT:-/home/ares/Documents/gitrepos/ml_kuda_sports_lab}:/workspace:ro
+    # Canonical active/inactive resolver. Reads
+    #   datasets/manual_overrides/fighter_status_overrides.json
+    # plus silver.fighters/silver.fights, writes gold.fighter_effective_status,
+    # and cascades the resolved status into silver.fighters.fighter_status so
+    # everything downstream (features, ranking, athletes/profiles, fight cards,
+    # rankings parquet, astro homepage feed) sees the same value.
+    command: >
+      python3 -m ml_kuda_sports_lab.etl.gold.mma_gold_fighter_status
+      --target prod
+      --status-overrides-json /workspace/datasets/manual_overrides/fighter_status_overrides.json
+    restart: "no"
+
+  mma_gold_features:
+    image: ghcr.io/${GHCR_OWNER:-datatomas}/ml_kuda_sports_lab-gold-etl:latest
+    entrypoint: []
+    profiles: ["sunday"]
+    depends_on:
+      mma_gold_fighter_status:
         condition: service_completed_successfully
     environment:
       - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
@@ -246,9 +273,14 @@ services:
       - DUCK_WH_DB=/data/db/sports_ml_warehouse.duckdb
     volumes:
       - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
+      - ${ML_REPO_ROOT:-/home/ares/Documents/gitrepos/ml_kuda_sports_lab}:/workspace:ro
+    # Reuses the same JSON the upstream mma_gold_fighter_status step read, but
+    # also rebuilds gold.fighter_effective_status itself as a safety net so
+    # ranking and silver-cascade can never disagree.
     command: >
       python3 -m ml_kuda_sports_lab.etl.gold.mma_gold_ranking
       --target prod
+      --status-overrides-json /workspace/datasets/manual_overrides/fighter_status_overrides.json
     restart: "no"
 
   mma_gold_belt_holders:
@@ -573,12 +605,17 @@ services:
     volumes:
       - ${DUCK_HOST_DB_DIR:-/home/ares/db/duck/warehouse}:/data/db
       - ${ML_REPO_ROOT:-/home/ares/Documents/gitrepos/ml_kuda_sports_lab}:/workspace:ro
+    # Refreshes gold.fighter_effective_status from the override JSON at startup
+    # before exporting parquets, so editing the JSON and re-running ONLY this
+    # step is enough to propagate active/inactive changes to athletes/fight
+    # cards/rankings parquets.
     command: >
       python3 -m ml_kuda_sports_lab.etl.gold.mma_parquets_dashboard
       --target prod
       --dataset all
       --prefix mma/diamond
       --parquet-base az://fightprophet-dashboard
+      --status-overrides-json /workspace/datasets/manual_overrides/fighter_status_overrides.json
     restart: "no"
 
   mma_parquets_dashboard_manual:
@@ -600,4 +637,5 @@ services:
       --dataset all
       --prefix mma/diamond
       --parquet-base az://fightprophet-dashboard
+      --status-overrides-json /workspace/datasets/manual_overrides/fighter_status_overrides.json
     restart: "no"
