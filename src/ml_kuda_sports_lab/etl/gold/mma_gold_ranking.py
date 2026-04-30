@@ -20,6 +20,7 @@ Docker ETL image (requirements.etl.txt does not include pandas).
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import math
 import os
@@ -39,6 +40,10 @@ logging.basicConfig(
     force=True,
 )
 logger = logging.getLogger(__name__)
+
+
+DEFAULT_STATUS_OVERRIDES_JSON_PATH = "datasets/manual_overrides/fighter_status_overrides.json"
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
 
 
 @dataclass
@@ -86,6 +91,11 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Date for final ranking snapshot (YYYY-MM-DD). Default: today.",
     )
+    p.add_argument(
+        "--status-overrides-json",
+        default=DEFAULT_STATUS_OVERRIDES_JSON_PATH,
+        help="Path to local fighter-status override JSON file.",
+    )
     return p.parse_args()
 
 
@@ -111,6 +121,130 @@ def _coerce_date(d: object | None) -> Optional[date]:
         except ValueError:
             return None
     return None
+
+
+def _normalize_fighter_status(value: object | None) -> str:
+    status = str(value or "").strip().lower()
+    return status if status in {"active", "inactive"} else ""
+
+
+def _normalize_person_key(value: object | None) -> str:
+    return " ".join(str(value or "").strip().lower().split())
+
+
+def resolve_json_path(json_path: str) -> Path:
+    candidate = Path(json_path).expanduser()
+    if candidate.is_absolute():
+        return candidate.resolve()
+
+    cwd_path = (Path.cwd() / candidate).resolve()
+    if cwd_path.exists():
+        return cwd_path
+
+    return (PROJECT_ROOT / candidate).resolve()
+
+
+def load_manual_status_overrides(
+    conn: duckdb.DuckDBPyConnection,
+    json_path: Path,
+) -> list[dict[str, object]]:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS gold.manual_fighter_status_overrides (
+            loaded_at TIMESTAMP,
+            fighter_id VARCHAR,
+            fighter_name VARCHAR,
+            fighter_status VARCHAR,
+            effective_from DATE,
+            effective_to DATE,
+            notes VARCHAR
+        )
+        """
+    )
+    conn.execute("DELETE FROM gold.manual_fighter_status_overrides")
+
+    if not json_path.exists():
+        logger.info("No manual fighter-status override file found at %s", json_path)
+        return []
+
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    rows_raw = payload.get("overrides") if isinstance(payload, dict) else []
+    if not isinstance(rows_raw, list):
+        raise ValueError(f"Expected 'overrides' list in {json_path}")
+
+    loaded_at_raw = payload.get("updated_at_utc") if isinstance(payload, dict) else None
+    loaded_at = datetime.now(tz=timezone.utc)
+    if isinstance(loaded_at_raw, str) and loaded_at_raw.strip():
+        try:
+            loaded_at = datetime.fromisoformat(loaded_at_raw.replace("Z", "+00:00"))
+        except ValueError:
+            logger.warning("Ignoring invalid updated_at_utc in %s: %s", json_path, loaded_at_raw)
+
+    inserted_rows: list[tuple] = []
+    overrides: list[dict[str, object]] = []
+
+    for row in rows_raw:
+        if not isinstance(row, dict):
+            continue
+
+        fighter_id = str(row.get("fighter_id") or "").strip()
+        fighter_name = str(row.get("fighter_name") or row.get("name") or "").strip()
+        fighter_status = _normalize_fighter_status(row.get("fighter_status"))
+        effective_from = _coerce_date(row.get("effective_from"))
+        effective_to = _coerce_date(row.get("effective_to"))
+        notes = str(row.get("notes") or row.get("note") or "").strip()
+
+        if not fighter_status or (not fighter_id and not fighter_name):
+            continue
+        if effective_from and effective_to and effective_to < effective_from:
+            raise ValueError(
+                f"Invalid fighter status override date range for {fighter_id or fighter_name}: "
+                f"{effective_from.isoformat()} > {effective_to.isoformat()}"
+            )
+
+        inserted_rows.append(
+            (
+                loaded_at,
+                fighter_id or None,
+                fighter_name or None,
+                fighter_status,
+                effective_from,
+                effective_to,
+                notes or None,
+            )
+        )
+        overrides.append(
+            {
+                "fighter_id": fighter_id.lower(),
+                "fighter_name": _normalize_person_key(fighter_name),
+                "fighter_status": fighter_status,
+                "effective_from": effective_from,
+                "effective_to": effective_to,
+            }
+        )
+
+    if inserted_rows:
+        conn.executemany(
+            """
+            INSERT INTO gold.manual_fighter_status_overrides (
+                loaded_at,
+                fighter_id,
+                fighter_name,
+                fighter_status,
+                effective_from,
+                effective_to,
+                notes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            inserted_rows,
+        )
+
+    logger.info(
+        "Loaded %s fighter status overrides into gold.manual_fighter_status_overrides from %s",
+        len(inserted_rows),
+        json_path,
+    )
+    return overrides
 
 
 def inactivity_erosion(last_date: object | None, current_date: object | None) -> float:
@@ -311,6 +445,7 @@ def ensure_gold_tables(conn: duckdb.DuckDBPyConnection, rebuild: bool) -> None:
         conn.execute("DROP TABLE IF EXISTS gold.mma_rankings")
         conn.execute("DROP TABLE IF EXISTS gold.mma_overall_rankings")
         conn.execute("DROP TABLE IF EXISTS gold.mma_ranking_fight_log")
+        conn.execute("DROP TABLE IF EXISTS gold.manual_fighter_status_overrides")
 
     conn.execute(
         r"""
@@ -421,6 +556,20 @@ def ensure_gold_tables(conn: duckdb.DuckDBPyConnection, rebuild: bool) -> None:
         """
     )
 
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS gold.manual_fighter_status_overrides (
+            loaded_at TIMESTAMP,
+            fighter_id VARCHAR,
+            fighter_name VARCHAR,
+            fighter_status VARCHAR,
+            effective_from DATE,
+            effective_to DATE,
+            notes VARCHAR
+        )
+        """
+    )
+
     # Backwards/forwards compatibility: if table existed before, add new columns.
     try:
         conn.execute("ALTER TABLE gold.mma_rankings ADD COLUMN IF NOT EXISTS fighter_status VARCHAR")
@@ -453,12 +602,14 @@ def main() -> None:
     args = parse_args()
     as_of = _parse_as_of_date(args.as_of_date)
     db_path = resolve_duckdb_path(args)
+    status_overrides_path = resolve_json_path(args.status_overrides_json)
     logger.info(
-        "Starting MMA gold ranking build target=%s rebuild=%s as_of_date=%s db_path=%s",
+        "Starting MMA gold ranking build target=%s rebuild=%s as_of_date=%s db_path=%s status_overrides_json=%s",
         args.target,
         args.rebuild,
         as_of.isoformat(),
         db_path,
+        status_overrides_path,
     )
 
     conn = duckdb.connect(db_path)
@@ -467,6 +618,29 @@ def main() -> None:
 
     ensure_gold_tables(conn, rebuild=args.rebuild)
     logger.info("Gold ranking tables are ready")
+    status_overrides = load_manual_status_overrides(conn, status_overrides_path)
+
+    def status_override_applies(row: dict[str, object]) -> bool:
+        effective_from = row.get("effective_from")
+        effective_to = row.get("effective_to")
+        if isinstance(effective_from, date) and as_of < effective_from:
+            return False
+        if isinstance(effective_to, date) and as_of > effective_to:
+            return False
+        return True
+
+    status_overrides_by_id: dict[str, str] = {}
+    status_overrides_by_name: dict[str, str] = {}
+    for row in status_overrides:
+        if not status_override_applies(row):
+            continue
+        status = str(row.get("fighter_status") or "").strip().lower()
+        fighter_id = str(row.get("fighter_id") or "").strip().lower()
+        fighter_name = _normalize_person_key(row.get("fighter_name"))
+        if fighter_id:
+            status_overrides_by_id[fighter_id] = status
+        if fighter_name:
+            status_overrides_by_name[fighter_name] = status
 
     bouts = load_bouts(conn)
     total_bouts = len(bouts)
@@ -1175,6 +1349,21 @@ def main() -> None:
             return "active"
         return "inactive" if (as_of - last_d).days > 730 else "active"
 
+    def resolve_fighter_status(
+        fighter_id: object | None,
+        fighter_name: object | None,
+        last_fight_date: object | None,
+    ) -> str:
+        fighter_id_key = str(fighter_id or "").strip().lower()
+        fighter_name_key = _normalize_person_key(fighter_name)
+        override = (
+            (fighter_id_key and status_overrides_by_id.get(fighter_id_key))
+            or (fighter_name_key and status_overrides_by_name.get(fighter_name_key))
+        )
+        if override in {"active", "inactive"}:
+            return str(override)
+        return fighter_status_from_last_fight(last_fight_date)
+
     # Compute ranks within (org, weight_class)
     grouped: Dict[Tuple[str, str], List[Tuple[str, FighterState, float]]] = {}
     for (org, wc, fid), st in states.items():
@@ -1200,7 +1389,7 @@ def main() -> None:
                     st.name,
                     float(pts),
                     st.last_fight_date,
-                    fighter_status_from_last_fight(st.last_fight_date),
+                    resolve_fighter_status(fid, st.name, st.last_fight_date),
                     int(st.fights),
                     int(st.wins),
                     int(st.losses),
@@ -1251,7 +1440,7 @@ def main() -> None:
                     st.name,
                     float(pts),
                     st.last_fight_date,
-                    fighter_status_from_last_fight(st.last_fight_date),
+                    resolve_fighter_status(fid, st.name, st.last_fight_date),
                     int(tot.fights),
                     int(tot.wins),
                     int(tot.losses),
