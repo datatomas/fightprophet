@@ -190,6 +190,17 @@ _COOKIE_IMAGE_MODE = "fp_image_mode"
 _COOKIE_LANG = "fp_lang"
 
 
+def _fp_cookie_domain() -> str | None:
+    """Domain to scope cookies to so that app.fightprophet.com and the marketing
+    site at fightprophet.com share preferences (lang, last page, etc.).
+
+    Configure with FP_COOKIE_DOMAIN=.fightprophet.com in production. Leave unset
+    for local dev so cookies stay on the current host.
+    """
+    raw = (os.environ.get("FP_COOKIE_DOMAIN") or "").strip()
+    return raw or None
+
+
 def _cookie_manager():
     if stx is None:
         return None
@@ -222,8 +233,18 @@ def _cookie_set(name: str, value: str) -> None:
     manager = _cookie_manager()
     if manager is None:
         return
+    domain = _fp_cookie_domain()
     try:
-        manager.set(name, value)
+        if domain:
+            manager.set(name, value, domain=domain)
+        else:
+            manager.set(name, value)
+    except TypeError:
+        # Older extra_streamlit_components without a domain kwarg.
+        try:
+            manager.set(name, value)
+        except Exception:
+            pass
     except Exception:
         pass
 
@@ -288,6 +309,7 @@ Use the sidebar to navigate:
 - Fighter Cards
 """,
     "common.contact": "Contact",
+    "common.made_in_colombia": "Made in Colombia",
     "page.terms.title": "Terms & Conditions",
     "page.terms.body": """
 By using this dashboard, you acknowledge and agree to the following:
@@ -407,6 +429,7 @@ Usa la barra lateral para navegar:
 - Tarjetas de Peleadores
 """,
         "common.contact": "Contacto",
+        "common.made_in_colombia": "Hecho en Colombia",
         "page.terms.title": "Términos y Condiciones",
         "page.upcoming.title": "Próximas Predicciones de Peleas",
         "page.upcoming.prediction_model": "Modelo de predicción",
@@ -498,6 +521,7 @@ Use a barra lateral para navegar:
 - Cards de Lutadores
 """,
         "common.contact": "Contato",
+        "common.made_in_colombia": "Feito na Colômbia",
         "page.terms.title": "Termos e Condições",
         "page.upcoming.title": "Próximas Previsões de Lutas",
         "page.upcoming.prediction_model": "Modelo de previsão",
@@ -701,6 +725,8 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(_PROJECT_ROOT / "src"))
 _STATIC_DIR = _PROJECT_ROOT / "static"
 _GOAT_EMOJI_PNG_PATH = _STATIC_DIR / "b91c1c-goat-emoji.png"
+_MADE_IN_COLOMBIA_ICON_FILE = "b91c1c-madeincolombia-emoji.png"
+_EARPRO_ICON_FILE = "b91c1c-earpro-emoji.png"
 _NAV_ICON_FILES = {
     "predictions": "b91c1c-predictions-emoji-rail.png",
     "fighter-card": "b91c1c-fighterscard-emoji-rail.png",
@@ -1717,9 +1743,25 @@ def _fighter_badge(
         else:
             country_val = maps["by_name"].get(txt, "")
 
-    flag = _country_to_flag(country_val)
+    flag = ""
+    if _country_flag_mode() == "cdn":
+        flag = _country_to_flagcdn_img(country_val, width=18)
+    if not flag:
+        flag = _country_to_flag(country_val)
     belt = _goat_icon_html(size=13, extra_class="fp-inline-goat--champ") if _to_boolish(is_champion) else ""
-    return f"{flag} {belt}".strip() if flag else belt
+
+    parts: list[str] = []
+    if flag:
+        if flag.strip().startswith("<"):
+            parts.append(flag)
+        else:
+            country_title = escape(country_val) if country_val else "Flag"
+            parts.append(f'<span class="fp-badge-flag" title="{country_title}">{escape(flag)}</span>')
+    if belt:
+        parts.append(belt)
+    if not parts:
+        return ""
+    return f'<span class="fp-fighter-badge">{"".join(parts)}</span>'
 
 
 def _fighter_badge_from_row(row: pd.Series, side: str) -> str:
@@ -2010,11 +2052,53 @@ def _goat_icon_data_uri() -> str:
 
 
 @st.cache_data(show_spinner=False)
-def _named_icon_data_uri(filename: str) -> str:
+def _named_icon_data_uri_cached(filename: str, mtime_ns: int) -> str:
+    del mtime_ns
     if not filename:
         return ""
     path = _STATIC_DIR / filename
     return _favicon_data_uri(path if path.exists() and path.is_file() else None)
+
+
+def _named_icon_data_uri(filename: str) -> str:
+    if not filename:
+        return ""
+    path = _STATIC_DIR / filename
+    if not path.exists() or not path.is_file():
+        return ""
+    try:
+        mtime_ns = path.stat().st_mtime_ns
+    except Exception:
+        mtime_ns = 0
+    return _named_icon_data_uri_cached(filename, mtime_ns)
+
+
+@st.cache_data(show_spinner=False)
+def _image_path_data_uri_cached(path_text: str, mtime_ns: int) -> str:
+    del mtime_ns
+    return _favicon_data_uri(Path(path_text))
+
+
+def _branding_icon_data_uri(filename: str) -> str:
+    if not filename:
+        return ""
+    candidates = (
+        _STATIC_DIR / filename,
+        _PROJECT_ROOT / "astro_adsense_starter" / "public" / "branding" / filename,
+    )
+    for path in candidates:
+        if not path.exists() or not path.is_file():
+            continue
+        try:
+            mtime_ns = path.stat().st_mtime_ns
+        except Exception:
+            mtime_ns = 0
+        return _image_path_data_uri_cached(str(path), mtime_ns)
+    return ""
+
+
+def _made_in_colombia_icon_data_uri() -> str:
+    return _branding_icon_data_uri(_MADE_IN_COLOMBIA_ICON_FILE)
 
 
 def _png_icon_html(
@@ -2365,36 +2449,71 @@ def _render_sidebar_footer_logo() -> None:
     if secondary is None:
         _, dark_icon = _get_favicon_icon_paths()
         secondary = dark_icon
-    st.markdown("<div style='height: 0.35rem;'></div>", unsafe_allow_html=True)
-    secondary_bytes = _read_image_bytes(secondary)
-    if secondary_bytes is not None:
-        import base64 as _b64
-        ear_b64 = _b64.b64encode(secondary_bytes).decode()
-        st.markdown(
-            f"""
-            <div style="display:flex; justify-content:center; align-items:center; padding:0.2rem 0 0.1rem;">
-                <img src="data:image/png;base64,{ear_b64}" alt="Fight Prophet"
-                     style="width:42px; height:auto; object-fit:contain; opacity:0.94;
-                            filter:drop-shadow(0 0 8px rgba(220,38,38,0.35));" />
-            </div>
-            """,
-            unsafe_allow_html=True,
+    ear_uri = _favicon_data_uri(secondary)
+    made_in_uri = _made_in_colombia_icon_data_uri()
+    contact_links = [
+        ("Business LinkedIn", "https://www.linkedin.com/company/fight-prophet"),
+        ("Founder LinkedIn", "https://www.linkedin.com/in/datatomas/"),
+        ("Business GitHub", "https://github.com/datatomas/fight_prophet"),
+        ("Medium", "https://medium.com/@datatomas"),
+        ("Email", "mailto:datatomas@uppercutanalytics.com"),
+    ]
+    ear_html = (
+        f'<img src="{ear_uri}" alt="Fight Prophet" class="fp-sidebar-footer-mark" loading="lazy" decoding="async" />'
+        if ear_uri
+        else ""
+    )
+    link_items: list[str] = []
+    for label, href in contact_links:
+        is_mailto = href.startswith("mailto:")
+        rel_attr = "" if is_mailto else ' rel="noopener noreferrer"'
+        link_items.append(
+            f'<a class="fp-sidebar-footer-link is-muted" href="{escape(href)}" '
+            f'target="{"_self" if is_mailto else "_blank"}"{rel_attr}>'
+            f'{escape(label)}</a>'
         )
-    else:
-        st.markdown("<div style='height:0.15rem;'></div>", unsafe_allow_html=True)
+    links_html = "".join(link_items)
+    made_in_html = (
+        f'<div class="fp-made-in fp-made-in--rail" aria-label="{escape(t("common.made_in_colombia"))}">'
+        f'<img src="{made_in_uri}" alt="" aria-hidden="true" data-fp-asset="{escape(_MADE_IN_COLOMBIA_ICON_FILE)}" '
+        'class="fp-made-in-mark" loading="lazy" decoding="async" />'
+        '</div>'
+        if made_in_uri
+        else ""
+    )
     st.markdown(
-        """
-        <div style="text-align:center;">
-            <div style="font-size:1.02rem; font-weight:700; margin-top:0.15rem; margin-bottom:0.45rem;">Contact</div>
-            <div style="font-size:0.95rem; line-height:1.5;">
-                <a href="https://www.linkedin.com/company/fight-prophet" target="_blank">Business LinkedIn</a><br/>
-                <a href="https://www.linkedin.com/in/datatomas/" target="_blank">Founder LinkedIn</a><br/>
-                <a href="https://github.com/datatomas/fight_prophet" target="_blank">Business GitHub</a><br/>
-                <a href="https://medium.com/@datatomas" target="_blank">Medium</a><br/>
-                <a href="mailto:datatomas@uppercutanalytics.com">Email</a>
-            </div>
-        </div>
-        """,
+        (
+            '<div class="fp-sidebar-footer" aria-label="Contact">'
+            f'{ear_html}'
+            '<div class="fp-sidebar-footer-divider" aria-hidden="true"></div>'
+            f'<div class="fp-sidebar-footer-title">{escape(t("common.contact"))}</div>'
+            f'<div class="fp-sidebar-footer-links">{links_html}</div>'
+            f'{made_in_html}'
+            '</div>'
+        ),
+        unsafe_allow_html=True,
+    )
+
+
+def _render_page_footer_earpro_badge() -> None:
+    """Plain ear-pro badge shown at the bottom of the page."""
+    badge_uri = _branding_icon_data_uri(_EARPRO_ICON_FILE)
+    if not badge_uri:
+        return
+    label = "Fight Prophet Ear Pro"
+    img_html = (
+        f'<img src="{badge_uri}" alt="" aria-hidden="true" '
+        f'data-fp-asset="{escape(_EARPRO_ICON_FILE)}" '
+        'class="fp-earpro-mark" '
+        'style="width:136px;height:136px;object-fit:contain;display:block;" />'
+    )
+    st.markdown(
+        (
+            f'<div class="fp-earpro fp-earpro--page-footer" aria-label="{escape(label)}" '
+            'style="display:flex;justify-content:center;margin:2rem 0 0.25rem;">'
+            f'{img_html}'
+            '</div>'
+        ),
         unsafe_allow_html=True,
     )
 
@@ -3033,6 +3152,9 @@ st.markdown(
     .fp-inline-goat.fp-inline-emoji--signal {
         filter: drop-shadow(0 0 6px rgba(248, 113, 113, 0.22));
     }
+    .fp-inline-goat.fp-inline-emoji--signal-low {
+        filter: brightness(1.45) saturate(1.5) contrast(1.28) drop-shadow(0 0 7px rgba(244, 244, 245, 0.34)) drop-shadow(0 0 9px rgba(248, 113, 113, 0.18));
+    }
     .fp-inline-goat.fp-inline-emoji--kpi {
         filter: brightness(1.18) saturate(1.18) contrast(1.1) drop-shadow(0 0 10px rgba(248, 113, 113, 0.24));
     }
@@ -3050,6 +3172,10 @@ st.markdown(
     }
     .fp-inline-emoji--signal {
         font-size: 0.92rem;
+    }
+    .fp-inline-emoji--signal-low {
+        color: #f4f4f5;
+        filter: brightness(1.35) contrast(1.22) drop-shadow(0 0 7px rgba(244, 244, 245, 0.32));
     }
     .fp-inline-emoji--guide {
         font-size: 0.98rem;
@@ -3073,6 +3199,32 @@ st.markdown(
     .fp-inline-goat--champ {
         margin-left: 0.16rem;
         vertical-align: -2px;
+    }
+    .fp-fighter-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.2rem;
+        width: 100%;
+        min-width: 2.4rem;
+        line-height: 1;
+        white-space: nowrap;
+    }
+    .fp-fighter-badge img {
+        display: block;
+        flex: 0 0 auto;
+    }
+    .fp-fighter-badge .fp-inline-goat--champ {
+        margin-left: 0;
+        vertical-align: middle;
+    }
+    .fp-badge-flag {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        font-size: 1rem;
+        line-height: 1;
     }
     .fp-sidebar-nav-link {
         display: flex;
@@ -3115,6 +3267,87 @@ st.markdown(
         opacity: 1;
         transform: scale(1.05);
         filter: brightness(1.82) saturate(1.75) contrast(1.24) drop-shadow(0 0 12px rgba(248, 113, 113, 0.48));
+    }
+    .fp-sidebar-footer {
+        display: grid;
+        justify-items: center;
+        gap: 0.72rem;
+        margin: 0.35rem 0 0.25rem;
+        text-align: center;
+    }
+    .fp-sidebar-footer-mark {
+        display: block;
+        width: 42px;
+        height: auto;
+        object-fit: contain;
+        opacity: 0.94;
+        filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.35));
+    }
+    .fp-sidebar-footer-divider {
+        width: 100%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(220, 38, 38, 0.34), transparent);
+    }
+    .fp-sidebar-footer-title {
+        margin: 0;
+        color: #f4f4f5;
+        font-size: 1.02rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+    }
+    .fp-sidebar-footer-links {
+        display: grid;
+        gap: 0.42rem;
+        width: 100%;
+    }
+    .fp-sidebar-footer-link,
+    .fp-sidebar-footer-link:link,
+    .fp-sidebar-footer-link:visited,
+    .fp-sidebar-footer-link:hover,
+    .fp-sidebar-footer-link:focus,
+    .fp-sidebar-footer-link:active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: auto;
+        padding: 0.38rem 0.56rem;
+        border-radius: 0.78rem;
+        border: 1px solid rgba(113, 113, 122, 0.28);
+        background: rgba(24, 24, 27, 0.72);
+        color: #a1a1aa !important;
+        font-size: 0.82rem;
+        font-weight: 600;
+        line-height: 1.25;
+        text-align: center;
+        text-decoration: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+        overflow-wrap: anywhere;
+    }
+    .fp-sidebar-footer-link:hover,
+    .fp-sidebar-footer-link:focus {
+        color: #f4f4f5 !important;
+        background: rgba(39, 39, 42, 0.82);
+        border-color: rgba(220, 38, 38, 0.22);
+    }
+    .fp-sidebar-footer-link:focus-visible {
+        box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.28) !important;
+    }
+    .fp-made-in,
+    .fp-earpro {
+        display: flex;
+        justify-content: center;
+        width: fit-content;
+    }
+    .fp-made-in--rail {
+        margin: 0.1rem 0 0.25rem;
+    }
+    .fp-made-in-mark,
+    .fp-earpro-mark {
+        display: block;
+        width: 136px;
+        height: 136px;
+        object-fit: contain;
     }
     .fp-section-title {
         display: inline-flex;
@@ -3207,7 +3440,7 @@ st.markdown(
     /* Signal badges in dataframes */
     .strong-signal { color: #4ade80; font-weight: 600; }
     .medium-signal { color: #facc15; font-weight: 600; }
-    .weak-signal   { color: #a1a1aa; }
+    .weak-signal   { color: #d4d4d8; font-weight: 600; }
 
     /* Sidebar logos */
     section[data-testid="stSidebar"] [data-testid="stImage"] img {
@@ -3354,6 +3587,13 @@ st.markdown(
         font-weight: 700;
         line-height: 1.1;
         text-wrap: balance;
+    }
+    .fighter-meta-caption {
+        color: #71717a;
+        font-size: 0.52rem;
+        letter-spacing: 0.03em;
+        margin-top: 0.18rem;
+        line-height: 1.3;
     }
 
     .kpi-card {
@@ -4279,10 +4519,10 @@ _SIGNAL_ICONS = {
     or _inline_emoji_html("🟡", extra_class="fp-inline-emoji--signal"),
     "MID": _png_icon_html("b91c1c-signals-mid-emoji.png", size=16, extra_class="fp-inline-emoji--signal", label="Mid signal")
     or _inline_emoji_html("🟡", extra_class="fp-inline-emoji--signal"),
-    "WEAK": _png_icon_html("b91c1c-signals-low-emoji.png", size=16, extra_class="fp-inline-emoji--signal", label="Low signal")
-    or _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal"),
-    "LOW": _png_icon_html("b91c1c-signals-low-emoji.png", size=16, extra_class="fp-inline-emoji--signal", label="Low signal")
-    or _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal"),
+    "WEAK": _png_icon_html("b91c1c-signals-low-emoji.png", size=18, extra_class="fp-inline-emoji--signal fp-inline-emoji--signal-low", label="Low signal")
+    or _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal fp-inline-emoji--signal-low"),
+    "LOW": _png_icon_html("b91c1c-signals-low-emoji.png", size=18, extra_class="fp-inline-emoji--signal fp-inline-emoji--signal-low", label="Low signal")
+    or _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal fp-inline-emoji--signal-low"),
 }
 
 
@@ -4335,13 +4575,15 @@ def _render_fighter_stat_card(label: str, value: str) -> None:
     )
 
 
-def _render_fighter_meta_card(label: str, value: str, icon: str, accent: str) -> None:
+def _render_fighter_meta_card(label: str, value: str, icon: str, accent: str, *, caption: str = "") -> None:
+    caption_html = f'<div class="fighter-meta-caption">{escape(caption)}</div>' if caption else ""
     st.markdown(
         (
             f'<div class="fighter-meta-card" style="--meta-accent: {escape(accent)};">'
             f'<div class="fighter-meta-icon">{_icon_markup(icon, default_size=14)}</div>'
             f'<div class="fighter-meta-label">{escape(label)}</div>'
             f'<div class="fighter-meta-value">{escape(value)}</div>'
+            f'{caption_html}'
             '</div>'
         ),
         unsafe_allow_html=True,
@@ -4473,7 +4715,7 @@ _PREDICTION_MATCHUP_CSS = """
 .fp-matchup-signal{display:inline-flex;align-items:center;gap:0.42rem;padding:0.34rem 0.72rem;border-radius:999px;font-size:0.74rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);color:#e4e4e7;}
 .fp-matchup-signal--strong{color:#bbf7d0;border-color:rgba(34,197,94,0.24);background:rgba(34,197,94,0.12);}
 .fp-matchup-signal--medium{color:#fde68a;border-color:rgba(234,179,8,0.24);background:rgba(234,179,8,0.12);}
-.fp-matchup-signal--weak{color:#e4e4e7;border-color:rgba(161,161,170,0.22);background:rgba(113,113,122,0.1);}
+.fp-matchup-signal--weak{color:#f4f4f5;border-color:rgba(212,212,216,0.36);background:rgba(161,161,170,0.16);box-shadow:0 0 14px rgba(244,244,245,0.08),inset 0 0 0 1px rgba(255,255,255,0.04);}
 .fp-matchup-signal--neutral{color:#f4f4f5;}
 .fp-matchup-grid{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) 170px minmax(0,1fr);gap:0.95rem;align-items:center;}
 .fp-fighter-pane{display:flex;flex-direction:column;align-items:center;gap:0.55rem;}
@@ -4514,7 +4756,7 @@ _BETTING_GUIDE_CSS = """
 .fp-guide-item{padding:0.78rem 0.82rem;border-radius:0.95rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);}
 .fp-guide-item--strong{border-color:rgba(34,197,94,0.24);background:rgba(34,197,94,0.08);}
 .fp-guide-item--medium{border-color:rgba(234,179,8,0.24);background:rgba(234,179,8,0.08);}
-.fp-guide-item--weak{border-color:rgba(161,161,170,0.2);background:rgba(113,113,122,0.08);}
+.fp-guide-item--weak{border-color:rgba(212,212,216,0.28);background:rgba(161,161,170,0.12);}
 .fp-guide-item--recommended{border-color:rgba(139,92,246,0.24);background:rgba(139,92,246,0.08);}
 .fp-guide-item--check{grid-column:1/-1;}
 .fp-guide-label{display:flex;align-items:center;gap:0.45rem;margin-bottom:0.35rem;font-size:0.8rem;font-weight:800;color:#fafafa;letter-spacing:0.03em;}
@@ -4944,7 +5186,52 @@ def _render_fighter_overview_card(
     )
 
 
-def _render_smart_dataframe(df: pd.DataFrame, *, key: str, height: int = 420) -> None:
+def _html_table_cell(value: object, *, allow_html: bool = False) -> str:
+    if value is None:
+        return ""
+    try:
+        if pd.isna(value):
+            return ""
+    except (TypeError, ValueError):
+        pass
+    text = str(value)
+    return text if allow_html else escape(text)
+
+
+def _render_html_dataframe(
+    df: pd.DataFrame,
+    *,
+    html_columns: list[str] | tuple[str, ...] | set[str],
+    height: int = 420,
+) -> None:
+    html_col_set = set(html_columns)
+    headers = "".join(f"<th>{escape(str(col))}</th>" for col in df.columns)
+    rows: list[str] = []
+    for _, row in df.iterrows():
+        cells = "".join(
+            f"<td>{_html_table_cell(row.get(col), allow_html=col in html_col_set)}</td>"
+            for col in df.columns
+        )
+        rows.append(f"<tr>{cells}</tr>")
+    table_html = (
+        f'<div class="fp-html-table-wrap" style="max-height:{int(height)}px;overflow:auto;">'
+        f"<table><thead><tr>{headers}</tr></thead><tbody>{''.join(rows)}</tbody></table>"
+        "</div>"
+    )
+    st.markdown(table_html, unsafe_allow_html=True)
+
+
+def _render_smart_dataframe(
+    df: pd.DataFrame,
+    *,
+    key: str,
+    height: int = 420,
+    html_columns: list[str] | tuple[str, ...] | set[str] | None = None,
+) -> None:
+    if html_columns:
+        _render_html_dataframe(df, html_columns=html_columns, height=height)
+        return
+
     if AgGrid is not None and GridOptionsBuilder is not None:
         gb = GridOptionsBuilder.from_dataframe(df)
         gb.configure_default_column(filter=True, sortable=True, resizable=True)
@@ -7025,46 +7312,43 @@ def page_belt_holders() -> None:
         active_champs = total_divisions
 
     total_title_fights = len(df_history) if not df_history.empty else 0
-    title_changes = 0
-    if not df_history.empty and "title_changed_hands" in df_history.columns:
-        tc_mask = df_history["title_changed_hands"].apply(
-            lambda v: (
-                (v is True)
-                or (isinstance(v, str) and v.strip().lower() in ("true", "1", "yes"))
-            )
-            if v is not None
-            else False
-        )
-        title_changes = int(tc_mask.sum())
 
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3 = st.columns(3)
     with c1:
         _render_kpi_card(
             t("page.belt_holders.total_divisions"),
             str(total_divisions),
-            icon=_goat_icon_html(),
+            icon=_png_icon_html(
+                "b91c1c-weights-emoji.png",
+                size=46,
+                extra_class="fp-inline-emoji--kpi",
+                label=t("page.belt_holders.total_divisions"),
+            ),
             accent="#3b82f6",
         )
     with c2:
         _render_kpi_card(
             t("page.belt_holders.active_champions"),
             str(active_champs),
-            icon=_goat_icon_html(),
+            icon=_png_icon_html(
+                "b91c1c-activechampions-emoji.png",
+                size=46,
+                extra_class="fp-inline-emoji--kpi",
+                label=t("page.belt_holders.active_champions"),
+            ),
             accent="#f59e0b",
         )
     with c3:
         _render_kpi_card(
             t("page.belt_holders.total_title_fights"),
             str(total_title_fights),
-            icon=_goat_icon_html(),
+            icon=_png_icon_html(
+                "b91c1c-tittlefight-emoji.png",
+                size=46,
+                extra_class="fp-inline-emoji--kpi",
+                label=t("page.belt_holders.total_title_fights"),
+            ),
             accent="#a855f7",
-        )
-    with c4:
-        _render_kpi_card(
-            t("page.belt_holders.title_changes"),
-            str(title_changes),
-            icon=_goat_icon_html(),
-            accent="#ef4444",
         )
 
     st.divider()
@@ -7147,6 +7431,7 @@ def page_belt_holders() -> None:
         champions_tbl.sort_values("Division") if "Division" in champions_tbl.columns else champions_tbl,
         key="belt_holders_current",
         height=360,
+        html_columns=["Ftr"],
     )
 
     # ---- Manual Belt Overrides section ----
@@ -7274,12 +7559,60 @@ def page_belt_holders() -> None:
     other_cols = [c for c in tbl.columns if c not in front_cols]
     tbl = tbl[front_cols + other_cols]
 
-    _render_smart_dataframe(tbl, key="belt_holders_history", height=420)
+    _render_smart_dataframe(tbl, key="belt_holders_history", height=420, html_columns=["W Ftr", "L Ftr"])
 
 
 # ---------------------------------------------------------------------------
 # Page: Fighter Rankings
 # ---------------------------------------------------------------------------
+
+
+def _prepare_rankings_dataframe(df_rank: pd.DataFrame) -> pd.DataFrame:
+    """Keep the rankings view to one current row per fighter/division."""
+    if df_rank.empty:
+        return df_rank
+
+    df = df_rank.copy()
+
+    if "as_of_date" in df.columns:
+        as_of = pd.to_datetime(df["as_of_date"], errors="coerce")
+        latest_as_of = as_of.max()
+        if pd.notna(latest_as_of):
+            df = df[as_of == latest_as_of].copy()
+
+    sort_cols: list[str] = []
+    ascending: list[bool] = []
+    for col, asc in [
+        ("weight_class", True),
+        ("rank", True),
+        ("points", False),
+        ("global_points", False),
+    ]:
+        if col in df.columns:
+            sort_cols.append(col)
+            ascending.append(asc)
+    if sort_cols:
+        df = df.sort_values(sort_cols, ascending=ascending, na_position="last")
+
+    df = df.drop_duplicates()
+
+    identity_cols = [
+        c
+        for c in ["organization", "weight_class", "fighter_id"]
+        if c in df.columns
+    ]
+    if len(identity_cols) >= 2 and "fighter_id" in identity_cols:
+        df = df.drop_duplicates(subset=identity_cols, keep="first")
+    else:
+        fallback_cols = [
+            c
+            for c in ["organization", "weight_class", "fighter_name"]
+            if c in df.columns
+        ]
+        if len(fallback_cols) >= 2:
+            df = df.drop_duplicates(subset=fallback_cols, keep="first")
+
+    return df.reset_index(drop=True)
 
 
 def page_rankings() -> None:
@@ -7319,6 +7652,7 @@ def page_rankings() -> None:
     if df_rank.empty:
         st.info("No ranking data available.")
         return
+    df_rank = _prepare_rankings_dataframe(df_rank)
 
     # As-of date badge
     if "as_of_date" in df_rank.columns:
@@ -7353,21 +7687,37 @@ def page_rankings() -> None:
     df_show = df_show[df_show["rank"] <= top_n]
 
     # Quick stats
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3 = st.columns(3)
     with c1:
         _render_kpi_card("Ranked Entries", str(len(df_show)), icon=_goat_icon_html(), accent="#a855f7")
     with c2:
-        _render_kpi_card("Weight Classes", str(df_show["weight_class"].nunique()), icon=_goat_icon_html(), accent="#3b82f6")
+        _render_kpi_card(
+            "Weight Classes",
+            str(df_show["weight_class"].nunique()),
+            icon=_png_icon_html(
+                "b91c1c-weights-emoji.png",
+                size=46,
+                extra_class="fp-inline-emoji--kpi",
+                label="Weight Classes",
+            ),
+            accent="#3b82f6",
+        )
     if champion_ids and "fighter_id" in df_show.columns:
         champs = df_show["fighter_id"].astype(str).str.strip().isin(champion_ids).sum()
     else:
         champs = (df_show["rank"] == 1).sum()
     with c3:
-        _render_kpi_card("Current Champs", str(int(champs)), icon=_goat_icon_html(), accent="#f59e0b")
-    avg_points = pd.to_numeric(df_show.get("points"), errors="coerce").mean() if "points" in df_show.columns else pd.NA
-    avg_points_text = f"{float(avg_points):.1f}" if pd.notna(avg_points) else "—"
-    with c4:
-        _render_kpi_card("Avg Points", avg_points_text, icon=_goat_icon_html(), accent="#ef4444")
+        _render_kpi_card(
+            "Current Champs",
+            str(int(champs)),
+            icon=_png_icon_html(
+                "b91c1c-champion-emoji.png",
+                size=46,
+                extra_class="fp-inline-emoji--kpi",
+                label="Current Champs",
+            ),
+            accent="#f59e0b",
+        )
 
     st.divider()
 
@@ -7661,11 +8011,11 @@ def page_fighter_profile() -> None:
             st.markdown(belt_holder_html, unsafe_allow_html=True)
         _r1, _r2, _r3 = st.columns(3)
         with _r1:
-            _render_fighter_meta_card("Str Def", _fmt_pct_compact(p.get("str_def")), icon=_goat_icon_html(), accent="#22c55e")
+            _render_fighter_meta_card("Str Def", _fmt_pct_compact(p.get("str_def")), icon=_png_icon_html("b91c1c-strikingdefence-emoji.png", size=20, label="Str Def") or _goat_icon_html(), accent="#22c55e", caption="Strikes absorbed vs. thrown by opponent")
         with _r2:
-            _render_fighter_meta_card("TD Def", _fmt_pct_compact(p.get("td_def")), icon=_goat_icon_html(), accent="#eab308")
+            _render_fighter_meta_card("TD Def", _fmt_pct_compact(p.get("td_def")), icon=_png_icon_html("b91c1c-takedowndefence-emoji.png", size=20, label="TD Def") or _goat_icon_html(), accent="#eab308", caption="Takedown attempts successfully stuffed")
         with _r3:
-            _render_fighter_meta_card("SApM", _fmt_float_compact(p.get("sapm"), 2), icon=_goat_icon_html(), accent="#ef4444")
+            _render_fighter_meta_card("SApM", _fmt_float_compact(p.get("sapm"), 2), icon=_png_icon_html("b91c1c-strikingaccuracy-emoji.png", size=20, label="SApM") or _goat_icon_html(), accent="#ef4444", caption="Significant strikes absorbed per minute")
 
     dob_val = p.get("dob")
     dob_text = "—"
@@ -7701,7 +8051,7 @@ def page_fighter_profile() -> None:
         st.markdown("<div style='height: 0.3rem;'></div>", unsafe_allow_html=True)
         s1, s2, s3 = st.columns(3)
         with s1:
-            _render_fighter_meta_card("Bonuses Won", _bonuses_won, icon=_goat_icon_html(), accent="#f59e0b")
+            _render_fighter_meta_card("Bonuses Won", _bonuses_won, icon=_png_icon_html("b91c1c-bonus-emoji.png", size=20, label="Bonus") or _goat_icon_html(), accent="#f59e0b")
         with s2:
             _render_fighter_meta_card(
                 "Longest Win Streak",
@@ -7942,3 +8292,5 @@ elif _active_page_slug == "belt-holders":
     page_belt_holders()
 elif _active_page_slug in {"fighter-card", "fighter-profile"}:
     page_fighter_profile()
+
+_render_page_footer_earpro_badge()

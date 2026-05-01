@@ -60,6 +60,11 @@ function slugify(input: string): string {
     .slice(0, 72) || 'mma-news';
 }
 
+function rankTierFor(index: number): string {
+  if (index === 0) return 'king';
+  return 'goat';
+}
+
 interface RankingDeck {
   slug: string;
   label: string;
@@ -75,11 +80,11 @@ interface RankingDeckExt extends RankingDeck {
 
 const rankingDecks: RankingDeckExt[] = [
   ...(topGoats.length > 0
-    ? [{
+      ? [{
         slug: 'goat-list',
         label: 'GOAT List',
         title: 'GOAT List',
-        note: 'A pound-for-pound style snapshot built from the latest model-wide ranking feed. Tap any category below to swap the deck.',
+        note: 'All-time global ladder: every UFC weight class feeds one GOAT score, sorted by global rank and global points.',
         countLabel: `${topGoats.length} featured fighters`,
         fighters: topGoats,
         rerank: false,
@@ -91,7 +96,7 @@ const rankingDecks: RankingDeckExt[] = [
       slug: `division-${slugify(group.weight_class || 'division')}`,
       label: group.weight_class,
       title: group.weight_class,
-      note: `Current ranking deck for ${group.weight_class}. Click around and the cards reshuffle into the new division.`,
+      note: `${group.weight_class} ladder: the same scoring engine, scoped to one weight class so the division king is obvious.`,
       countLabel: `${group.fighters.length} ranked fighters`,
       fighters: group.fighters,
       rerank: true,
@@ -198,9 +203,9 @@ const newsStructuredData = newsItems.map((item) => ({
       <div class="fp-hero-brand">
         <img src="/branding/fightprophet_logo_white.png" alt="Fight Prophet" class="fp-hero-logo" loading="eager" />
       </div>
-      <p class="fp-hero-eyebrow" id="i18n-hero-eyebrow">The Home of MMA Intelligence</p>
-      <h1 class="fp-hero-title" id="i18n-hero-title">AI-powered MMA rankings, stats, and fight predictions.</h1>
-      <p class="fp-hero-sub" id="i18n-hero-sub">Built for fans by fans. Fight Prophet helps pioneer MMA intelligence by turning fight data and machine learning into simple picks and rankings.</p>
+      <p class="fp-hero-eyebrow" id="i18n-hero-eyebrow">The MMA GOAT Board</p>
+      <h1 class="fp-hero-title" id="i18n-hero-title">Who is the greatest fighter of all time?</h1>
+      <p class="fp-hero-sub" id="i18n-hero-sub">Fight Prophet runs a fight-by-fight ranking engine: every UFC result earns or burns points, then the board splits into all-time, active, and weight-class GOAT lists.</p>
       <div class="fp-hero-ctas">
         <a class="fp-cta-primary" href={predictionsAppUrl}>
           <span id="i18n-cta-open-app">See predictions</span>
@@ -216,18 +221,50 @@ const newsStructuredData = newsItems.map((item) => ({
       <div class="fp-rank-section-head">
         <div>
           <p class="fp-section-label" id="i18n-rank-label">GOAT Board</p>
-          <h2 class="fp-rank-section-title" id="i18n-rank-title">GOAT List</h2>
+          <h2 class="fp-rank-section-title" id="i18n-rank-title">All-time, active, and division GOAT rankings</h2>
+          <p class="fp-rank-section-copy" id="i18n-rank-copy">No nostalgia ballot. No barbershop argument. The board is rebuilt from fight results, opponent quality, finishes, titles, streaks, inactivity, and losses.</p>
         </div>
       </div>
 
       {hasRankingDecks ? (
-        <div class="fp-rank-wall" data-initial-division={initialDeckSlug} data-status-filter="active">
-          <p class="fp-rank-note">Start on the GOAT list, then click any category pill to swap the deck and reveal a different set of fighter cards.</p>
+        <div class="fp-rank-wall" data-initial-division={initialDeckSlug} data-status-filter="all">
+          <div class="fp-ranking-scoreboard" aria-label="How Fight Prophet rankings work">
+            <div class="fp-ranking-scoreboard-lead">
+              <span class="fp-score-stamp" id="i18n-score-stamp">Ranking Engine</span>
+              <h3 id="i18n-score-title">Points are won in the cage, then boosted for legacy.</h3>
+              <p id="i18n-score-copy">Each UFC bout updates two ladders: a weight-class ladder and a global GOAT ladder. Wins over strong opponents add more points; finishes, title fights, UFC bonuses, win streaks, champion history, title defenses, and career volume push the score higher. Losses pull fighters down, and inactive division ranks start decaying after 730 days.</p>
+            </div>
+            <div class="fp-score-rules">
+              <div class="fp-score-rule">
+                <strong id="i18n-score-rule-1-title">All-time GOAT</strong>
+                <span id="i18n-score-rule-1-copy">Global points compare every UFC fighter across every weight class.</span>
+              </div>
+              <div class="fp-score-rule">
+                <strong id="i18n-score-rule-2-title">Active GOAT</strong>
+                <span id="i18n-score-rule-2-copy">The live race without retired or long-inactive names.</span>
+              </div>
+              <div class="fp-score-rule">
+                <strong id="i18n-score-rule-3-title">By weight</strong>
+                <span id="i18n-score-rule-3-copy">Division tabs reveal the king of each class using the same point logic.</span>
+              </div>
+              <div class="fp-score-rule">
+                <strong id="i18n-score-rule-4-title">How points move</strong>
+                <span id="i18n-score-rule-4-copy">Elite wins, finishes, title stakes, bonuses, streaks, and defenses matter. Losses hurt.</span>
+              </div>
+            </div>
+          </div>
 
-          <div class="fp-status-toggle" role="radiogroup" aria-label="Fighter status filter">
-            <button type="button" class="fp-status-btn is-active" data-status-target="active" aria-pressed="true">Active</button>
-            <button type="button" class="fp-status-btn" data-status-target="inactive" aria-pressed="false">Inactive</button>
-            <button type="button" class="fp-status-btn" data-status-target="all" aria-pressed="false">All</button>
+          <div class="fp-rank-control-row">
+            <label class="fp-rank-search">
+              <span id="i18n-rank-search-label">Search</span>
+              <input id="i18n-rank-search" type="search" data-rank-search placeholder="Search fighter, country, division" autocomplete="off" />
+            </label>
+
+            <div class="fp-status-toggle" role="radiogroup" aria-label="Fighter status filter">
+              <button type="button" class="fp-status-btn is-active" data-status-target="all" aria-pressed="true" id="i18n-status-all">All-time</button>
+              <button type="button" class="fp-status-btn" data-status-target="active" aria-pressed="false" id="i18n-status-active">Active</button>
+              <button type="button" class="fp-status-btn" data-status-target="inactive" aria-pressed="false" id="i18n-status-inactive">Inactive</button>
+            </div>
           </div>
 
           <div class="fp-division-pills" role="toolbar" aria-label="Ranking categories">
@@ -261,29 +298,35 @@ const newsStructuredData = newsItems.map((item) => ({
                 <div class="fp-card-grid">
                   {deck.fighters.map((c, cardIdx) => (
                     <div
-                      class="fp-card-shell"
+                      class={`fp-card-shell is-rank-${rankTierFor(cardIdx)}`}
                       style={`--card-index:${Math.min(cardIdx, 10)};`}
+                      data-rank-tier={rankTierFor(cardIdx)}
                       data-fighter-status={c.fighter_status || 'active'}
                       data-global-rank={c.global_rank ?? ''}
                       data-division-rank={c.rank ?? ''}
+                      data-search-text={`${c.name || ''} ${c.country || ''} ${c.weight_class || ''}`.toLowerCase()}
                     >
-                      <FighterCard
-                        name={c.name}
-                        fighterId={c.fighter_id}
-                        country={c.country}
-                        weightClass={c.weight_class}
-                        isChampion={c.is_champion ?? false}
-                        finishRate={c.finish_rate ?? null}
-                        subRate={c.sub_rate ?? null}
-                        winStreak={c.win_streak ?? null}
-                        lossStreak={c.loss_streak ?? null}
-                        wins={c.wins ?? null}
-                        losses={c.losses ?? null}
-                        globalRank={c.global_rank ?? null}
-                        divisionRank={c.rank ?? null}
-                        compact={true}
-                        appUrl={appUrl}
-                      />
+                      <span class="fp-rank-tier-label" aria-hidden="true" hidden={cardIdx !== 0}>THE GOAT</span>
+                      <div class="fp-card-holder">
+                        <FighterCard
+                          name={c.name}
+                          fighterId={c.fighter_id}
+                          country={c.country}
+                          weightClass={c.weight_class}
+                          isChampion={c.is_champion ?? false}
+                          finishRate={c.finish_rate ?? null}
+                          subRate={c.sub_rate ?? null}
+                          winStreak={c.win_streak ?? null}
+                          lossStreak={c.loss_streak ?? null}
+                          wins={c.wins ?? null}
+                          losses={c.losses ?? null}
+                          points={deck.slug === 'goat-list' ? c.global_points ?? c.points ?? null : c.points ?? c.global_points ?? null}
+                          globalRank={c.global_rank ?? null}
+                          divisionRank={c.rank ?? null}
+                          compact={true}
+                          appUrl={appUrl}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -428,9 +471,68 @@ const newsStructuredData = newsItems.map((item) => ({
       const divisionPanels = Array.from(wall.querySelectorAll('.fp-division-block'));
       const panelHost = wall.querySelector('.fp-division-panels');
       const statusButtons = Array.from(wall.querySelectorAll('.fp-status-btn'));
+      const searchInput = wall.querySelector('[data-rank-search]');
       let activeSlug = wall.getAttribute('data-initial-division') || divisionPanels[0]?.getAttribute('data-division-panel') || '';
-      let activeStatus = wall.getAttribute('data-status-filter') || 'active';
+      let activeStatus = wall.getAttribute('data-status-filter') || 'all';
+      let activeSearch = searchInput?.value?.trim().toLowerCase() || '';
       let cleanupTimer = 0;
+      let filterFrame = 0;
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+      function activePanel() {
+        return divisionPanels.find((panel) => panel.getAttribute('data-division-panel') === activeSlug) || null;
+      }
+
+      function visibleShells(panel) {
+        if (!panel) return [];
+        return Array.from(panel.querySelectorAll('.fp-card-shell')).filter((shell) => !shell.hidden);
+      }
+
+      function snapshotPanel(panel) {
+        if (!panel || prefersReducedMotion.matches) return new Map();
+        return new Map(visibleShells(panel).map((shell) => [shell, shell.getBoundingClientRect()]));
+      }
+
+      function animateReflow(panel, firstRects) {
+        if (!panel || prefersReducedMotion.matches) return;
+        visibleShells(panel).forEach((shell) => {
+          const first = firstRects.get(shell);
+          const last = shell.getBoundingClientRect();
+          const dx = first ? first.left - last.left : 0;
+          const dy = first ? first.top - last.top : 0;
+
+          shell.classList.remove('is-filter-entering');
+          if (!first) {
+            shell.classList.add('is-filter-entering');
+            window.setTimeout(() => shell.classList.remove('is-filter-entering'), 340);
+            return;
+          }
+          if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+          shell.animate(
+            [
+              { transform: `translate3d(${dx}px, ${dy}px, 0) rotate(-0.8deg)`, opacity: 0.82 },
+              { transform: 'translate3d(0, 0, 0) rotate(0)', opacity: 1 },
+            ],
+            {
+              duration: 340,
+              easing: 'cubic-bezier(0.2, 0.85, 0.25, 1)',
+            },
+          );
+        });
+      }
+
+      function applyHierarchy(shell, visibleRank) {
+        const isKing = visibleRank === 1;
+        shell.classList.toggle('is-rank-king', isKing);
+        shell.classList.toggle('is-rank-goat', !isKing);
+        shell.setAttribute('data-rank-tier', isKing ? 'king' : 'goat');
+        shell.setAttribute('data-board-slot', String(visibleRank));
+        const label = shell.querySelector('.fp-rank-tier-label');
+        if (label) {
+          label.hidden = !isKing;
+          label.textContent = 'THE GOAT';
+        }
+      }
 
       function ensureRatingSub(shell) {
         const rating = shell.querySelector('.fp-card-rating');
@@ -444,8 +546,11 @@ const newsStructuredData = newsItems.map((item) => ({
         return sub;
       }
 
-      function applyStatusFilter(status) {
-        activeStatus = status || 'active';
+      function applyStatusFilter(status, opts = {}) {
+        const panelBefore = opts.animate ? activePanel() : null;
+        const firstRects = panelBefore ? snapshotPanel(panelBefore) : null;
+        activeStatus = status || 'all';
+        activeSearch = searchInput?.value?.trim().toLowerCase() || '';
         wall.setAttribute('data-status-filter', activeStatus);
 
         statusButtons.forEach((btn) => {
@@ -462,10 +567,18 @@ const newsStructuredData = newsItems.map((item) => ({
 
           shells.forEach((shell) => {
             const shellStatus = (shell.getAttribute('data-fighter-status') || 'active').toLowerCase();
-            const matches = activeStatus === 'all' || shellStatus === activeStatus;
+            const searchable = (shell.getAttribute('data-search-text') || '').toLowerCase();
+            const matchesStatus = activeStatus === 'all' || shellStatus === activeStatus;
+            const matchesSearch = !activeSearch || searchable.includes(activeSearch);
+            const matches = matchesStatus && matchesSearch;
             shell.hidden = !matches;
-            if (!matches) return;
+            if (!matches) {
+              const label = shell.querySelector('.fp-rank-tier-label');
+              if (label) label.hidden = true;
+              return;
+            }
             visibleCount += 1;
+            applyHierarchy(shell, visibleCount);
             const num = shell.querySelector('.fp-card-rating-num');
             const pos = shell.querySelector('.fp-card-rating-pos');
             const sub = ensureRatingSub(shell);
@@ -500,22 +613,40 @@ const newsStructuredData = newsItems.map((item) => ({
               return;
             }
 
-            if (num && Number.isFinite(globalRank)) {
-              num.textContent = `#${globalRank}`;
-            }
-            if (pos) {
-              pos.textContent = 'P4P';
-            }
             if (sub && Number.isFinite(divisionRank)) {
               const divisionVisibleRank = activeStatus === 'all' || !rerank ? divisionRank : visibleCount;
-              sub.textContent = subPrefix ? `${subPrefix} #${divisionVisibleRank}` : `#${divisionVisibleRank}`;
-              sub.hidden = false;
+              if (num) {
+                num.textContent = `#${divisionVisibleRank}`;
+              }
+              if (pos) {
+                pos.textContent = subPrefix || 'DIV';
+              }
+              if (Number.isFinite(globalRank)) {
+                sub.textContent = `P4P #${globalRank}`;
+                sub.hidden = false;
+              } else {
+                sub.textContent = '';
+                sub.hidden = true;
+              }
+            } else {
+              if (num && Number.isFinite(globalRank)) {
+                num.textContent = `#${globalRank}`;
+              }
+              if (pos) {
+                pos.textContent = 'P4P';
+              }
+              if (sub) {
+                sub.textContent = '';
+                sub.hidden = true;
+              }
             }
           });
 
           const deckCountEl = panel.querySelector('[data-deck-count]');
           if (deckCountEl) {
-            if (activeStatus === 'all') {
+            if (activeSearch) {
+              deckCountEl.textContent = `${visibleCount} match${visibleCount === 1 ? '' : 'es'}`;
+            } else if (activeStatus === 'all') {
               deckCountEl.textContent = deckCountEl.getAttribute('data-original-count') || `${visibleCount} fighters`;
             } else {
               const label = activeStatus === 'active' ? 'active fighter' : 'inactive fighter';
@@ -529,6 +660,10 @@ const newsStructuredData = newsItems.map((item) => ({
           const pillCountEl = wall.querySelector('.fp-division-pill[data-division-target="' + slug + '"] [data-pill-count]');
           if (pillCountEl) pillCountEl.textContent = String(visibleCount);
         });
+
+        if (panelBefore && firstRects) {
+          requestAnimationFrame(() => animateReflow(panelBefore, firstRects));
+        }
       }
 
       function syncPills(slug) {
@@ -609,9 +744,17 @@ const newsStructuredData = newsItems.map((item) => ({
 
       statusButtons.forEach((btn) => {
         btn.addEventListener('click', () => {
-          const target = btn.getAttribute('data-status-target') || 'active';
+          const target = btn.getAttribute('data-status-target') || 'all';
           if (target === activeStatus) return;
-          applyStatusFilter(target);
+          applyStatusFilter(target, { animate: true });
+        });
+      });
+
+      searchInput?.addEventListener('input', () => {
+        if (filterFrame) window.cancelAnimationFrame(filterFrame);
+        filterFrame = window.requestAnimationFrame(() => {
+          filterFrame = 0;
+          applyStatusFilter(activeStatus, { animate: true });
         });
       });
 
@@ -623,13 +766,27 @@ const newsStructuredData = newsItems.map((item) => ({
     const FP_LANG_KEY = 'fp_lang';
     const translations = {
       en: {
-        heroEyebrow: 'The Home of MMA Intelligence',
-        heroTitle: 'AI-powered MMA rankings, stats, and fight predictions.',
-        heroSub: 'Built for fans by fans. Fight Prophet helps pioneer MMA intelligence by turning fight data and machine learning into simple picks and rankings.',
+        heroEyebrow: 'The MMA GOAT Board',
+        heroTitle: 'Who is the greatest fighter of all time?',
+        heroSub: 'Fight Prophet runs a fight-by-fight ranking engine: every UFC result earns or burns points, then the board splits into all-time, active, and weight-class GOAT lists.',
         heroNote: 'For information and education only — not financial advice. Our predictions and estimates can be wrong.',
         ctaOpenApp: 'See predictions',
-        ctaBrowse: 'Browse rankings ↓',
+        ctaBrowse: 'See GOAT board ↓',
         rankLabel: 'GOAT Board',
+        rankTitle: 'All-time, active, and division GOAT rankings',
+        rankCopy: 'No nostalgia ballot. No barbershop argument. The board is rebuilt from fight results, opponent quality, finishes, titles, streaks, inactivity, and losses.',
+        scoreStamp: 'Ranking Engine',
+        scoreTitle: 'Points are won in the cage, then boosted for legacy.',
+        scoreCopy: 'Each UFC bout updates two ladders: a weight-class ladder and a global GOAT ladder. Wins over strong opponents add more points; finishes, title fights, UFC bonuses, win streaks, champion history, title defenses, and career volume push the score higher. Losses pull fighters down, and inactive division ranks start decaying after 730 days.',
+        scoreRule1Title: 'All-time GOAT', scoreRule1Copy: 'Global points compare every UFC fighter across every weight class.',
+        scoreRule2Title: 'Active GOAT', scoreRule2Copy: 'The live race without retired or long-inactive names.',
+        scoreRule3Title: 'By weight', scoreRule3Copy: 'Division tabs reveal the king of each class using the same point logic.',
+        scoreRule4Title: 'How points move', scoreRule4Copy: 'Elite wins, finishes, title stakes, bonuses, streaks, and defenses matter. Losses hurt.',
+        rankSearchLabel: 'Search',
+        rankSearchPlaceholder: 'Search fighter, country, division',
+        statusAll: 'All-time',
+        statusActive: 'Active',
+        statusInactive: 'Inactive',
         exploreLabel: 'Explore',
         exploreTitle: 'Everything Fight Prophet has',
         cta1Title: 'Predictions', cta1Desc: 'Compare model vs market probability',
@@ -648,13 +805,27 @@ const newsStructuredData = newsItems.map((item) => ({
         finalCta: 'Predictions',
       },
       es: {
-        heroEyebrow: 'El hogar de la inteligencia MMA',
-        heroTitle: 'Rankings, estadísticas y predicciones de MMA con IA.',
-        heroSub: 'Hecho por fans para fans. Fight Prophet ayuda a impulsar la inteligencia MMA convirtiendo datos de pelea y machine learning en picks y rankings fáciles de entender.',
+        heroEyebrow: 'El tablero GOAT de MMA',
+        heroTitle: '¿Quién es el mejor peleador de todos los tiempos?',
+        heroSub: 'Fight Prophet corre un motor de ranking pelea por pelea: cada resultado UFC gana o quema puntos, y el tablero se divide en GOAT histórico, activo y por división.',
         heroNote: 'Solo para información y educación — no es asesoría financiera. Nuestras predicciones y estimaciones pueden estar equivocadas.',
         ctaOpenApp: 'Ver predicciones',
-        ctaBrowse: 'Ver rankings ↓',
+        ctaBrowse: 'Ver tablero GOAT ↓',
         rankLabel: 'Tablero GOAT',
+        rankTitle: 'Rankings GOAT históricos, activos y por división',
+        rankCopy: 'Sin voto de nostalgia. Sin discusión de barbería. El tablero se reconstruye con resultados, nivel de rivales, finalizaciones, títulos, rachas, inactividad y derrotas.',
+        scoreStamp: 'Motor de ranking',
+        scoreTitle: 'Los puntos se ganan en la jaula y luego se impulsan por legado.',
+        scoreCopy: 'Cada pelea UFC actualiza dos escaleras: una por división y una global GOAT. Ganar a rivales fuertes suma más; finalizaciones, peleas de título, bonos UFC, rachas, historial de campeón, defensas y volumen de carrera elevan el puntaje. Las derrotas bajan, y los rankings divisionales inactivos empiezan a decaer después de 730 días.',
+        scoreRule1Title: 'GOAT histórico', scoreRule1Copy: 'Los puntos globales comparan peleadores UFC de todas las divisiones.',
+        scoreRule2Title: 'GOAT activo', scoreRule2Copy: 'La carrera actual sin retirados o inactivos largos.',
+        scoreRule3Title: 'Por peso', scoreRule3Copy: 'Las pestañas por división revelan el rey de cada clase con la misma lógica.',
+        scoreRule4Title: 'Cómo se mueven', scoreRule4Copy: 'Victorias élite, finalizaciones, títulos, bonos, rachas y defensas importan. Las derrotas duelen.',
+        rankSearchLabel: 'Buscar',
+        rankSearchPlaceholder: 'Buscar peleador, país, división',
+        statusAll: 'Histórico',
+        statusActive: 'Activo',
+        statusInactive: 'Inactivo',
         exploreLabel: 'Explorar',
         exploreTitle: 'Todo lo que tiene Fight Prophet',
         cta1Title: 'Predicciones', cta1Desc: 'Compara probabilidad del modelo vs mercado',
@@ -673,13 +844,27 @@ const newsStructuredData = newsItems.map((item) => ({
         finalCta: 'Abrir Fight Prophet',
       },
       pt: {
-        heroEyebrow: 'A casa da inteligência MMA',
-        heroTitle: 'Rankings, estatísticas e previsões de MMA com IA.',
-        heroSub: 'Feito por fãs para fãs. O Fight Prophet ajuda a impulsionar a inteligência MMA ao transformar dados de luta e machine learning em picks e rankings fáceis de entender.',
+        heroEyebrow: 'O quadro GOAT do MMA',
+        heroTitle: 'Quem é o maior lutador de todos os tempos?',
+        heroSub: 'O Fight Prophet roda um motor de ranking luta por luta: cada resultado do UFC ganha ou perde pontos, e o quadro se divide em GOAT histórico, ativo e por categoria.',
         heroNote: 'Apenas para informação e educação — não é aconselhamento financeiro. Nossas previsões e estimativas podem estar erradas.',
-        ctaOpenApp: 'Abrir o App',
-        ctaBrowse: 'Ver rankings ↓',
+        ctaOpenApp: 'Ver previsões',
+        ctaBrowse: 'Ver quadro GOAT ↓',
         rankLabel: 'Quadro GOAT',
+        rankTitle: 'Rankings GOAT histórico, ativo e por categoria',
+        rankCopy: 'Sem voto de nostalgia. Sem discussão vazia. O quadro é reconstruído com resultados, força dos adversários, finalizações, títulos, sequências, inatividade e derrotas.',
+        scoreStamp: 'Motor de ranking',
+        scoreTitle: 'Os pontos são ganhos na jaula e depois impulsionados pelo legado.',
+        scoreCopy: 'Cada luta do UFC atualiza duas escadas: uma por categoria e uma global GOAT. Vitórias contra rivais fortes somam mais; finalizações, lutas de título, bônus UFC, sequências, histórico de campeão, defesas e volume de carreira elevam a pontuação. Derrotas derrubam, e rankings divisionais inativos começam a decair após 730 dias.',
+        scoreRule1Title: 'GOAT histórico', scoreRule1Copy: 'Pontos globais comparam todos os lutadores do UFC em todas as categorias.',
+        scoreRule2Title: 'GOAT ativo', scoreRule2Copy: 'A corrida atual sem aposentados ou longos inativos.',
+        scoreRule3Title: 'Por peso', scoreRule3Copy: 'As abas por divisão mostram o rei de cada categoria com a mesma lógica.',
+        scoreRule4Title: 'Como sobe', scoreRule4Copy: 'Vitórias elite, finalizações, títulos, bônus, sequências e defesas importam. Derrotas pesam.',
+        rankSearchLabel: 'Buscar',
+        rankSearchPlaceholder: 'Buscar lutador, país, categoria',
+        statusAll: 'Histórico',
+        statusActive: 'Ativo',
+        statusInactive: 'Inativo',
         exploreLabel: 'Explorar',
         exploreTitle: 'Tudo que o Fight Prophet tem',
         cta1Title: 'Previsões', cta1Desc: 'Compare probabilidade do modelo vs mercado',
@@ -707,6 +892,19 @@ const newsStructuredData = newsItems.map((item) => ({
       ctaOpenApp: 'i18n-cta-open-app',
       ctaBrowse: 'i18n-cta-browse',
       rankLabel: 'i18n-rank-label',
+      rankTitle: 'i18n-rank-title',
+      rankCopy: 'i18n-rank-copy',
+      scoreStamp: 'i18n-score-stamp',
+      scoreTitle: 'i18n-score-title',
+      scoreCopy: 'i18n-score-copy',
+      scoreRule1Title: 'i18n-score-rule-1-title', scoreRule1Copy: 'i18n-score-rule-1-copy',
+      scoreRule2Title: 'i18n-score-rule-2-title', scoreRule2Copy: 'i18n-score-rule-2-copy',
+      scoreRule3Title: 'i18n-score-rule-3-title', scoreRule3Copy: 'i18n-score-rule-3-copy',
+      scoreRule4Title: 'i18n-score-rule-4-title', scoreRule4Copy: 'i18n-score-rule-4-copy',
+      rankSearchLabel: 'i18n-rank-search-label',
+      statusAll: 'i18n-status-all',
+      statusActive: 'i18n-status-active',
+      statusInactive: 'i18n-status-inactive',
       exploreLabel: 'i18n-explore-label',
       exploreTitle: 'i18n-explore-title',
       cta1Title: 'i18n-cta-1-title', cta1Desc: 'i18n-cta-1-desc',
@@ -725,25 +923,53 @@ const newsStructuredData = newsItems.map((item) => ({
       finalCta: 'i18n-final-cta',
     };
 
-    function applyLanguage(lang) {
+    // Read priority: ?lang query → fp_lang cookie (parent-domain shared with the app) → localStorage → en
+    function readLangCookie() {
+      const prefix = FP_LANG_KEY + '=';
+      const parts = (document.cookie || '').split(';');
+      for (const raw of parts) {
+        const c = raw.trim();
+        if (c.startsWith(prefix)) {
+          try { return decodeURIComponent(c.slice(prefix.length)); } catch { return c.slice(prefix.length); }
+        }
+      }
+      return '';
+    }
+
+    function applyLanguage(lang, opts) {
       const selected = translations[lang] ? lang : 'en';
       const pack = translations[selected];
       Object.entries(keyToId).forEach(([key, id]) => {
         const el = document.getElementById(id);
         if (el && typeof pack[key] === 'string') el.textContent = pack[key];
       });
-      document.querySelectorAll('.fp-lang-btn').forEach((btn) => {
-        btn.classList.toggle('is-active', btn.getAttribute('data-lang') === selected);
-      });
+      const rankSearch = document.getElementById('i18n-rank-search');
+      if (rankSearch && typeof pack.rankSearchPlaceholder === 'string') {
+        rankSearch.setAttribute('placeholder', pack.rankSearchPlaceholder);
+      }
       document.documentElement.lang = selected;
-      localStorage.setItem(FP_LANG_KEY, selected);
+      // Persistence + button active state are owned by BaseLayout — only re-broadcast
+      // when this script is the one driving the change (a click on the home page).
+      if (opts && opts.broadcast) {
+        window.dispatchEvent(new CustomEvent('fp-lang-change', { detail: { lang: selected } }));
+      }
     }
 
-    const initialLang = localStorage.getItem(FP_LANG_KEY) || 'en';
+    const queryLang = (new URLSearchParams(window.location.search).get('lang') || '').toLowerCase();
+    const cookieLang = (readLangCookie() || '').toLowerCase();
+    const localLang = (localStorage.getItem(FP_LANG_KEY) || '').toLowerCase();
+    const initialLang = translations[queryLang] ? queryLang
+      : translations[cookieLang] ? cookieLang
+      : translations[localLang] ? localLang
+      : 'en';
     applyLanguage(initialLang);
 
-    document.querySelectorAll('.fp-lang-btn').forEach((btn) => {
-      btn.addEventListener('click', () => applyLanguage(btn.getAttribute('data-lang') || 'en'));
+    // The rail buttons are also bound by BaseLayout (which persists). We just need
+    // to re-render the home content whenever language changes anywhere on the page.
+    window.addEventListener('fp-lang-change', (event) => {
+      const detail = event && event.detail ? event.detail : null;
+      const lang = detail && detail.lang ? detail.lang : 'en';
+      applyLanguage(lang);
     });
   </script>
 
@@ -800,7 +1026,7 @@ const newsStructuredData = newsItems.map((item) => ({
       line-height: 1.18;
       color: #fef2f2;
       max-width: 28ch;
-      letter-spacing: -0.01em;
+      letter-spacing: 0;
     }
     .fp-hero-sub {
       margin: 0;
@@ -884,10 +1110,18 @@ const newsStructuredData = newsItems.map((item) => ({
     }
     .fp-rank-section-title {
       margin: 0.18rem 0 0;
-      font-size: clamp(1.05rem, 2.2vw, 1.32rem);
+      font-size: clamp(1.18rem, 2.4vw, 1.56rem);
       font-weight: 800;
       color: #fef2f2;
-      letter-spacing: -0.01em;
+      letter-spacing: 0;
+      line-height: 1.18;
+    }
+    .fp-rank-section-copy {
+      margin: 0.38rem 0 0;
+      max-width: 74ch;
+      color: #d4d4d8;
+      font-size: clamp(0.92rem, 1.4vw, 1.02rem);
+      line-height: 1.55;
     }
     .fp-rank-section-link {
       font-size: 0.84rem;
@@ -902,7 +1136,7 @@ const newsStructuredData = newsItems.map((item) => ({
     .fp-rank-wall {
       display: flex;
       flex-direction: column;
-      gap: 0.85rem;
+      gap: 0.75rem;
     }
     .fp-rank-note {
       margin: 0;
@@ -912,15 +1146,154 @@ const newsStructuredData = newsItems.map((item) => ({
       max-width: 72ch;
     }
 
+    .fp-ranking-scoreboard {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.95fr) minmax(320px, 1.25fr);
+      gap: 0.72rem;
+      padding: 0.78rem;
+      box-sizing: border-box;
+      max-width: 100%;
+      background:
+        linear-gradient(90deg, rgba(127, 29, 29, 0.34), rgba(9, 9, 11, 0.72)),
+        repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 10px);
+      border: 1px solid rgba(248, 113, 113, 0.28);
+      border-radius: 0.5rem;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.32), 0 10px 24px rgba(0, 0, 0, 0.18);
+    }
+    .fp-ranking-scoreboard-lead {
+      display: flex;
+      flex-direction: column;
+      gap: 0.34rem;
+      min-width: 0;
+    }
+    .fp-score-stamp {
+      align-self: flex-start;
+      padding: 0.24rem 0.48rem;
+      color: #071014;
+      background: linear-gradient(160deg, #67e8f9, #22d3ee);
+      border: 1px solid rgba(103, 232, 249, 0.75);
+      border-radius: 0.32rem;
+      font-size: 0.62rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .fp-ranking-scoreboard h3 {
+      margin: 0;
+      color: #fef2f2;
+      font-size: clamp(1.02rem, 1.8vw, 1.28rem);
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .fp-ranking-scoreboard p {
+      margin: 0;
+      color: #d4d4d8;
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+    .fp-score-rules {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.44rem;
+    }
+    .fp-score-rule {
+      display: grid;
+      gap: 0.2rem;
+      min-width: 0;
+      max-width: 100%;
+      padding: 0.54rem 0.6rem;
+      background: rgba(9, 9, 11, 0.58);
+      border: 1px solid rgba(113, 113, 122, 0.34);
+      border-left-color: rgba(248, 113, 113, 0.7);
+      border-radius: 0.5rem;
+    }
+    .fp-score-rule strong {
+      color: #fef2f2;
+      font-size: 0.82rem;
+      line-height: 1.15;
+    }
+    .fp-score-rule span {
+      color: #a1a1aa;
+      font-size: 0.72rem;
+      line-height: 1.35;
+    }
+    @media (max-width: 900px) {
+      .fp-ranking-scoreboard {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 560px) {
+      .fp-ranking-scoreboard {
+        padding: 0.62rem;
+      }
+      .fp-score-rules {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .fp-rank-control-row {
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: 0.62rem;
+      flex-wrap: wrap;
+    }
+    .fp-rank-search {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.42rem;
+      min-width: min(100%, 340px);
+      padding: 0.3rem 0.44rem;
+      box-sizing: border-box;
+      background: rgba(22, 22, 26, 0.72);
+      border: 1px solid rgba(113, 113, 122, 0.36);
+      border-radius: 999px;
+    }
+    .fp-rank-search span {
+      color: #67e8f9;
+      font-size: 0.68rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .fp-rank-search input {
+      min-width: 0;
+      width: 100%;
+      color: #fef2f2;
+      background: transparent;
+      border: 0;
+      outline: 0;
+      font: inherit;
+      font-size: 0.86rem;
+    }
+    .fp-rank-search input::placeholder {
+      color: #71717a;
+    }
+    @media (max-width: 560px) {
+      .fp-rank-control-row,
+      .fp-rank-search,
+      .fp-status-toggle {
+        width: 100%;
+      }
+      .fp-status-toggle {
+        justify-content: space-between;
+      }
+      .fp-status-btn {
+        flex: 1;
+        padding-inline: 0.46rem;
+      }
+    }
+
     /* STATUS TOGGLE (active / inactive / all) */
     .fp-status-toggle {
       display: inline-flex;
       gap: 0.32rem;
       padding: 0.3rem;
+      box-sizing: border-box;
       background: rgba(22, 22, 26, 0.6);
       border: 1px solid rgba(113, 113, 122, 0.32);
       border-radius: 999px;
-      align-self: flex-start;
+      align-self: stretch;
     }
     .fp-status-btn {
       padding: 0.34rem 0.78rem;
@@ -945,6 +1318,11 @@ const newsStructuredData = newsItems.map((item) => ({
       border-color: rgba(248, 113, 113, 0.6);
       box-shadow: 0 0 12px rgba(220, 38, 38, 0.22);
     }
+    @media (max-width: 560px) {
+      .fp-status-btn {
+        padding: 0.34rem 0.46rem;
+      }
+    }
     .fp-division-empty {
       margin: 0.6rem 0 0;
       font-size: 0.86rem;
@@ -957,6 +1335,8 @@ const newsStructuredData = newsItems.map((item) => ({
       flex-wrap: wrap;
       gap: 0.36rem;
       padding: 0.42rem;
+      box-sizing: border-box;
+      max-width: 100%;
       background: rgba(22, 22, 26, 0.6);
       border: 1px solid rgba(113, 113, 122, 0.32);
       border-radius: 0.7rem;
@@ -1061,29 +1441,110 @@ const newsStructuredData = newsItems.map((item) => ({
       max-width: 68ch;
     }
 
-    /* CARD GRID — 5 across at desktop so the GOAT 10 wraps as 5+5 */
+    /* CARD GRID — centered card-game hierarchy: one GOAT boss card, ranked GOATs below. */
     .fp-card-grid {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 0.7rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: start;
+      gap: 0.92rem 0.78rem;
+      max-width: 1120px;
+      margin-inline: auto;
       padding-inline: 0.1rem;
-    }
-    @media (max-width: 1024px) {
-      .fp-card-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.6rem; }
-    }
-    @media (max-width: 760px) {
-      .fp-card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
-    }
-    @media (max-width: 460px) {
-      .fp-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.45rem; }
     }
     .fp-card-shell {
       contain: layout;
       will-change: transform, opacity;
+      width: 100%;
+      flex: 0 1 168px;
+      max-width: 168px;
+      position: relative;
+      --fp-card-scale: 1;
+      --fp-card-font-scale: 1;
+      transform-origin: center top;
+    }
+    .fp-card-holder {
+      width: 100%;
+    }
+    .fp-rank-tier-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 1.15rem;
+      margin: 0 auto 0.22rem;
+      padding: 0.12rem 0.44rem;
+      color: #fef2f2;
+      background: linear-gradient(160deg, rgba(127, 29, 29, 0.92), rgba(24, 24, 27, 0.9));
+      border: 1px solid rgba(248, 113, 113, 0.55);
+      border-radius: 999px;
+      box-shadow: 0 0 12px rgba(220, 38, 38, 0.2);
+      font-size: 0.58rem;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .fp-rank-tier-label[hidden] {
+      display: none;
+    }
+    .fp-card-shell.is-rank-king {
+      flex-basis: 100%;
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      --fp-card-scale: 1.24;
+      --fp-card-font-scale: 1.14;
+      z-index: 4;
+    }
+    .fp-card-shell.is-rank-king .fp-card-holder {
+      width: min(270px, 100%);
+      max-width: 270px;
+    }
+    .fp-card-shell.is-rank-king .fp-rank-tier-label {
+      color: #140900;
+      background: linear-gradient(160deg, #ffe27a, #f59e0b);
+      border-color: rgba(255, 240, 170, 0.78);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.28);
+      font-size: 0.66rem;
+    }
+    .fp-card-shell.is-rank-goat {
+      --fp-card-scale: 1.02;
+      --fp-card-font-scale: 1.02;
+      z-index: 1;
+    }
+    .fp-card-shell[hidden] {
+      display: none;
+    }
+    .fp-card-shell.is-filter-entering {
+      animation: fpCardFilterIn 260ms cubic-bezier(0.2, 0.85, 0.25, 1) both;
+      animation-delay: calc(var(--card-index, 0) * 12ms);
+    }
+    @media (max-width: 900px) {
+      .fp-card-grid {
+        gap: 0.78rem 0.64rem;
+      }
+      .fp-card-shell.is-rank-king .fp-card-holder {
+        width: min(220px, 100%);
+        max-width: 220px;
+      }
+    }
+    @media (max-width: 560px) {
+      .fp-card-grid {
+        gap: 0.78rem 0.54rem;
+      }
+      .fp-card-shell.is-rank-goat {
+        flex-basis: calc(50% - 0.32rem);
+        max-width: 170px;
+      }
+      .fp-card-shell.is-rank-king .fp-card-holder {
+        width: min(224px, 100%);
+        max-width: 224px;
+      }
     }
     .fp-division-block.is-entering .fp-card-shell {
-      animation: fpCardDeal 220ms ease-out both;
-      animation-delay: calc(var(--card-index, 0) * 14ms);
+      animation: fpCardDeal 360ms cubic-bezier(0.18, 0.9, 0.22, 1) both;
+      animation-delay: calc(var(--card-index, 0) * 28ms);
     }
     .fp-division-block.is-leaving .fp-card-shell {
       animation: none;
@@ -1125,11 +1586,33 @@ const newsStructuredData = newsItems.map((item) => ({
     @keyframes fpCardDeal {
       0% {
         opacity: 0;
-        transform: translate3d(0, 8px, 0) scale(0.97);
+        transform: translate3d(0, -18px, 0) rotate(-2deg) scale(0.9);
+        filter: saturate(0.85) brightness(0.82);
+      }
+      62% {
+        opacity: 1;
+        transform: translate3d(0, 4px, 0) rotate(0.8deg) scale(1.015);
       }
       100% {
         opacity: 1;
         transform: translate3d(0, 0, 0) scale(1);
+        filter: none;
+      }
+    }
+    @keyframes fpCardFilterIn {
+      0% {
+        opacity: 0;
+        transform: translate3d(0, 10px, 0) rotate(1deg) scale(0.96);
+      }
+      100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) rotate(0) scale(1);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .fp-division-block.is-entering .fp-card-shell,
+      .fp-card-shell.is-filter-entering {
+        animation: none;
       }
     }
 
@@ -1145,7 +1628,7 @@ const newsStructuredData = newsItems.map((item) => ({
       font-size: clamp(1.05rem, 2.2vw, 1.32rem);
       font-weight: 800;
       color: #fef2f2;
-      letter-spacing: -0.01em;
+      letter-spacing: 0;
     }
     .fp-cta-grid {
       display: grid;
@@ -1183,6 +1666,45 @@ const newsStructuredData = newsItems.map((item) => ({
     }
     @media (max-width: 460px) {
       .fp-cta-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .fp-home-main {
+        gap: 1rem;
+        overflow-x: hidden;
+      }
+      .fp-hero {
+        padding: 1.18rem 0.88rem 1rem;
+        border-radius: 0.7rem;
+      }
+      .fp-hero-logo {
+        width: min(168px, 72vw);
+      }
+      .fp-hero-title {
+        max-width: 19ch;
+        font-size: clamp(1.28rem, 6.2vw, 1.58rem);
+      }
+      .fp-hero-sub {
+        max-width: 100%;
+        font-size: 0.92rem;
+      }
+      .fp-hero-ctas {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .fp-cta-primary,
+      .fp-cta-ghost {
+        width: 100%;
+        justify-content: center;
+        box-sizing: border-box;
+      }
+      .fp-rank-section-title {
+        font-size: 1.22rem;
+      }
+      .fp-rank-section-copy {
+        font-size: 0.9rem;
+      }
     }
 
     /* NEWS */

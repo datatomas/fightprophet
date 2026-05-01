@@ -14,6 +14,7 @@ interface Props {
   lossStreak?: number | null;
   wins?: number | null;
   losses?: number | null;
+  points?: number | null;
   appUrl?: string;
   rank?: number | null;
   globalRank?: number | null;
@@ -33,6 +34,7 @@ const {
   lossStreak = null,
   wins = null,
   losses = null,
+  points = null,
   appUrl = 'https://app.fightprophet.com',
   rank = null,
   globalRank = null,
@@ -66,6 +68,15 @@ function fmtPct(v: number | null | undefined): string {
 function fmtInt(v: number | null | undefined): string {
   if (v == null || Number.isNaN(v)) return '—';
   return String(Math.trunc(v));
+}
+
+function fmtCompact(v: number | null | undefined): string {
+  if (v == null || Number.isNaN(v)) return '—';
+  const abs = Math.abs(v);
+  if (abs >= 1000) return `${(v / 1000).toFixed(abs >= 10000 ? 0 : 1)}K`;
+  if (abs >= 100) return String(Math.round(v));
+  if (abs >= 10) return v.toFixed(1);
+  return v.toFixed(2);
 }
 
 function divisionAbbrev(wc: string): string {
@@ -129,6 +140,7 @@ const init = initials(name);
 const wcAbbr = divisionAbbrev(weightClass);
 const divisionLabel = weightClass.trim();
 const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(losses)}` : '';
+const pointsLabel = fmtCompact(points);
 const resolvedGlobalRank = globalRank ?? rank;
 const resolvedDivisionRank = divisionRank ?? (globalRank != null ? rank : null);
 
@@ -189,9 +201,9 @@ const typeLine = [divisionLabel || 'MMA Fighter', canonicalCountryValue]
       <span class="fp-card-stat"><em>L✗</em><b>{fmtInt(lossStreak)}</b></span>
     </div>
     <div class="fp-card-atkdef">
-      <span class="fp-card-atk">ATK/{fmtInt(wins)}</span>
+      <span class="fp-card-atk">PTS/{pointsLabel}</span>
       <span class="fp-card-sep">·</span>
-      <span class="fp-card-def">DEF/{fmtInt(losses)}</span>
+      <span class="fp-card-def">REC/{recordLabel || `${fmtInt(wins)}-${fmtInt(losses)}`}</span>
     </div>
   </div>
 
@@ -280,16 +292,18 @@ const typeLine = [divisionLabel || 'MMA Fighter', canonicalCountryValue]
     border-color: rgba(255, 235, 170, 0.6);
   }
   .fp-card-name {
-    display: block;
-    font-size: 0.7rem;
+    display: -webkit-box;
+    min-height: 1.5em;
+    font-size: 0.74rem;
     font-weight: 900;
-    letter-spacing: 0.01em;
-    line-height: 1.1;
+    letter-spacing: 0;
+    line-height: 1.08;
     color: #fff5f5;
     text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    text-wrap: balance;
   }
   .is-champ .fp-card-name {
     color: #1a0e00;
@@ -542,33 +556,34 @@ const typeLine = [divisionLabel || 'MMA Fighter', canonicalCountryValue]
   /* COMPACT (used on the home deck) */
   .fp-card.is-compact {
     aspect-ratio: 59 / 86;
-    min-height: 152px;
-    padding: 0.26rem 0.28rem 0.28rem;
-    border-radius: 0.36rem;
+    min-height: calc(166px * var(--fp-card-scale, 1));
+    padding: calc(0.26rem * var(--fp-card-scale, 1)) calc(0.28rem * var(--fp-card-scale, 1)) calc(0.28rem * var(--fp-card-scale, 1));
+    border-radius: 0.32rem;
   }
   .fp-card.is-compact .fp-card-frame {
-    inset: 0.14rem;
-    border-radius: 0.24rem;
+    inset: calc(0.13rem * var(--fp-card-scale, 1));
+    border-radius: 0.22rem;
   }
   .fp-card.is-compact .fp-card-top {
-    margin: 0 0 0.14rem;
-    min-height: 1.3rem;
-    gap: 0.24rem;
+    margin: 0 0 calc(0.12rem * var(--fp-card-scale, 1));
+    min-height: calc(1.22rem * var(--fp-card-scale, 1));
+    gap: 0.22rem;
   }
   .fp-card.is-compact .fp-card-banner {
-    padding: 0.14rem 0.26rem;
+    padding: calc(0.13rem * var(--fp-card-scale, 1)) calc(0.22rem * var(--fp-card-scale, 1));
   }
   .fp-card.is-compact .fp-card-name {
-    font-size: 0.6rem;
+    font-size: calc(0.76rem * var(--fp-card-font-scale, 1));
+    line-height: 1.05;
   }
   .fp-card.is-compact .fp-card-portrait {
-    min-height: 56px;
+    min-height: calc(58px * var(--fp-card-scale, 1));
   }
   .fp-card.is-compact .fp-card-portrait-silhouette {
-    font-size: 2rem;
+    font-size: calc(2.05rem * var(--fp-card-scale, 1));
   }
   .fp-card.is-compact .fp-card-initials {
-    font-size: 1.05rem;
+    font-size: calc(1.12rem * var(--fp-card-font-scale, 1));
   }
   .fp-card.is-compact .fp-card-crown {
     font-size: 0.64rem;
@@ -576,45 +591,48 @@ const typeLine = [divisionLabel || 'MMA Fighter', canonicalCountryValue]
     left: 0.18rem;
   }
   .fp-card.is-compact .fp-card-flag {
-    font-size: 1.1rem;
-    padding: 0.1rem 0.32rem;
+    font-size: calc(1.08rem * var(--fp-card-font-scale, 1));
+    padding: 0.08rem 0.28rem;
   }
   .fp-card.is-compact .fp-card-rating {
-    padding: 0.12rem 0.32rem;
-    gap: 0.22rem;
-    border-radius: 0.32rem;
+    flex-wrap: wrap;
+    padding: 0.12rem 0.28rem;
+    gap: 0.14rem 0.2rem;
+    border-radius: 0.28rem;
+    max-width: calc(100% - 1.78rem);
   }
   .fp-card.is-compact .fp-card-rating-num {
-    font-size: 0.7rem;
+    font-size: calc(0.84rem * var(--fp-card-font-scale, 1));
   }
   .fp-card.is-compact .fp-card-rating-pos {
-    font-size: 0.4rem;
+    font-size: calc(0.46rem * var(--fp-card-font-scale, 1));
   }
   .fp-card.is-compact .fp-card-rating-sub {
-    font-size: 0.42rem;
-    padding: 0.08rem 0.26rem;
+    font-size: calc(0.44rem * var(--fp-card-font-scale, 1));
+    padding: 0.07rem 0.22rem;
   }
   .fp-card.is-compact .fp-card-type-bar {
-    margin: 0.12rem 0 0.1rem;
-    padding: 0.14rem 0.2rem;
-    font-size: 0.5rem;
-    letter-spacing: 0.06em;
+    margin: calc(0.13rem * var(--fp-card-scale, 1)) 0 calc(0.1rem * var(--fp-card-scale, 1));
+    padding: 0.13rem 0.18rem;
+    font-size: calc(0.52rem * var(--fp-card-font-scale, 1));
+    letter-spacing: 0.04em;
   }
   .fp-card.is-compact .fp-card-desc {
-    padding: 0.18rem 0.22rem 0.2rem;
-    gap: 0.16rem;
+    padding: calc(0.18rem * var(--fp-card-scale, 1)) calc(0.2rem * var(--fp-card-scale, 1)) calc(0.2rem * var(--fp-card-scale, 1));
+    gap: calc(0.15rem * var(--fp-card-scale, 1));
   }
   .fp-card.is-compact .fp-card-stat-row {
-    font-size: 0.58rem;
-    gap: 0.08rem 0.3rem;
+    font-size: calc(0.66rem * var(--fp-card-font-scale, 1));
+    gap: 0.1rem 0.28rem;
   }
   .fp-card.is-compact .fp-card-stat b {
-    font-size: 0.7rem;
+    font-size: calc(0.8rem * var(--fp-card-font-scale, 1));
   }
   .fp-card.is-compact .fp-card-atkdef {
-    font-size: 0.7rem;
+    font-size: calc(0.72rem * var(--fp-card-font-scale, 1));
     padding-top: 0.16rem;
-    gap: 0.32rem;
+    gap: 0.22rem;
+    justify-content: space-between;
   }
 
   @media (max-width: 640px) {

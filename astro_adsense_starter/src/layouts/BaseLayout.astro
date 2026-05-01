@@ -24,6 +24,8 @@ const eventsEmojiUrl = '/branding/b91c1c-events-emoji-rail.png';
 const rankingsEmojiUrl = '/branding/b91c1c-goat-emoji-rail.png';
 const labEmojiUrl = '/branding/b91c1c-lab-emoji-rail.png';
 const termsEmojiUrl = '/branding/b91c1c-terms-emoji-rail.png';
+const madeInColombiaEmojiUrl = '/branding/b91c1c-madeincolombia-emoji.png';
+const earProEmojiUrl = '/branding/b91c1c-earpro-emoji.png';
 
 const currentPath = Astro.url.pathname;
 const isActive = (href: string) => {
@@ -141,6 +143,18 @@ const isActive = (href: string) => {
             <a class="fp-app-rail-link is-muted" href="/terms/">Terms</a>
             <a class="fp-app-rail-link is-muted" href="/privacy/">Privacy</a>
           </div>
+          <div class="fp-made-in fp-made-in--rail" aria-label="Made in Colombia">
+            <img
+              src={madeInColombiaEmojiUrl}
+              alt=""
+              class="fp-made-in-mark"
+              loading="lazy"
+              decoding="async"
+              width="136"
+              height="136"
+              aria-hidden="true"
+            />
+          </div>
         </div>
       </div>
     </aside>
@@ -177,6 +191,30 @@ const isActive = (href: string) => {
           <a href="/terms/">Terms</a>
         </nav>
         <p class="fp-site-footer-meta">© Fight Prophet · Information and education only — not financial advice.</p>
+        <div class="fp-made-in" aria-label="Made in Colombia">
+          <img
+            src={madeInColombiaEmojiUrl}
+            alt=""
+            class="fp-made-in-mark"
+            loading="lazy"
+            decoding="async"
+            width="136"
+            height="136"
+            aria-hidden="true"
+          />
+        </div>
+        <div class="fp-footer-emoji" aria-label="Fight Prophet Ear Pro">
+          <img
+            src={earProEmojiUrl}
+            alt=""
+            class="fp-footer-emoji-mark"
+            loading="lazy"
+            decoding="async"
+            width="136"
+            height="136"
+            aria-hidden="true"
+          />
+        </div>
       </footer>
     </div>
 
@@ -276,36 +314,124 @@ const isActive = (href: string) => {
     if (typeof desktopQuery.addEventListener === 'function') desktopQuery.addEventListener('change', handleViewport);
     else if (typeof desktopQuery.addListener === 'function') (desktopQuery as any).addListener(handleViewport);
 
-    // Language button active state (full applyLanguage is in index.astro for home content)
-    const initLangButtons = (lang: string) => {
-      document.querySelectorAll<HTMLButtonElement>('.fp-lang-btn').forEach((btn) => {
-        btn.classList.toggle('is-active', btn.dataset.lang === lang);
-      });
-      document.documentElement.lang = lang;
+    // ── Language preference: shared across Astro + Streamlit via a parent-domain cookie ─
+    const SUPPORTED_LANGS = ['en', 'es', 'pt'];
+    const normalizeLang = (raw: string | null | undefined): string => {
+      const v = (raw || '').trim().toLowerCase();
+      return SUPPORTED_LANGS.includes(v) ? v : '';
+    };
+    const cookieDomain = (() => {
+      const host = window.location.hostname || '';
+      // Share cookies between fightprophet.com and *.fightprophet.com.
+      // Skip on bare hosts (localhost, IPs, *.pages.dev preview domains, etc.).
+      if (/(^|\.)fightprophet\.com$/i.test(host)) return '.fightprophet.com';
+      return '';
+    })();
+    const readCookie = (name: string): string => {
+      const prefix = name + '=';
+      const parts = (document.cookie || '').split(';');
+      for (const raw of parts) {
+        const c = raw.trim();
+        if (c.startsWith(prefix)) {
+          try { return decodeURIComponent(c.slice(prefix.length)); } catch { return c.slice(prefix.length); }
+        }
+      }
+      return '';
+    };
+    const writeCookie = (name: string, value: string) => {
+      const oneYear = 60 * 60 * 24 * 365;
+      const parts = [
+        `${name}=${encodeURIComponent(value)}`,
+        'Path=/',
+        `Max-Age=${oneYear}`,
+        'SameSite=Lax',
+      ];
+      if (cookieDomain) parts.push(`Domain=${cookieDomain}`);
+      if (window.location.protocol === 'https:') parts.push('Secure');
+      document.cookie = parts.join('; ');
     };
 
-    const storedLang = localStorage.getItem(FP_LANG_KEY) || 'en';
-    initLangButtons(storedLang);
+    const queryLang = normalizeLang(new URLSearchParams(window.location.search).get('lang'));
+    const cookieLang = normalizeLang(readCookie(FP_LANG_KEY));
+    const localLang = normalizeLang(localStorage.getItem(FP_LANG_KEY));
+    const initialLang = queryLang || cookieLang || localLang || 'en';
+
+    const persistLang = (lang: string) => {
+      const safe = normalizeLang(lang) || 'en';
+      try { localStorage.setItem(FP_LANG_KEY, safe); } catch {}
+      writeCookie(FP_LANG_KEY, safe);
+    };
+
+    const MADE_IN_COPY: Record<string, string> = {
+      en: 'Made in Colombia',
+      es: 'Hecho en Colombia',
+      pt: 'Feito na Colômbia',
+    };
+
+    const applyLangChrome = (lang: string) => {
+      const safe = normalizeLang(lang) || 'en';
+      document.querySelectorAll<HTMLButtonElement>('.fp-lang-btn').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.dataset.lang === safe);
+      });
+      document.documentElement.lang = safe;
+      document.querySelectorAll<HTMLElement>('[data-i18n-made-in]').forEach((el) => {
+        el.textContent = MADE_IN_COPY[safe] || MADE_IN_COPY.en;
+      });
+    };
+
+    persistLang(initialLang);
+    applyLangChrome(initialLang);
+
+    let currentLang = initialLang;
+    const announceLang = (lang: string) => {
+      currentLang = lang;
+      window.dispatchEvent(new CustomEvent('fp-lang-change', { detail: { lang } }));
+    };
 
     document.querySelectorAll<HTMLButtonElement>('.fp-lang-btn[data-lang]').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const lang = btn.dataset.lang || 'en';
-        localStorage.setItem(FP_LANG_KEY, lang);
-        initLangButtons(lang);
+        const lang = normalizeLang(btn.dataset.lang) || 'en';
+        persistLang(lang);
+        applyLangChrome(lang);
+        announceLang(lang);
       });
     });
 
+    // Forward the current lang to the Streamlit app via ?lang=… so the first load
+    // is already correct (cookies on the parent domain catch subsequent loads).
+    const decorateAppLinkWithLang = (anchor: HTMLAnchorElement) => {
+      try {
+        const url = new URL(anchor.href, window.location.href);
+        if (url.origin !== appOrigin) return;
+        if (url.searchParams.get('lang') !== currentLang) {
+          url.searchParams.set('lang', currentLang);
+          anchor.href = url.toString();
+        }
+      } catch {
+        // ignore malformed hrefs
+      }
+    };
+
     document.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((anchor) => {
       if (!isAppLink(anchor)) return;
+
+      decorateAppLinkWithLang(anchor);
 
       const earlyWarm = () => warmApp();
       anchor.addEventListener('mouseenter', earlyWarm, { passive: true });
       anchor.addEventListener('focus', earlyWarm, { passive: true });
       anchor.addEventListener('touchstart', earlyWarm, { passive: true });
       anchor.addEventListener('click', (event) => {
+        decorateAppLinkWithLang(anchor);
         warmApp();
         if (!isPrimaryNavClick(event)) return;
         showAppTransition();
+      });
+    });
+
+    window.addEventListener('fp-lang-change', () => {
+      document.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((anchor) => {
+        if (isAppLink(anchor)) decorateAppLinkWithLang(anchor);
       });
     });
   })();
@@ -656,6 +782,18 @@ const isActive = (href: string) => {
     box-shadow: 0 0 10px rgba(220, 38, 38, 0.08);
     overflow-wrap: anywhere;
   }
+  .fp-app-rail-link,
+  .fp-app-rail-link:link,
+  .fp-app-rail-link:visited,
+  .fp-app-rail-link:hover,
+  .fp-app-rail-link:focus,
+  .fp-app-rail-link:active {
+    text-decoration: none;
+    outline: none;
+  }
+  .fp-app-rail-link:focus-visible {
+    box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.28);
+  }
   .fp-app-rail-link.is-primary {
     min-height: 3rem;
     background: linear-gradient(160deg, #ef4444, #dc2626);
@@ -673,6 +811,12 @@ const isActive = (href: string) => {
     background: rgba(24, 24, 27, 0.72);
     border-color: rgba(113, 113, 122, 0.28);
     box-shadow: none;
+  }
+  .fp-app-rail-link.is-muted:hover,
+  .fp-app-rail-link.is-muted:focus {
+    color: #f4f4f5;
+    background: rgba(39, 39, 42, 0.82);
+    border-color: rgba(220, 38, 38, 0.22);
   }
 
   .fp-app-rail-footer {
@@ -751,7 +895,27 @@ const isActive = (href: string) => {
     color: #71717a;
     text-align: center;
   }
-
+  .fp-made-in,
+  .fp-footer-emoji {
+    margin: 0.85rem auto 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+  }
+  .fp-made-in-mark,
+  .fp-footer-emoji-mark {
+    display: block;
+    width: 136px;
+    height: 136px;
+    object-fit: contain;
+  }
+  .fp-made-in--rail {
+    margin-top: 0.05rem;
+  }
+  .fp-footer-emoji {
+    margin-top: 0.2rem;
+  }
   /* ── Mobile (≤900px): drawer behavior ────────────────────────────── */
   @media (max-width: 900px) {
     .fp-mobile-topbar {
