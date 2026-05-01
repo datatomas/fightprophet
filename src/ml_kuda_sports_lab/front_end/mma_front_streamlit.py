@@ -127,44 +127,10 @@ def _inject_marketing_handoff_bridge() -> None:
                 } catch (e) {}
               }
 
-              function plainLeftClick(event) {
-                return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
-              }
-
-              function shouldStayInCurrentTab(anchor, url) {
-                if (!anchor || !url) return false;
-                if (anchor.classList && anchor.classList.contains('fp-site-shell-link')) return true;
-                return url.origin === win.location.origin && (
-                  url.searchParams.has('page') ||
-                  url.searchParams.has('fighter') ||
-                  url.pathname === win.location.pathname
-                );
-              }
-
               primeMarketingOrigin();
 
               if (win.__fpSiteHandoffBound) return;
               win.__fpSiteHandoffBound = true;
-
-              doc.addEventListener('click', function(event) {
-                if (!plainLeftClick(event)) return;
-                var target = event.target;
-                if (!target || !target.closest) return;
-                var anchor = target.closest('a[href]');
-                if (!anchor) return;
-                var rawHref = anchor.getAttribute('href') || '';
-                if (!rawHref || rawHref.indexOf('mailto:') === 0 || rawHref.charAt(0) === '#') return;
-                var url;
-                try {
-                  url = new URL(anchor.href || rawHref, win.location.href);
-                } catch (e) {
-                  return;
-                }
-                if (!shouldStayInCurrentTab(anchor, url)) return;
-                event.preventDefault();
-                anchor.setAttribute('target', '_self');
-                win.location.assign(url.href);
-              }, true);
 
               doc.addEventListener('pointerdown', function(event) {
                 var target = event.target;
@@ -3063,17 +3029,9 @@ st.markdown(
         vertical-align: middle;
         object-fit: contain;
     }
-    .fp-inline-goat--signal {
-        filter: drop-shadow(0 0 8px rgba(248, 113, 113, 0.28));
-    }
-    .fp-inline-goat.fp-inline-emoji--signal-low {
-        filter:
-            brightness(1.6)
-            saturate(1.35)
-            contrast(1.55)
-            drop-shadow(0 0 0.6px rgba(255, 255, 255, 0.95))
-            drop-shadow(0 0 1.2px rgba(255, 255, 255, 0.85))
-            drop-shadow(0 0 14px rgba(248, 113, 113, 0.55));
+    .fp-inline-goat--signal,
+    .fp-inline-goat.fp-inline-emoji--signal {
+        filter: drop-shadow(0 0 6px rgba(248, 113, 113, 0.22));
     }
     .fp-inline-goat.fp-inline-emoji--kpi {
         filter: brightness(1.18) saturate(1.18) contrast(1.1) drop-shadow(0 0 10px rgba(248, 113, 113, 0.24));
@@ -3092,13 +3050,6 @@ st.markdown(
     }
     .fp-inline-emoji--signal {
         font-size: 0.92rem;
-    }
-    .fp-inline-emoji--signal-low {
-        font-size: 1.35rem;
-        font-weight: 900;
-        filter:
-            drop-shadow(0 0 0.6px rgba(255, 255, 255, 0.9))
-            drop-shadow(0 0 14px rgba(248, 113, 113, 0.5));
     }
     .fp-inline-emoji--guide {
         font-size: 0.98rem;
@@ -4328,10 +4279,10 @@ _SIGNAL_ICONS = {
     or _inline_emoji_html("🟡", extra_class="fp-inline-emoji--signal"),
     "MID": _png_icon_html("b91c1c-signals-mid-emoji.png", size=16, extra_class="fp-inline-emoji--signal", label="Mid signal")
     or _inline_emoji_html("🟡", extra_class="fp-inline-emoji--signal"),
-    "WEAK": _png_icon_html("b91c1c-signals-low-emoji.png", size=26, extra_class="fp-inline-emoji--signal fp-inline-emoji--signal-low", label="Low signal")
-    or _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal fp-inline-emoji--signal-low"),
-    "LOW": _png_icon_html("b91c1c-signals-low-emoji.png", size=26, extra_class="fp-inline-emoji--signal fp-inline-emoji--signal-low", label="Low signal")
-    or _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal fp-inline-emoji--signal-low"),
+    "WEAK": _png_icon_html("b91c1c-signals-low-emoji.png", size=16, extra_class="fp-inline-emoji--signal", label="Low signal")
+    or _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal"),
+    "LOW": _png_icon_html("b91c1c-signals-low-emoji.png", size=16, extra_class="fp-inline-emoji--signal", label="Low signal")
+    or _inline_emoji_html("⚪", extra_class="fp-inline-emoji--signal"),
 }
 
 
