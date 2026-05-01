@@ -272,7 +272,7 @@ STRINGS = {
     "nav.predictions": "Predictions",
     "nav.model_performance": "Fight Lab",
     "nav.historical": "Fight Lab",
-    "nav.rankings": "Fighter Rankings",
+    "nav.rankings": "Rankings Vault",
     "nav.events_history": "Events History",
     "nav.fighter_profile": "Fighter Cards",
     "nav.belt_holders": "Belt Holders",
@@ -305,7 +305,7 @@ Fight Prophet provides AI-assisted MMA prediction insights, fighter analytics, a
 Use the sidebar to navigate:
 - Upcoming Predictions
 - Fight Lab (historical picks + model diagnostics)
-- Fighter Rankings
+- Rankings Vault
 - Fighter Cards
 """,
     "common.contact": "Contact",
@@ -377,8 +377,9 @@ By using this dashboard, you acknowledge and agree to the following:
     "page.belt_holders.active_champions": "Active Champions",
     "page.belt_holders.total_title_fights": "Title Fights",
     "page.belt_holders.title_changes": "Title Changes",
-    "page.belt_holders.manual_overrides": "Manual Belt Overrides",
-    "page.belt_holders.manual_overrides_empty": "No manual override dataset found.",
+    "page.belt_holders.manual_overrides": "Title Vacates",
+    "page.belt_holders.manual_overrides_empty": "No title vacates dataset found.",
+    "page.rankings.title": "Rankings Vault",
 }
 
 STATIC_TRANSLATIONS = {
@@ -393,7 +394,7 @@ STATIC_TRANSLATIONS = {
         "nav.predictions": "Predicciones",
         "nav.model_performance": "Fight Lab",
         "nav.historical": "Fight Lab",
-        "nav.rankings": "Rankings de Peleadores",
+        "nav.rankings": "Rankings Vault",
         "nav.events_history": "Historial de Eventos",
         "nav.fighter_profile": "Tarjetas de Peleadores",
         "nav.belt_holders": "Poseedores del Cinturón",
@@ -425,7 +426,7 @@ Usa la barra lateral para navegar:
 - Próximas Predicciones
 - Rendimiento del Modelo
 - Picks Históricos
-- Rankings de Peleadores
+- Rankings Vault
 - Tarjetas de Peleadores
 """,
         "common.contact": "Contacto",
@@ -473,6 +474,9 @@ Usa la barra lateral para navegar:
         "page.belt_holders.active_champions": "Campeones Activos",
         "page.belt_holders.total_title_fights": "Peleas por el Título",
         "page.belt_holders.title_changes": "Cambios de Título",
+        "page.belt_holders.manual_overrides": "Vacantes de Título",
+        "page.belt_holders.manual_overrides_empty": "No se encontró el dataset de vacantes de título.",
+        "page.rankings.title": "Rankings Vault",
     },
     "pt": {
         "news.latest": "Últimas notícias de MMA",
@@ -485,7 +489,7 @@ Usa la barra lateral para navegar:
         "nav.predictions": "Previsões",
         "nav.model_performance": "Fight Lab",
         "nav.historical": "Fight Lab",
-        "nav.rankings": "Rankings de Lutadores",
+        "nav.rankings": "Rankings Vault",
         "nav.events_history": "Histórico de Eventos",
         "nav.fighter_profile": "Cards de Lutadores",
         "nav.belt_holders": "Detentores do Cinturão",
@@ -517,7 +521,7 @@ Use a barra lateral para navegar:
 - Próximas Previsões
 - Desempenho do Modelo
 - Picks Históricos
-- Rankings de Lutadores
+- Rankings Vault
 - Cards de Lutadores
 """,
         "common.contact": "Contato",
@@ -565,6 +569,9 @@ Use a barra lateral para navegar:
         "page.belt_holders.active_champions": "Campeões Ativos",
         "page.belt_holders.total_title_fights": "Lutas pelo Título",
         "page.belt_holders.title_changes": "Mudanças de Título",
+        "page.belt_holders.manual_overrides": "Vacâncias de Título",
+        "page.belt_holders.manual_overrides_empty": "Nenhum dataset de vacâncias de título foi encontrado.",
+        "page.rankings.title": "Rankings Vault",
     },
 }
 
@@ -1748,7 +1755,16 @@ def _fighter_badge(
         flag = _country_to_flagcdn_img(country_val, width=18)
     if not flag:
         flag = _country_to_flag(country_val)
-    belt = _goat_icon_html(size=13, extra_class="fp-inline-goat--champ") if _to_boolish(is_champion) else ""
+    belt = (
+        _png_icon_html(
+            "b91c1c-belt-emoji.png",
+            size=14,
+            extra_class="fp-inline-goat--champ fp-inline-belt--champ",
+            label="Champion",
+        )
+        if _to_boolish(is_champion)
+        else ""
+    )
 
     parts: list[str] = []
     if flag:
@@ -2510,7 +2526,7 @@ def _render_page_footer_earpro_badge() -> None:
     st.markdown(
         (
             f'<div class="fp-earpro fp-earpro--page-footer" aria-label="{escape(label)}" '
-            'style="display:flex;justify-content:center;margin:2rem 0 0.25rem;">'
+            'style="display:flex;align-items:center;justify-content:center;width:100%;margin:2rem auto 0.25rem;">'
             f'{img_html}'
             '</div>'
         ),
@@ -3200,6 +3216,9 @@ st.markdown(
         margin-left: 0.16rem;
         vertical-align: -2px;
     }
+    .fp-inline-belt--champ {
+        filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.28));
+    }
     .fp-fighter-badge {
         display: inline-flex;
         align-items: center;
@@ -3337,10 +3356,21 @@ st.markdown(
     .fp-earpro {
         display: flex;
         justify-content: center;
-        width: fit-content;
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
     }
     .fp-made-in--rail {
         margin: 0.1rem 0 0.25rem;
+    }
+    .fp-earpro--page-footer {
+        align-items: center;
+        justify-content: center;
+        width: 100% !important;
+        max-width: 100%;
+        margin-left: auto !important;
+        margin-right: auto !important;
     }
     .fp-made-in-mark,
     .fp-earpro-mark {
@@ -3348,17 +3378,96 @@ st.markdown(
         width: 136px;
         height: 136px;
         object-fit: contain;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .fp-title-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin: 0.15rem 0 1.1rem;
+        text-align: center;
+    }
+    .fp-title-wrap--section {
+        margin: 0.35rem 0 0.85rem;
+    }
+    .fp-title-wrap--compact {
+        margin: 0.2rem 0 0.55rem;
+    }
+    .fp-title {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.62rem;
+        margin: 0;
+        color: #ffffff;
+        font-weight: 900;
+        line-height: 1.16;
+        letter-spacing: 0;
+        text-align: center;
+        text-shadow: 0 0 16px rgba(248, 113, 113, 0.16);
+        text-wrap: balance;
+    }
+    .fp-title--page {
+        font-size: clamp(1.95rem, 3vw, 2.65rem);
+    }
+    .fp-title--section {
+        font-size: clamp(1.38rem, 2vw, 1.82rem);
+    }
+    .fp-title--compact {
+        font-size: 1.08rem;
+        color: #f4f4f5;
+        font-weight: 850;
+    }
+    .fp-title::after {
+        content: "";
+        display: block;
+        position: absolute;
+        width: min(12rem, 42vw);
+        height: 2px;
+        left: 50%;
+        bottom: -0.42rem;
+        transform: translateX(-50%);
+        background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.9), transparent);
+        border-radius: 999px;
+        box-shadow: 0 0 14px rgba(239, 68, 68, 0.42);
+    }
+    .fp-title {
+        position: relative;
+    }
+    .fp-title--compact::after {
+        width: min(7rem, 30vw);
+        bottom: -0.28rem;
+        opacity: 0.72;
+    }
+    .fp-title-accent {
+        color: #ef4444;
+        filter: drop-shadow(0 0 7px rgba(239, 68, 68, 0.36));
+    }
+    [data-testid="stMainBlockContainer"] h1,
+    [data-testid="stMainBlockContainer"] h2,
+    [data-testid="stMainBlockContainer"] h3 {
+        color: #ffffff !important;
+        font-weight: 900 !important;
+        letter-spacing: 0 !important;
+        text-align: center !important;
+        text-shadow: 0 0 16px rgba(248, 113, 113, 0.14);
     }
     .fp-section-title {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 0.62rem;
+        width: 100%;
         margin: 0 0 1rem;
-        color: #f4f4f5;
+        color: #ffffff;
         font-size: 1.75rem;
-        font-weight: 700;
+        font-weight: 900;
         line-height: 1.2;
-        letter-spacing: -0.01em;
+        letter-spacing: 0;
+        text-align: center;
+        text-shadow: 0 0 16px rgba(248, 113, 113, 0.16);
     }
 
     /* Sidebar controls should stay dark (language flags, selectors, actions) */
@@ -4981,6 +5090,29 @@ def _render_kpi_card(
     )
 
 
+def _render_fp_title(
+    text: str,
+    *,
+    icon: str | None = None,
+    level: int = 2,
+    variant: str = "section",
+) -> None:
+    level = min(3, max(1, int(level)))
+    variant = variant if variant in {"page", "section", "compact"} else "section"
+    icon_html = _icon_markup(icon, default_size=24) if icon else ""
+    icon_part = f'<span class="fp-title-accent">{icon_html}</span>' if icon_html else ""
+    st.markdown(
+        (
+            f'<div class="fp-title-wrap fp-title-wrap--{variant}">'
+            f'<h{level} class="fp-title fp-title--{variant}">'
+            f'{icon_part}<span>{escape(text)}</span>'
+            f'</h{level}>'
+            '</div>'
+        ),
+        unsafe_allow_html=True,
+    )
+
+
 def _render_kpi_strip(items: list[dict[str, object]]) -> None:
     parts: list[str] = []
     for item in items:
@@ -5554,7 +5686,7 @@ def _ui_copy_pack() -> dict[str, object]:
             "how_steps": [
                 "Start in **Upcoming Predictions** to compare model probability vs market probability.",
                 "Open **Fight Lab** to review historical outcomes plus metrics like accuracy, F1, AUC, Brier, and log loss.",
-                "Use **Fighter Rankings** and **Fighter Cards** to understand matchup context.",
+                "Use **Rankings Vault** and **Fighter Cards** to understand matchup context.",
                 "Use **Belt Holders** to track champions, title-fight history, and manual vacate overrides.",
             ],
             "engine_intro": "Fight Prophet serves three ML views for decision support:",
@@ -7282,7 +7414,11 @@ def _belt_holders_champion_map(
 
 
 def page_belt_holders() -> None:
-    st.header(t("page.belt_holders.title"))
+    _render_fp_title(
+        t("page.belt_holders.title"),
+        level=1,
+        variant="page",
+    )
 
     df_belt = _read_parquet(FOLDER_BELT_HOLDERS, ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
     df_history = _read_parquet(FOLDER_TITLE_FIGHT_HISTORY, ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
@@ -7293,7 +7429,11 @@ def page_belt_holders() -> None:
         return
 
     # ---- Current Champions section ----
-    st.subheader(t("page.belt_holders.current_champions"))
+    _render_fp_title(
+        t("page.belt_holders.current_champions"),
+        level=2,
+        variant="section",
+    )
 
     # KPI cards
     total_divisions = len(df_belt)
@@ -7434,9 +7574,13 @@ def page_belt_holders() -> None:
         html_columns=["Ftr"],
     )
 
-    # ---- Manual Belt Overrides section ----
+    # ---- Title Vacates section ----
     st.divider()
-    st.subheader(t("page.belt_holders.manual_overrides"))
+    _render_fp_title(
+        t("page.belt_holders.manual_overrides"),
+        level=2,
+        variant="section",
+    )
     if df_manual.empty:
         st.caption(t("page.belt_holders.manual_overrides_empty"))
     else:
@@ -7469,7 +7613,11 @@ def page_belt_holders() -> None:
         return
 
     st.divider()
-    st.subheader(t("page.belt_holders.title_fight_history"))
+    _render_fp_title(
+        t("page.belt_holders.title_fight_history"),
+        level=2,
+        variant="section",
+    )
 
     # Division filter
     if "weight_class" in df_history.columns:
@@ -7563,7 +7711,7 @@ def page_belt_holders() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Page: Fighter Rankings
+# Page: Rankings Vault
 # ---------------------------------------------------------------------------
 
 
@@ -7616,9 +7764,10 @@ def _prepare_rankings_dataframe(df_rank: pd.DataFrame) -> pd.DataFrame:
 
 
 def page_rankings() -> None:
-    st.markdown(
-        f"<h2 class='fp-section-title'>{_goat_icon_html(size=24)}<span>Fighter Rankings</span></h2>",
-        unsafe_allow_html=True,
+    _render_fp_title(
+        t("page.rankings.title"),
+        level=1,
+        variant="page",
     )
 
     df_rank = _read_parquet(FOLDER_RANKINGS, ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
@@ -7727,7 +7876,7 @@ def page_rankings() -> None:
         wc_champ_id = champion_ids_per_wc.get(wc, "")
         wc_champ_name = champion_names_per_wc.get(wc, "")
 
-        st.subheader(str(wc))
+        _render_fp_title(str(wc), level=3, variant="compact")
 
         display_cols = [
             "rank", "fighter_id", "fighter_name", "country", "points", "fights_count",
@@ -7792,13 +7941,13 @@ def page_rankings() -> None:
 def page_fighter_profile() -> None:
     df_profiles = _read_parquet(FOLDER_FIGHTER_PROFILES, ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
     if df_profiles.empty:
-        st.header("Fighter Cards")
+        _render_fp_title("Fighter Cards", level=1, variant="page")
         st.info("No fighter card data available.")
         return
 
     name_col = "fighter_name_display" if "fighter_name_display" in df_profiles.columns else "fighter_name"
     if name_col not in df_profiles.columns:
-        st.header("Fighter Cards")
+        _render_fp_title("Fighter Cards", level=1, variant="page")
         st.info("Fighter card data is incomplete.")
         return
 
@@ -7816,9 +7965,15 @@ def page_fighter_profile() -> None:
     )
     fighter_options = list(dict.fromkeys(fighter_options))
     if not fighter_options:
-        st.header("Fighter Cards")
+        _render_fp_title("Fighter Cards", level=1, variant="page")
         st.info("No fighters found in profile dataset.")
         return
+
+    _render_fp_title(
+        "Fighter Cards",
+        level=1,
+        variant="page",
+    )
 
     alias_map = _build_fighter_alias_map(df_profiles, name_col)
 
@@ -7860,7 +8015,7 @@ def page_fighter_profile() -> None:
         if not prof.empty:
             break
     if prof.empty:
-        st.header("Fighter Cards")
+        _render_fp_title("Fighter Cards", level=1, variant="page")
         st.info("No profile row found for this fighter.")
         return
     p = prof.iloc[0]
@@ -8177,7 +8332,11 @@ def page_fighter_profile() -> None:
     _render_fighter_overview_card(meta_specs, html_value_labels=country_html_labels)
 
     st.divider()
-    st.subheader("Full Fight History")
+    _render_fp_title(
+        "Full Fight History",
+        level=2,
+        variant="section",
+    )
 
     df_hist_all = _read_parquet(FOLDER_FIGHTER_HISTORY, ACTIVE_PARQUET_BASE, ACTIVE_PREFIX)
     if df_hist_all.empty:
