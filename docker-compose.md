@@ -178,12 +178,20 @@ https://app.fightprophet.com/?page=predictions
 Add these to `/home/ares/.config/ml_kuda_sports_lab/pipeline.env`:
 
 ```bash
+# for the news letters
+# for the news letters
 BUTTONDOWN_ENABLED=true
-BUTTONDOWN_API_KEY=your_buttondown_api_key
-BUTTONDOWN_EMAIL_STATUS=draft
+BUTTONDOWN_API_KEY="71bcd183-5b7a-4678-a703-26d1041046b5"
+BUTTONDOWN_EMAIL_STATUS=about_to_send
 BUTTONDOWN_CONFIRM_SEND=false
+BUTTONDOWN_DRY_RUN=false
+BUTTONDOWN_SKIP_DUPLICATES=true
 PUBLIC_APP_URL=https://app.fightprophet.com
 NEWSLETTER_TIMEZONE=America/Bogota
+
+
+
+
 ```
 
 Test without sending:
@@ -198,21 +206,59 @@ first live API send on a new Buttondown API key, set `BUTTONDOWN_CONFIRM_SEND=tr
 once, then set it back to `false` after the send succeeds.
 
 ### Run the full pipeline directly (bypassing systemd)
-# update pipeline
-
+# update pipeline and run a draft
 export PIPELINE_ENV_FILE="/home/ares/.config/ml_kuda_sports_lab/pipeline.env"
 
-BUTTONDOWN_ENABLED=true BUTTONDOWN_DRY_RUN=true \
+BUTTONDOWN_ENABLED=true BUTTONDOWN_DRY_RUN=false BUTTONDOWN_EMAIL_STATUS=draft \
+sudo -E docker compose \
+  -f /home/ares/Documents/gitrepos/ml_kuda_sports_lab/docker-compose.yml \
+  --env-file "$PIPELINE_ENV_FILE" \
+  --profile sunday run --rm --no-deps mma_buttondown_weekly_email
+
+# send test it doe snot send it but tests it
+BUTTONDOWN_ENABLED=true BUTTONDOWN_DRY_RUN=false BUTTONDOWN_EMAIL_STATUS=about_to_send BUTTONDOWN_CONFIRM_SEND=true \
+sudo -E docker compose \
+  -f /home/ares/Documents/gitrepos/ml_kuda_sports_lab/docker-compose.yml \
+  --env-file "$PIPELINE_ENV_FILE" \
+  --profile sunday run --rm --no-deps mma_buttondown_weekly_email
+
+# actually send an email
+export PIPELINE_ENV_FILE="/home/ares/.config/ml_kuda_sports_lab/pipeline.env"
+
+BUTTONDOWN_ENABLED=true BUTTONDOWN_DRY_RUN=false BUTTONDOWN_EMAIL_STATUS=about_to_send BUTTONDOWN_CONFIRM_SEND=true \
 sudo -E docker compose \
   -f /home/ares/Documents/gitrepos/ml_kuda_sports_lab/docker-compose.yml \
   --env-file "$PIPELINE_ENV_FILE" \
   --profile sunday run --rm --no-deps mma_buttondown_weekly_email
 
 
+
+# test email permission
+set -a
+source /home/ares/.config/ml_kuda_sports_lab/pipeline.env
+set +a
+
+curl -i \
+  -H "Authorization: Token ${BUTTONDOWN_API_KEY}" \
+  -H "X-API-Version: 2026-04-01" \
+  https://api.buttondown.com/v1/emails
+
+
+# test email key 
+
+source /home/ares/.config/ml_kuda_sports_lab/pipeline.env
+
+curl -i \
+  -H "Authorization: Token ${BUTTONDOWN_API_KEY}" \
+  -H "X-API-Version: 2026-04-01" \
+  https://api.buttondown.com/v1/api_requests
+
+
+
 ```bash
 export PIPELINE_ENV_FILE="/home/ares/.config/ml_kuda_sports_lab/pipeline.env"
 
-# Weekly (sunday profile)
+# Weekly (sunday profile) run full profile
 sudo -E docker compose \
   -f /home/ares/Documents/gitrepos/ml_kuda_sports_lab/docker-compose.yml \
   --env-file "$PIPELINE_ENV_FILE" \
