@@ -218,6 +218,16 @@ const isActive = (href: string) => {
       </footer>
     </div>
 
+    <!-- Ko-fi floating support widget -->
+    <script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js' is:inline></script>
+    <script is:inline>
+      kofiWidgetOverlay.draw('fightprophet', {
+        'type': 'floating-chat',
+        'floating-chat.donateButton.text': 'Support Us',
+        'floating-chat.donateButton.background-color': '#d9534f',
+        'floating-chat.donateButton.text-color': '#fff'
+      });
+    </script>
   </body>
 </html>
 

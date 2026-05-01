@@ -203,7 +203,7 @@ const newsStructuredData = newsItems.map((item) => ({
       <div class="fp-hero-brand">
         <img src="/branding/fightprophet_logo_white.png" alt="Fight Prophet" class="fp-hero-logo" loading="eager" />
       </div>
-      <p class="fp-hero-eyebrow" id="i18n-hero-eyebrow">The MMA GOAT Board</p>
+      <p class="fp-hero-eyebrow" id="i18n-hero-eyebrow">The Home of MMA</p>
       <h1 class="fp-hero-title" id="i18n-hero-title">Who is the greatest fighter of all time?</h1>
       <p class="fp-hero-sub" id="i18n-hero-sub">Fight Prophet runs a fight-by-fight ranking engine: every UFC result earns or burns points, then the board splits into all-time, active, and weight-class GOAT lists.</p>
       <div class="fp-hero-ctas">
@@ -383,6 +383,23 @@ const newsStructuredData = newsItems.map((item) => ({
     </section>
 
     <NewsletterSignup />
+
+    <!-- KO-FI TIP PANEL -->
+    <section class="fp-kofi-section">
+      <p class="fp-section-label">Support Fight Prophet</p>
+      <h2 class="fp-kofi-title">Buy us a coffee</h2>
+      <p class="fp-kofi-copy">Fight Prophet is free. If the picks are landing, a tip keeps the lights on.</p>
+      <div class="fp-kofi-frame-wrap">
+        <iframe
+          id="kofiframe"
+          src="https://ko-fi.com/fightprophet/?hidefeed=true&widget=true&embed=true&preview=true"
+          style="border:none;width:100%;padding:0;background:transparent;"
+          height="712"
+          title="Support Fight Prophet on Ko-fi"
+          loading="lazy"
+        ></iframe>
+      </div>
+    </section>
 
     <!-- LATEST NEWS -->
     {newsItems.length > 0 && (
@@ -766,7 +783,7 @@ const newsStructuredData = newsItems.map((item) => ({
     const FP_LANG_KEY = 'fp_lang';
     const translations = {
       en: {
-        heroEyebrow: 'The MMA GOAT Board',
+        heroEyebrow: 'The Home of MMA',
         heroTitle: 'Who is the greatest fighter of all time?',
         heroSub: 'Fight Prophet runs a fight-by-fight ranking engine: every UFC result earns or burns points, then the board splits into all-time, active, and weight-class GOAT lists.',
         heroNote: 'For information and education only — not financial advice. Our predictions and estimates can be wrong.',
@@ -805,7 +822,7 @@ const newsStructuredData = newsItems.map((item) => ({
         finalCta: 'Predictions',
       },
       es: {
-        heroEyebrow: 'El tablero GOAT de MMA',
+        heroEyebrow: 'The Home of MMA',
         heroTitle: '¿Quién es el mejor peleador de todos los tiempos?',
         heroSub: 'Fight Prophet corre un motor de ranking pelea por pelea: cada resultado UFC gana o quema puntos, y el tablero se divide en GOAT histórico, activo y por división.',
         heroNote: 'Solo para información y educación — no es asesoría financiera. Nuestras predicciones y estimaciones pueden estar equivocadas.',
@@ -844,7 +861,7 @@ const newsStructuredData = newsItems.map((item) => ({
         finalCta: 'Abrir Fight Prophet',
       },
       pt: {
-        heroEyebrow: 'O quadro GOAT do MMA',
+        heroEyebrow: 'The Home of MMA',
         heroTitle: 'Quem é o maior lutador de todos os tempos?',
         heroSub: 'O Fight Prophet roda um motor de ranking luta por luta: cada resultado do UFC ganha ou perde pontos, e o quadro se divide em GOAT histórico, ativo e por categoria.',
         heroNote: 'Apenas para informação e educação — não é aconselhamento financeiro. Nossas previsões e estimativas podem estar erradas.',
@@ -1884,6 +1901,31 @@ const newsStructuredData = newsItems.map((item) => ({
       margin: 0.5rem 0;
       color: #a1a1aa;
       font-size: 0.88rem;
+    }
+
+    /* KO-FI SECTION */
+    .fp-kofi-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .fp-kofi-title {
+      margin: 0.1rem 0 0;
+      font-size: clamp(1.05rem, 2.2vw, 1.32rem);
+      font-weight: 800;
+      color: #fef2f2;
+    }
+    .fp-kofi-copy {
+      margin: 0;
+      font-size: 0.92rem;
+      color: #a1a1aa;
+      line-height: 1.5;
+    }
+    .fp-kofi-frame-wrap {
+      margin-top: 0.5rem;
+      border-radius: 0.9rem;
+      overflow: hidden;
+      border: 1px solid rgba(220, 38, 38, 0.22);
     }
   </style>
 </BaseLayout>
