@@ -166,7 +166,8 @@ docker compose --env-file "$PIPELINE_ENV_FILE" --profile sunday config >/tmp/mlk
 ```
 
 ### Weekly Buttondown email
-
+/home/ares/.config/ml_kuda_sports_lab/pipeline.env
+HERES THE pipelien
 The Sunday profile includes `mma_buttondown_weekly_email` after the Azure dashboard export.
 It creates or sends a Buttondown email that links to:
 
@@ -200,7 +201,13 @@ once, then set it back to `false` after the send succeeds.
 # update pipeline
 
 export PIPELINE_ENV_FILE="/home/ares/.config/ml_kuda_sports_lab/pipeline.env"
-docker compose --env-file "$PIPELINE_ENV_FILE" --profile sunday pull
+
+BUTTONDOWN_ENABLED=true BUTTONDOWN_DRY_RUN=true \
+sudo -E docker compose \
+  -f /home/ares/Documents/gitrepos/ml_kuda_sports_lab/docker-compose.yml \
+  --env-file "$PIPELINE_ENV_FILE" \
+  --profile sunday run --rm --no-deps mma_buttondown_weekly_email
+
 
 ```bash
 export PIPELINE_ENV_FILE="/home/ares/.config/ml_kuda_sports_lab/pipeline.env"
