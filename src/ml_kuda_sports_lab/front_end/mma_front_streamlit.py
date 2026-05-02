@@ -2916,6 +2916,21 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+st.markdown(
+    """
+<script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
+<script>
+  kofiWidgetOverlay.draw('fightprophet', {
+    'type': 'floating-chat',
+    'floating-chat.donateButton.text': 'Support Us',
+    'floating-chat.donateButton.background-color': '#d9534f',
+    'floating-chat.donateButton.text-color': '#fff'
+  });
+</script>
+""",
+    unsafe_allow_html=True,
+)
+
 _inject_theme_aware_favicon()
 
 _background_uri = _favicon_data_uri(_STATIC_DIR / "background.png")
