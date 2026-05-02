@@ -165,21 +165,12 @@ export PIPELINE_ENV_FILE="/home/ares/.config/ml_kuda_sports_lab/pipeline.env"
 docker compose --env-file "$PIPELINE_ENV_FILE" --profile sunday config >/tmp/mlkuda_sunday_config.yml && echo "compose env OK"
 ```
 
-### Weekly Buttondown email
-/home/ares/.config/ml_kuda_sports_lab/pipeline.env
-HERES THE pipelien
-The Sunday profile includes `mma_buttondown_weekly_email` after the Azure dashboard export.
-It creates or sends a Buttondown email that links to:
-
-```text
-https://app.fightprophet.com/?page=predictions
-```
+### Buttondown emails — env vars
 
 Add these to `/home/ares/.config/ml_kuda_sports_lab/pipeline.env`:
 
 ```bash
-# for the news letters
-# for the news letters
+# Buttondown (shared by free + premium email)
 BUTTONDOWN_ENABLED=true
 BUTTONDOWN_API_KEY="71bcd183-5b7a-4678-a703-26d1041046b5"
 BUTTONDOWN_EMAIL_STATUS=about_to_send
@@ -189,50 +180,98 @@ BUTTONDOWN_SKIP_DUPLICATES=true
 PUBLIC_APP_URL=https://app.fightprophet.com
 NEWSLETTER_TIMEZONE=America/Bogota
 
-
-
-
+# Optional: restrict premium email to a Buttondown subscriber tag.
+# Leave empty to send to everyone.
+BUTTONDOWN_PREMIUM_TAG=
 ```
 
-Test without sending:
+---
+
+### FREE newsletter (Sunday — all prelims + upcoming fights)
+
+The Sunday pipeline sends this automatically after the parquet export.
+It goes to **all subscribers** and links to the predictions page.
 
 ```bash
-BUTTONDOWN_ENABLED=true BUTTONDOWN_DRY_RUN=true \
-PYTHONPATH=src python3 -m ml_kuda_sports_lab.etl.gold.mma_buttondown_weekly_email
-```
-
-When the draft looks good, change `BUTTONDOWN_EMAIL_STATUS=about_to_send`. For the
-first live API send on a new Buttondown API key, set `BUTTONDOWN_CONFIRM_SEND=true`
-once, then set it back to `false` after the send succeeds.
-
-### Run the full pipeline directly (bypassing systemd)
-# update pipeline and run a draft
 export PIPELINE_ENV_FILE="/home/ares/.config/ml_kuda_sports_lab/pipeline.env"
 
+# 1. Dry-run — print payload, do not call Buttondown
+BUTTONDOWN_ENABLED=true BUTTONDOWN_DRY_RUN=true \
+sudo -E docker compose \
+  -f /home/ares/Documents/gitrepos/ml_kuda_sports_lab/docker-compose.yml \
+  --env-file "$PIPELINE_ENV_FILE" \
+  --profile sunday run --rm --no-deps mma_buttondown_weekly_email
+
+# 2. Create as draft (visible in Buttondown dashboard, not sent)
 BUTTONDOWN_ENABLED=true BUTTONDOWN_DRY_RUN=false BUTTONDOWN_EMAIL_STATUS=draft \
 sudo -E docker compose \
   -f /home/ares/Documents/gitrepos/ml_kuda_sports_lab/docker-compose.yml \
   --env-file "$PIPELINE_ENV_FILE" \
   --profile sunday run --rm --no-deps mma_buttondown_weekly_email
 
-# send test it doe snot send it but tests it
+# 3. SEND — actually delivers to subscribers
+#    First time on a new API key: set BUTTONDOWN_CONFIRM_SEND=true once, then back to false
 BUTTONDOWN_ENABLED=true BUTTONDOWN_DRY_RUN=false BUTTONDOWN_EMAIL_STATUS=about_to_send BUTTONDOWN_CONFIRM_SEND=true \
 sudo -E docker compose \
   -f /home/ares/Documents/gitrepos/ml_kuda_sports_lab/docker-compose.yml \
   --env-file "$PIPELINE_ENV_FILE" \
   --profile sunday run --rm --no-deps mma_buttondown_weekly_email
 
-# actually send an email
+# Force a new slug when today's email already exists as a draft
+# Change the suffix (-b, -c, -v2 …) to anything unique
+
 export PIPELINE_ENV_FILE="/home/ares/.config/ml_kuda_sports_lab/pipeline.env"
 
-BUTTONDOWN_ENABLED=true BUTTONDOWN_DRY_RUN=false BUTTONDOWN_EMAIL_STATUS=about_to_send BUTTONDOWN_CONFIRM_SEND=true \
+BUTTONDOWN_ENABLED=true BUTTONDOWN_DRY_RUN=false \
+BUTTONDOWN_EMAIL_STATUS=about_to_send BUTTONDOWN_CONFIRM_SEND=true \
+BUTTONDOWN_EMAIL_SLUG="fight-prophet-weekly-$(date +%Y-%m-%d)-b" \
 sudo -E docker compose \
   -f /home/ares/Documents/gitrepos/ml_kuda_sports_lab/docker-compose.yml \
   --env-file "$PIPELINE_ENV_FILE" \
   --profile sunday run --rm --no-deps mma_buttondown_weekly_email
+```
 
+---
 
+### PAID email — Fight Prophet Edge (main card predictions)
 
+Premium email with predicted main card winners and fighter cards.
+Payment links will be wired in when the paywall is ready.
+Uses `mma_buttondown_premium_email` (separate from the free newsletter).
+
+```bash
+export PIPELINE_ENV_FILE="/home/ares/.config/ml_kuda_sports_lab/pipeline.env"
+
+# 1. Dry-run — print payload with payment links, do not call Buttondown
+BUTTONDOWN_ENABLED=true BUTTONDOWN_DRY_RUN=true \
+sudo -E docker compose \
+  -f /home/ares/Documents/gitrepos/ml_kuda_sports_lab/docker-compose.yml \
+  --env-file "$PIPELINE_ENV_FILE" \
+  --profile sunday run --rm --no-deps mma_buttondown_premium_email
+
+# 2. Create as draft (review in Buttondown before sending)
+BUTTONDOWN_ENABLED=true BUTTONDOWN_DRY_RUN=false BUTTONDOWN_EMAIL_STATUS=draft \
+sudo -E docker compose \
+  -f /home/ares/Documents/gitrepos/ml_kuda_sports_lab/docker-compose.yml \
+  --env-file "$PIPELINE_ENV_FILE" \
+  --profile sunday run --rm --no-deps mma_buttondown_premium_email
+
+# 3. SEND — delivers to all subscribers (or only "premium" tag if BUTTONDOWN_PREMIUM_TAG is set)
+BUTTONDOWN_ENABLED=true BUTTONDOWN_DRY_RUN=false BUTTONDOWN_EMAIL_STATUS=about_to_send BUTTONDOWN_CONFIRM_SEND=true \
+sudo -E docker compose \
+  -f /home/ares/Documents/gitrepos/ml_kuda_sports_lab/docker-compose.yml \
+  --env-file "$PIPELINE_ENV_FILE" \
+  --profile sunday run --rm --no-deps mma_buttondown_premium_email
+```
+
+> **To restrict paid email to paying subscribers only:** tag them as `premium` in
+> Buttondown → Subscribers, then set `BUTTONDOWN_PREMIUM_TAG=premium` in pipeline.env.
+
+---
+
+### Verify API key / permissions
+
+```bash
 # test email permission
 set -a
 source /home/ares/.config/ml_kuda_sports_lab/pipeline.env
@@ -244,7 +283,7 @@ curl -i \
   https://api.buttondown.com/v1/emails
 
 
-# test email key 
+# test email key
 
 source /home/ares/.config/ml_kuda_sports_lab/pipeline.env
 
