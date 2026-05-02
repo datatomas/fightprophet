@@ -372,6 +372,9 @@ const isActive = (href: string) => {
         persistLang(lang);
         applyLangChrome(lang);
         announceLang(lang);
+        // Also call the home page translator directly in case the event doesn't cross module boundaries
+        const homeLang = (window as any).__fpHomeLang;
+        if (typeof homeLang === 'function') homeLang(lang);
       });
     });
 
