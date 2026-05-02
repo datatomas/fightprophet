@@ -19,6 +19,7 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 COPY src/ml_kuda_sports_lab /app/src/ml_kuda_sports_lab
 COPY static /app/static
+COPY configs /app/configs
 
 EXPOSE 8080
 
