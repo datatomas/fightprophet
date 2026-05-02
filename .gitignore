@@ -204,4 +204,9 @@ cython_debug/
 # Marimo
 marimo/_static/
 marimo/_lsp/
+
+# Secrets / local vars
+.dev.vars
+*.duckdb
+*.parquet
 __marimo__/
