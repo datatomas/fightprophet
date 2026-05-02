@@ -735,6 +735,7 @@ _GOAT_EMOJI_PNG_PATH = _STATIC_DIR / "b91c1c-goat-emoji.png"
 _MADE_IN_COLOMBIA_ICON_FILE = "b91c1c-madeincolombia-emoji.png"
 _EARPRO_ICON_FILE = "b91c1c-earpro-emoji.png"
 _NAV_ICON_FILES = {
+    "home": "b91c1c-goat-emoji-rail.png",
     "predictions": "b91c1c-predictions-emoji-rail.png",
     "fighter-card": "b91c1c-fighterscard-emoji-rail.png",
     "belt-holders": "b91c1c-belt-emoji-rail.png",
@@ -4591,7 +4592,7 @@ with st.sidebar:
         _page_slug_to_label,
         lang=_selected_lang,
         leading_links=[
-            _render_site_shell_link(t("nav.home"), _MARKETING_HOME_URL, "rankings"),
+            _render_site_shell_link(t("nav.home"), _MARKETING_HOME_URL, "home"),
         ],
         trailing_links=[
             _render_site_shell_link(t("nav.terms"), _MARKETING_TERMS_URL, "terms", is_active=_active_page_slug == "terms"),
