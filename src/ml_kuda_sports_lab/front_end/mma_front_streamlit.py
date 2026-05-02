@@ -739,7 +739,7 @@ _NAV_ICON_FILES = {
     "fighter-card": "b91c1c-fighterscard-emoji-rail.png",
     "belt-holders": "b91c1c-belt-emoji-rail.png",
     "events-history": "b91c1c-events-emoji-rail.png",
-    "rankings": "b91c1c-goat-emoji-rail.png",
+    "rankings": "b91c1c-ranking-emoji.png",
     "fight-lab": "b91c1c-lab-emoji-rail.png",
     "terms": "b91c1c-terms-emoji-rail.png",
 }
@@ -2474,10 +2474,13 @@ def _render_sidebar_footer_logo() -> None:
         ("Medium", "https://medium.com/@datatomas"),
         ("Email", "mailto:datatomas@uppercutanalytics.com"),
     ]
-    ear_html = (
+    ear_img = (
         f'<img src="{ear_uri}" alt="Fight Prophet" class="fp-sidebar-footer-mark" loading="lazy" decoding="async" />'
-        if ear_uri
-        else ""
+        if ear_uri else ""
+    )
+    marks_html = (
+        f'<div class="fp-sidebar-footer-marks">{ear_img}</div>'
+        if ear_img else ""
     )
     link_items: list[str] = []
     for label, href in contact_links:
@@ -2489,22 +2492,13 @@ def _render_sidebar_footer_logo() -> None:
             f'{escape(label)}</a>'
         )
     links_html = "".join(link_items)
-    made_in_html = (
-        f'<div class="fp-made-in fp-made-in--rail" aria-label="{escape(t("common.made_in_colombia"))}">'
-        f'<img src="{made_in_uri}" alt="" aria-hidden="true" data-fp-asset="{escape(_MADE_IN_COLOMBIA_ICON_FILE)}" '
-        'class="fp-made-in-mark" loading="lazy" decoding="async" />'
-        '</div>'
-        if made_in_uri
-        else ""
-    )
     st.markdown(
         (
             '<div class="fp-sidebar-footer" aria-label="Contact">'
-            f'{ear_html}'
+            f'{marks_html}'
             '<div class="fp-sidebar-footer-divider" aria-hidden="true"></div>'
             f'<div class="fp-sidebar-footer-title">{escape(t("common.contact"))}</div>'
             f'<div class="fp-sidebar-footer-links">{links_html}</div>'
-            f'{made_in_html}'
             '</div>'
         ),
         unsafe_allow_html=True,
@@ -2512,22 +2506,31 @@ def _render_sidebar_footer_logo() -> None:
 
 
 def _render_page_footer_earpro_badge() -> None:
-    """Plain ear-pro badge shown at the bottom of the page."""
-    badge_uri = _branding_icon_data_uri(_EARPRO_ICON_FILE)
-    if not badge_uri:
-        return
-    label = "Fight Prophet Ear Pro"
-    img_html = (
-        f'<img src="{badge_uri}" alt="" aria-hidden="true" '
+    """Ear-pro + Made in Colombia badges shown side by side at the bottom of the page."""
+    ear_uri = _branding_icon_data_uri(_EARPRO_ICON_FILE)
+    made_in_uri = _made_in_colombia_icon_data_uri()
+    ear_img = (
+        f'<img src="{ear_uri}" alt="" aria-hidden="true" '
         f'data-fp-asset="{escape(_EARPRO_ICON_FILE)}" '
         'class="fp-earpro-mark" '
         'style="width:136px;height:136px;object-fit:contain;display:block;" />'
+        if ear_uri else ""
     )
+    colombia_img = (
+        f'<img src="{made_in_uri}" alt="{escape(t("common.made_in_colombia"))}" '
+        f'data-fp-asset="{escape(_MADE_IN_COLOMBIA_ICON_FILE)}" '
+        'class="fp-made-in-mark" '
+        'style="width:136px;height:136px;object-fit:contain;display:block;" />'
+        if made_in_uri else ""
+    )
+    if not ear_img and not colombia_img:
+        return
     st.markdown(
         (
-            f'<div class="fp-earpro fp-earpro--page-footer" aria-label="{escape(label)}" '
-            'style="display:flex;align-items:center;justify-content:center;width:100%;margin:2rem auto 0.25rem;">'
-            f'{img_html}'
+            '<div style="width:100%;text-align:center;margin:1.2rem 0 0.25rem;">'
+            '<span style="display:inline-flex;align-items:center;gap:0;">'
+            f'{ear_img}{colombia_img}'
+            '</span>'
             '</div>'
         ),
         unsafe_allow_html=True,
@@ -2916,7 +2919,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown(
+_st_components.html(
     """
 <script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
 <script>
@@ -2928,7 +2931,7 @@ st.markdown(
   });
 </script>
 """,
-    unsafe_allow_html=True,
+    height=0,
 )
 
 _inject_theme_aware_favicon()
@@ -3376,8 +3379,17 @@ st.markdown(
         margin-right: auto;
         text-align: center;
     }
-    .fp-made-in--rail {
-        margin: 0.1rem 0 0.25rem;
+    .fp-sidebar-footer-marks {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+        margin-bottom: 0.25rem;
+    }
+    .fp-sidebar-footer-marks .fp-made-in-mark {
+        width: 42px;
+        height: 42px;
+        object-fit: contain;
     }
     .fp-earpro--page-footer {
         align-items: center;
@@ -6053,7 +6065,7 @@ def page_terms() -> None:
         "pt": "Abrir termos em fightprophet.com",
     }
 
-    st.header(f"{t('page.terms.title')}")
+    _render_fp_title(t("page.terms.title"), level=1, variant="page")
     st.info(redirect_title_map.get(lang, redirect_title_map["en"]))
     st.caption(redirect_body_map.get(lang, redirect_body_map["en"]))
     st.markdown(
@@ -6094,7 +6106,7 @@ def page_terms() -> None:
 
 
 def page_upcoming() -> None:
-    st.header(f"{t('page.upcoming.title')}")
+    _render_fp_title(t("page.upcoming.title"), level=1, variant="page")
 
     model_view = st.selectbox(
         t("page.upcoming.prediction_model"),
@@ -6648,7 +6660,7 @@ def _render_model_diagnostics(model_view: str) -> None:
 
 
 def page_historical() -> None:
-    st.header("Fight Lab: Historical Picks + Model Performance")
+    _render_fp_title("Fight Lab: Historical Picks + Model Performance", level=1, variant="page")
 
     model_view = st.selectbox(
         "Historical model",
@@ -7045,7 +7057,7 @@ def page_historical() -> None:
 
 
 def page_events_history() -> None:
-    st.header(f"{t('page.events_history.title')}")
+    _render_fp_title(t("page.events_history.title"), level=1, variant="page")
 
     if st.button("Clear all filters", key="events_history_clear_filters"):
         st.session_state["events_history_query"] = ""
@@ -7779,8 +7791,15 @@ def _prepare_rankings_dataframe(df_rank: pd.DataFrame) -> pd.DataFrame:
 
 
 def page_rankings() -> None:
+    _ranking_icon_uri = _branding_icon_data_uri("b91c1c-ranking-emoji.png")
+    _ranking_icon_html = (
+        f'<img src="{_ranking_icon_uri}" alt="" aria-hidden="true" '
+        'style="width:36px;height:36px;object-fit:contain;vertical-align:middle;" />'
+        if _ranking_icon_uri else None
+    )
     _render_fp_title(
         t("page.rankings.title"),
+        icon=_ranking_icon_html,
         level=1,
         variant="page",
     )
