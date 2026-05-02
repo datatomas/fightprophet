@@ -60,6 +60,14 @@ const isActive = (href: string) => {
     <link id="dynamic-favicon" rel="icon" type="image/png" sizes="32x32" href="/branding/ear_favicon_transparent.png" />
     <meta name="theme-color" content="#09090b" />
     <title>{title}</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R7PND3T858"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-R7PND3T858');
+    </script>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5085788292969536" crossorigin="anonymous"></script>
     <script is:inline define:vars={{ appUrl }}>
       (() => {
@@ -139,7 +147,7 @@ const isActive = (href: string) => {
           <div class="fp-app-rail-links is-footer">
             <a class="fp-app-rail-link is-muted" href="https://www.linkedin.com/company/fight-prophet" target="_blank" rel="noopener noreferrer">Business LinkedIn</a>
             <a class="fp-app-rail-link is-muted" href="https://www.linkedin.com/in/datatomas/" target="_blank" rel="noopener noreferrer">Founder LinkedIn</a>
-            <a class="fp-app-rail-link is-muted" href="https://github.com/datatomas/fight_prophet" target="_blank" rel="noopener noreferrer">Business GitHub</a>
+            <a class="fp-app-rail-link is-muted" href="https://github.com/datatomas/fightprophet" target="_blank" rel="noopener noreferrer">Business GitHub</a>
             <a class="fp-app-rail-link is-muted" href="/terms/">Terms</a>
             <a class="fp-app-rail-link is-muted" href="/privacy/">Privacy</a>
           </div>
@@ -201,23 +209,17 @@ const isActive = (href: string) => {
 
 <script is:inline define:vars={{ appUrl }}>
   (() => {
-    const RAIL_WIDTH = 260;
     const DESKTOP_BP = 901;
     const FP_LANG_KEY = 'fp_lang';
 
-    const layout = document.querySelector('.fp-layout-wrap') as HTMLElement | null;
-    const rail = document.getElementById('fp-app-rail-shell') as HTMLElement | null;
-    const toggle = document.getElementById('fp-rail-toggle') as HTMLButtonElement | null;
-    const closeBtn = document.getElementById('fp-rail-close') as HTMLButtonElement | null;
-    const backdrop = document.getElementById('fp-rail-backdrop') as HTMLElement | null;
-    const transition = document.getElementById('fp-app-transition') as HTMLElement | null;
+    const rail = document.getElementById('fp-app-rail-shell');
+    const toggle = document.getElementById('fp-rail-toggle');
+    const closeBtn = document.getElementById('fp-rail-close');
+    const backdrop = document.getElementById('fp-rail-backdrop');
+    const transition = document.getElementById('fp-app-transition');
     const body = document.body;
     const appOrigin = (() => {
-      try {
-        return new URL(appUrl).origin;
-      } catch {
-        return '';
-      }
+      try { return new URL(appUrl).origin; } catch { return ''; }
     })();
     let warmStarted = false;
 
@@ -228,35 +230,24 @@ const isActive = (href: string) => {
       warmStarted = true;
       try {
         fetch(appOrigin + '/_stcore/health', {
-          mode: 'no-cors',
-          credentials: 'omit',
-          cache: 'no-store',
-          keepalive: true,
+          mode: 'no-cors', credentials: 'omit', cache: 'no-store', keepalive: true,
         }).catch(() => {});
-      } catch {
-        // no-op
-      }
+      } catch (e) { /* no-op */ }
     };
     const showAppTransition = () => {
       if (!transition) return;
       transition.hidden = false;
       transition.setAttribute('aria-hidden', 'false');
-      requestAnimationFrame(() => {
-        transition.dataset.visible = 'true';
-      });
+      requestAnimationFrame(() => { transition.dataset.visible = 'true'; });
     };
-    const isPrimaryNavClick = (event: MouseEvent) =>
+    const isPrimaryNavClick = (event) =>
       event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
-    const isAppLink = (anchor: HTMLAnchorElement) => {
+    const isAppLink = (anchor) => {
       if (!canWarm()) return false;
-      try {
-        return new URL(anchor.href, window.location.href).origin === appOrigin;
-      } catch {
-        return false;
-      }
+      try { return new URL(anchor.href, window.location.href).origin === appOrigin; } catch { return false; }
     };
 
-    const setOpen = (open: boolean) => {
+    const setOpen = (open) => {
       if (!rail) return;
       rail.dataset.railOpen = open ? 'true' : 'false';
       if (toggle) {
@@ -267,7 +258,7 @@ const isActive = (href: string) => {
       body.style.overflow = open && isMobile() ? 'hidden' : '';
     };
 
-    if (toggle) toggle.addEventListener('click', () => setOpen(rail?.dataset.railOpen !== 'true'));
+    if (toggle) toggle.addEventListener('click', () => setOpen(rail && rail.dataset.railOpen !== 'true'));
     if (closeBtn) closeBtn.addEventListener('click', () => setOpen(false));
     if (backdrop) backdrop.addEventListener('click', () => setOpen(false));
 
@@ -278,37 +269,31 @@ const isActive = (href: string) => {
     }
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && rail?.dataset.railOpen === 'true') setOpen(false);
+      if (e.key === 'Escape' && rail && rail.dataset.railOpen === 'true') setOpen(false);
     });
 
-    const desktopQuery = window.matchMedia(`(min-width: ${DESKTOP_BP}px)`);
+    const desktopQuery = window.matchMedia('(min-width: ' + DESKTOP_BP + 'px)');
     const handleViewport = () => {
-      if (desktopQuery.matches) {
-        setOpen(false);
-        body.style.overflow = '';
-      }
+      if (desktopQuery.matches) { setOpen(false); body.style.overflow = ''; }
     };
     handleViewport();
     if (typeof desktopQuery.addEventListener === 'function') desktopQuery.addEventListener('change', handleViewport);
-    else if (typeof desktopQuery.addListener === 'function') (desktopQuery as any).addListener(handleViewport);
+    else if (typeof desktopQuery.addListener === 'function') desktopQuery.addListener(handleViewport);
 
-    // ── Language preference: shared across Astro + Streamlit via a parent-domain cookie ─
+    // ── Language preference ────────────────────────────────────────────
     const SUPPORTED_LANGS = ['en', 'es', 'pt'];
-    const normalizeLang = (raw: string | null | undefined): string => {
+    const normalizeLang = (raw) => {
       const v = (raw || '').trim().toLowerCase();
       return SUPPORTED_LANGS.includes(v) ? v : '';
     };
     const cookieDomain = (() => {
       const host = window.location.hostname || '';
-      // Share cookies between fightprophet.com and *.fightprophet.com.
-      // Skip on bare hosts (localhost, IPs, *.pages.dev preview domains, etc.).
       if (/(^|\.)fightprophet\.com$/i.test(host)) return '.fightprophet.com';
       return '';
     })();
-    const readCookie = (name: string): string => {
+    const readCookie = (name) => {
       const prefix = name + '=';
-      const parts = (document.cookie || '').split(';');
-      for (const raw of parts) {
+      for (const raw of (document.cookie || '').split(';')) {
         const c = raw.trim();
         if (c.startsWith(prefix)) {
           try { return decodeURIComponent(c.slice(prefix.length)); } catch { return c.slice(prefix.length); }
@@ -316,15 +301,15 @@ const isActive = (href: string) => {
       }
       return '';
     };
-    const writeCookie = (name: string, value: string) => {
+    const writeCookie = (name, value) => {
       const oneYear = 60 * 60 * 24 * 365;
       const parts = [
-        `${name}=${encodeURIComponent(value)}`,
+        name + '=' + encodeURIComponent(value),
         'Path=/',
-        `Max-Age=${oneYear}`,
+        'Max-Age=' + oneYear,
         'SameSite=Lax',
       ];
-      if (cookieDomain) parts.push(`Domain=${cookieDomain}`);
+      if (cookieDomain) parts.push('Domain=' + cookieDomain);
       if (window.location.protocol === 'https:') parts.push('Secure');
       document.cookie = parts.join('; ');
     };
@@ -334,25 +319,25 @@ const isActive = (href: string) => {
     const localLang = normalizeLang(localStorage.getItem(FP_LANG_KEY));
     const initialLang = queryLang || cookieLang || localLang || 'en';
 
-    const persistLang = (lang: string) => {
+    const persistLang = (lang) => {
       const safe = normalizeLang(lang) || 'en';
-      try { localStorage.setItem(FP_LANG_KEY, safe); } catch {}
+      try { localStorage.setItem(FP_LANG_KEY, safe); } catch (e) { /* no-op */ }
       writeCookie(FP_LANG_KEY, safe);
     };
 
-    const MADE_IN_COPY: Record<string, string> = {
+    const MADE_IN_COPY = {
       en: 'Made in Colombia',
       es: 'Hecho en Colombia',
       pt: 'Feito na Colômbia',
     };
 
-    const applyLangChrome = (lang: string) => {
+    const applyLangChrome = (lang) => {
       const safe = normalizeLang(lang) || 'en';
-      document.querySelectorAll<HTMLButtonElement>('.fp-lang-btn').forEach((btn) => {
+      document.querySelectorAll('.fp-lang-btn').forEach((btn) => {
         btn.classList.toggle('is-active', btn.dataset.lang === safe);
       });
       document.documentElement.lang = safe;
-      document.querySelectorAll<HTMLElement>('[data-i18n-made-in]').forEach((el) => {
+      document.querySelectorAll('[data-i18n-made-in]').forEach((el) => {
         el.textContent = MADE_IN_COPY[safe] || MADE_IN_COPY.en;
       });
     };
@@ -361,26 +346,25 @@ const isActive = (href: string) => {
     applyLangChrome(initialLang);
 
     let currentLang = initialLang;
-    const announceLang = (lang: string) => {
+    const announceLang = (lang) => {
       currentLang = lang;
       window.dispatchEvent(new CustomEvent('fp-lang-change', { detail: { lang } }));
     };
 
-    document.querySelectorAll<HTMLButtonElement>('.fp-lang-btn[data-lang]').forEach((btn) => {
+    document.querySelectorAll('.fp-lang-btn[data-lang]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const lang = normalizeLang(btn.dataset.lang) || 'en';
         persistLang(lang);
         applyLangChrome(lang);
         announceLang(lang);
         // Also call the home page translator directly in case the event doesn't cross module boundaries
-        const homeLang = (window as any).__fpHomeLang;
+        const homeLang = window['__fpHomeLang'];
         if (typeof homeLang === 'function') homeLang(lang);
       });
     });
 
-    // Forward the current lang to the Streamlit app via ?lang=… so the first load
-    // is already correct (cookies on the parent domain catch subsequent loads).
-    const decorateAppLinkWithLang = (anchor: HTMLAnchorElement) => {
+    // Forward the current lang to the Streamlit app via ?lang=…
+    const decorateAppLinkWithLang = (anchor) => {
       try {
         const url = new URL(anchor.href, window.location.href);
         if (url.origin !== appOrigin) return;
@@ -388,16 +372,12 @@ const isActive = (href: string) => {
           url.searchParams.set('lang', currentLang);
           anchor.href = url.toString();
         }
-      } catch {
-        // ignore malformed hrefs
-      }
+      } catch (e) { /* ignore malformed hrefs */ }
     };
 
-    document.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((anchor) => {
+    document.querySelectorAll('a[href]').forEach((anchor) => {
       if (!isAppLink(anchor)) return;
-
       decorateAppLinkWithLang(anchor);
-
       const earlyWarm = () => warmApp();
       anchor.addEventListener('mouseenter', earlyWarm, { passive: true });
       anchor.addEventListener('focus', earlyWarm, { passive: true });
@@ -411,7 +391,7 @@ const isActive = (href: string) => {
     });
 
     window.addEventListener('fp-lang-change', () => {
-      document.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((anchor) => {
+      document.querySelectorAll('a[href]').forEach((anchor) => {
         if (isAppLink(anchor)) decorateAppLinkWithLang(anchor);
       });
     });
