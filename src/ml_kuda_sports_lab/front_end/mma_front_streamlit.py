@@ -2921,14 +2921,20 @@ st.markdown(
 
 _st_components.html(
     """
-<script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
 <script>
-  kofiWidgetOverlay.draw('fightprophet', {
-    'type': 'floating-chat',
-    'floating-chat.donateButton.text': 'Support Us',
-    'floating-chat.donateButton.background-color': '#d9534f',
-    'floating-chat.donateButton.text-color': '#fff'
-  });
+  (function() {
+    var s = window.parent.document.createElement('script');
+    s.src = 'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js';
+    s.onload = function() {
+      window.parent.kofiWidgetOverlay.draw('fightprophet', {
+        'type': 'floating-chat',
+        'floating-chat.donateButton.text': 'Support Us',
+        'floating-chat.donateButton.background-color': '#d9534f',
+        'floating-chat.donateButton.text-color': '#fff'
+      });
+    };
+    window.parent.document.body.appendChild(s);
+  })();
 </script>
 """,
     height=0,
