@@ -1,5 +1,14 @@
 # Astro + AdSense Starter (Cloudflare Pages)
 
+## Open Source Front End & Rankings
+
+This front end and the MMA rankings logic are open source as part of the FightProphet project — the home of MA intelligence.
+
+- The Astro front end provides the public website and rankings UI.
+- The Streamlit dashboard for MMA predictions and analytics is also open source. See [../src/ml_kuda_sports_lab/front_end/README.md](../src/ml_kuda_sports_lab/front_end/README.md) for details and usage.
+
+Contributions are welcome!
+
 Production-oriented starter for adding AdSense to an Astro site deployed on Cloudflare Pages.
 
 ## 1) Install and run
