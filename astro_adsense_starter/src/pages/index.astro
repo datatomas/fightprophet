@@ -203,9 +203,9 @@ const newsStructuredData = newsItems.map((item) => ({
       <div class="fp-hero-brand">
         <img src="/branding/fightprophet_logo_white.png" alt="Fight Prophet" class="fp-hero-logo" loading="eager" />
       </div>
-      <p class="fp-hero-eyebrow" id="i18n-hero-eyebrow">The Home of MMA</p>
+      <p class="fp-hero-eyebrow" id="i18n-hero-eyebrow">The Home of MMA Intelligence</p>
       <h1 class="fp-hero-title" id="i18n-hero-title">Who is the greatest fighter of all time?</h1>
-      <p class="fp-hero-sub" id="i18n-hero-sub">Fight Prophet runs a fight-by-fight ranking engine: every UFC result earns or burns points, then the board splits into all-time, active, and weight-class GOAT lists.</p>
+      <p class="fp-hero-sub" id="i18n-hero-sub">Fight Prophet runs an AI &amp; ML-powered fight-by-fight ranking engine: every UFC result earns or burns points, then the board splits into all-time, active, and weight-class GOAT lists. Predictions and rankings, built from data.</p>
       <div class="fp-hero-ctas">
         <a class="fp-cta-primary" href={predictionsAppUrl}>
           <span id="i18n-cta-open-app">See predictions</span>
@@ -383,23 +383,6 @@ const newsStructuredData = newsItems.map((item) => ({
     </section>
 
     <NewsletterSignup />
-
-    <!-- KO-FI TIP PANEL -->
-    <section class="fp-kofi-section">
-      <p class="fp-section-label">Support Fight Prophet</p>
-      <h2 class="fp-kofi-title">Buy us a coffee</h2>
-      <p class="fp-kofi-copy">Fight Prophet is free. If the picks are landing, a tip keeps the lights on.</p>
-      <div class="fp-kofi-frame-wrap">
-        <iframe
-          id="kofiframe"
-          src="https://ko-fi.com/fightprophet/?hidefeed=true&widget=true&embed=true&preview=true"
-          style="border:none;width:100%;padding:0;background:transparent;"
-          height="712"
-          title="Support Fight Prophet on Ko-fi"
-          loading="lazy"
-        ></iframe>
-      </div>
-    </section>
 
     <!-- LATEST NEWS -->
     {newsItems.length > 0 && (
@@ -783,9 +766,9 @@ const newsStructuredData = newsItems.map((item) => ({
     const FP_LANG_KEY = 'fp_lang';
     const translations = {
       en: {
-        heroEyebrow: 'The Home of MMA',
+        heroEyebrow: 'The Home of MMA Intelligence',
         heroTitle: 'Who is the greatest fighter of all time?',
-        heroSub: 'Fight Prophet runs a fight-by-fight ranking engine: every UFC result earns or burns points, then the board splits into all-time, active, and weight-class GOAT lists.',
+        heroSub: 'Fight Prophet runs an AI & ML-powered fight-by-fight ranking engine: every UFC result earns or burns points, then the board splits into all-time, active, and weight-class GOAT lists. Predictions and rankings, built from data.',
         heroNote: 'For information and education only — not financial advice. Our predictions and estimates can be wrong.',
         ctaOpenApp: 'See predictions',
         ctaBrowse: 'See GOAT board ↓',
@@ -822,9 +805,9 @@ const newsStructuredData = newsItems.map((item) => ({
         finalCta: 'Predictions',
       },
       es: {
-        heroEyebrow: 'The Home of MMA',
+        heroEyebrow: 'The Home of MMA Intelligence',
         heroTitle: '¿Quién es el mejor peleador de todos los tiempos?',
-        heroSub: 'Fight Prophet corre un motor de ranking pelea por pelea: cada resultado UFC gana o quema puntos, y el tablero se divide en GOAT histórico, activo y por división.',
+        heroSub: 'Fight Prophet corre un motor de ranking con IA y ML pelea por pelea: cada resultado UFC gana o quema puntos, y el tablero se divide en GOAT histórico, activo y por división. Predicciones y rankings construidos desde los datos.',
         heroNote: 'Solo para información y educación — no es asesoría financiera. Nuestras predicciones y estimaciones pueden estar equivocadas.',
         ctaOpenApp: 'Ver predicciones',
         ctaBrowse: 'Ver tablero GOAT ↓',
@@ -861,9 +844,9 @@ const newsStructuredData = newsItems.map((item) => ({
         finalCta: 'Abrir Fight Prophet',
       },
       pt: {
-        heroEyebrow: 'The Home of MMA',
+        heroEyebrow: 'The Home of MMA Intelligence',
         heroTitle: 'Quem é o maior lutador de todos os tempos?',
-        heroSub: 'O Fight Prophet roda um motor de ranking luta por luta: cada resultado do UFC ganha ou perde pontos, e o quadro se divide em GOAT histórico, ativo e por categoria.',
+        heroSub: 'O Fight Prophet roda um motor de ranking com IA e ML luta por luta: cada resultado do UFC ganha ou perde pontos, e o quadro se divide em GOAT histórico, ativo e por categoria. Previsões e rankings construídos a partir dos dados.',
         heroNote: 'Apenas para informação e educação — não é aconselhamento financeiro. Nossas previsões e estimativas podem estar erradas.',
         ctaOpenApp: 'Ver previsões',
         ctaBrowse: 'Ver quadro GOAT ↓',
@@ -1903,29 +1886,5 @@ const newsStructuredData = newsItems.map((item) => ({
       font-size: 0.88rem;
     }
 
-    /* KO-FI SECTION */
-    .fp-kofi-section {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-    .fp-kofi-title {
-      margin: 0.1rem 0 0;
-      font-size: clamp(1.05rem, 2.2vw, 1.32rem);
-      font-weight: 800;
-      color: #fef2f2;
-    }
-    .fp-kofi-copy {
-      margin: 0;
-      font-size: 0.92rem;
-      color: #a1a1aa;
-      line-height: 1.5;
-    }
-    .fp-kofi-frame-wrap {
-      margin-top: 0.5rem;
-      border-radius: 0.9rem;
-      overflow: hidden;
-      border: 1px solid rgba(220, 38, 38, 0.22);
-    }
   </style>
 </BaseLayout>
