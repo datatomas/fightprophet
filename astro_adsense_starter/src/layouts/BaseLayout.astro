@@ -143,18 +143,6 @@ const isActive = (href: string) => {
             <a class="fp-app-rail-link is-muted" href="/terms/">Terms</a>
             <a class="fp-app-rail-link is-muted" href="/privacy/">Privacy</a>
           </div>
-          <div class="fp-made-in fp-made-in--rail" aria-label="Made in Colombia">
-            <img
-              src={madeInColombiaEmojiUrl}
-              alt=""
-              class="fp-made-in-mark"
-              loading="lazy"
-              decoding="async"
-              width="136"
-              height="136"
-              aria-hidden="true"
-            />
-          </div>
         </div>
       </div>
     </aside>
@@ -191,29 +179,9 @@ const isActive = (href: string) => {
           <a href="/terms/">Terms</a>
         </nav>
         <p class="fp-site-footer-meta">© Fight Prophet · Information and education only — not financial advice.</p>
-        <div class="fp-made-in" aria-label="Made in Colombia">
-          <img
-            src={madeInColombiaEmojiUrl}
-            alt=""
-            class="fp-made-in-mark"
-            loading="lazy"
-            decoding="async"
-            width="136"
-            height="136"
-            aria-hidden="true"
-          />
-        </div>
-        <div class="fp-footer-emoji" aria-label="Fight Prophet Ear Pro">
-          <img
-            src={earProEmojiUrl}
-            alt=""
-            class="fp-footer-emoji-mark"
-            loading="lazy"
-            decoding="async"
-            width="136"
-            height="136"
-            aria-hidden="true"
-          />
+        <div class="fp-footer-marks">
+          <img src={earProEmojiUrl} alt="" class="fp-footer-emoji-mark" loading="lazy" decoding="async" width="136" height="136" aria-hidden="true" />
+          <img src={madeInColombiaEmojiUrl} alt="Made in Colombia" class="fp-made-in-mark" loading="lazy" decoding="async" width="136" height="136" />
         </div>
       </footer>
     </div>
@@ -905,12 +873,12 @@ const isActive = (href: string) => {
     color: #71717a;
     text-align: center;
   }
-  .fp-made-in,
-  .fp-footer-emoji {
+  .fp-footer-marks {
     margin: 0.85rem auto 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 0.5rem;
     width: fit-content;
   }
   .fp-made-in-mark,
@@ -919,12 +887,6 @@ const isActive = (href: string) => {
     width: 136px;
     height: 136px;
     object-fit: contain;
-  }
-  .fp-made-in--rail {
-    margin-top: 0.05rem;
-  }
-  .fp-footer-emoji {
-    margin-top: 0.2rem;
   }
   /* ── Mobile (≤900px): drawer behavior ────────────────────────────── */
   @media (max-width: 900px) {
