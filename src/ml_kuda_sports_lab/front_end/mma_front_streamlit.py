@@ -3436,7 +3436,7 @@ st.markdown(
         gap: 0.62rem;
         margin: 0;
         color: #ffffff;
-        font-weight: 900;
+        font-weight: 800;
         line-height: 1.16;
         letter-spacing: 0;
         text-align: center;
@@ -3444,15 +3444,15 @@ st.markdown(
         text-wrap: balance;
     }
     .fp-title--page {
-        font-size: clamp(1.95rem, 3vw, 2.65rem);
+        font-size: clamp(1.35rem, 3.2vw, 2.05rem);
     }
     .fp-title--section {
-        font-size: clamp(1.38rem, 2vw, 1.82rem);
+        font-size: clamp(1.18rem, 2.4vw, 1.56rem);
     }
     .fp-title--compact {
         font-size: 1.08rem;
         color: #f4f4f5;
-        font-weight: 850;
+        font-weight: 800;
     }
     .fp-title::after {
         content: "";
@@ -3483,7 +3483,7 @@ st.markdown(
     [data-testid="stMainBlockContainer"] h2,
     [data-testid="stMainBlockContainer"] h3 {
         color: #ffffff !important;
-        font-weight: 900 !important;
+        font-weight: 800 !important;
         letter-spacing: 0 !important;
         text-align: center !important;
         text-shadow: 0 0 16px rgba(248, 113, 113, 0.14);
@@ -3496,8 +3496,8 @@ st.markdown(
         width: 100%;
         margin: 0 0 1rem;
         color: #ffffff;
-        font-size: 1.75rem;
-        font-weight: 900;
+        font-size: clamp(1.18rem, 2.4vw, 1.56rem);
+        font-weight: 800;
         line-height: 1.2;
         letter-spacing: 0;
         text-align: center;
