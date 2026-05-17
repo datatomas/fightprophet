@@ -10,6 +10,8 @@ const AZURE_BLOB_API_VERSION = '2023-11-03';
 
 const FOLDER_UPCOMING = 'dashboard_upcoming_cards';
 const FOLDER_UPCOMING_CATBOOST = 'dashboard_upcoming_cards_catboost';
+const FOLDER_UPCOMING_ENSEMBLE = 'dashboard_upcoming_cards_ensemble';
+const FOLDER_UPCOMING_LOGREG = 'dashboard_upcoming_cards_logreg';
 const FOLDER_EVENTS = 'dashboard_upcoming_events';
 const FOLDER_HISTORICAL = 'dashboard_hist_historical_all';
 const FOLDER_HISTORICAL_CATBOOST = 'dashboard_hist_historical_all_catboost';
@@ -151,6 +153,8 @@ export interface UpcomingFightRow {
   opponent_flag: string;
   fighter_is_champion: boolean;
   opponent_is_champion: boolean;
+  fighter_status: string;
+  opponent_status: string;
   fighter_wins: number | null;
   fighter_losses: number | null;
   opponent_wins: number | null;
@@ -179,6 +183,12 @@ export interface UpcomingPredictionsData {
     fetched: boolean;
     fightCount: number;
   };
+}
+
+export interface AllModelsPredictionsData {
+  catboost: UpcomingFightRow[];
+  ensemble: UpcomingFightRow[];
+  logreg: UpcomingFightRow[];
 }
 
 let cachedEvents: EventsHistoryData | null = null;
@@ -793,6 +803,7 @@ export async function getUpcomingPredictionsData(env?: RuntimeEnv): Promise<Upco
     'weight_class',
     'fighter_country', 'opponent_country',
     'fighter_is_champion', 'opponent_is_champion',
+    'fighter_status', 'opponent_status',
     'fighter_wins', 'fighter_losses',
     'opponent_wins', 'opponent_losses',
     'fighter_finish_rate', 'opponent_finish_rate',
@@ -834,6 +845,8 @@ export async function getUpcomingPredictionsData(env?: RuntimeEnv): Promise<Upco
         opponent_flag: flagEmojiFor(countryIndex.byAlias, row.opponent_country),
         fighter_is_champion: coerceBool(row.fighter_is_champion),
         opponent_is_champion: coerceBool(row.opponent_is_champion),
+        fighter_status: cleanStr(row.fighter_status),
+        opponent_status: cleanStr(row.opponent_status),
         fighter_wins: coerceInt(row.fighter_wins),
         fighter_losses: coerceInt(row.fighter_losses),
         opponent_wins: coerceInt(row.opponent_wins),
@@ -864,4 +877,95 @@ export async function getUpcomingPredictionsData(env?: RuntimeEnv): Promise<Upco
   };
   cacheExpiresAt = now + cacheTtlMilliseconds(env);
   return cachedPredictions;
+}
+
+let cachedAllModels: AllModelsPredictionsData | null = null;
+
+export async function getAllModelsPredictionsData(env?: RuntimeEnv): Promise<AllModelsPredictionsData> {
+  const now = Date.now();
+  if (cachedAllModels && now < cacheExpiresAt) return cachedAllModels;
+
+  const columns = [
+    'event_name', 'event_date', 'location',
+    'fighter_name_display', 'opponent_name_display',
+    'weight_class',
+    'fighter_country', 'opponent_country',
+    'fighter_is_champion', 'opponent_is_champion',
+    'fighter_status', 'opponent_status',
+    'fighter_wins', 'fighter_losses',
+    'opponent_wins', 'opponent_losses',
+    'fighter_finish_rate', 'opponent_finish_rate',
+    'fighter_sub_rate', 'opponent_sub_rate',
+    'fighter_win_streak', 'fighter_loss_streak',
+    'opponent_win_streak', 'opponent_loss_streak',
+    'model_prob', 'market_prob', 'edge',
+    'signal_strength', 'recommended_bet',
+    'fighter_odds', 'opponent_odds',
+    'bet_on_name',
+  ];
+
+  const [catboostRows, ensembleRows, logregRows, countryIndex] = await Promise.all([
+    readLatestDashboardRows(env, FOLDER_UPCOMING_CATBOOST, columns),
+    readLatestDashboardRows(env, FOLDER_UPCOMING_ENSEMBLE, columns),
+    readLatestDashboardRows(env, FOLDER_UPCOMING_LOGREG, columns),
+    getCountryMasterIndex(env),
+  ]);
+
+  function normalizeRows(rows: Record<string, any>[], fallbackRows: Record<string, any>[]): UpcomingFightRow[] {
+    const source = rows.length > 0 ? rows : fallbackRows;
+    return source
+      .map((row): UpcomingFightRow | null => {
+        const eventName = cleanStr(row.event_name);
+        const fighterName = cleanStr(row.fighter_name_display);
+        if (!eventName || !fighterName) return null;
+        const fighterCountry = countryName(countryIndex.byAlias, row.fighter_country);
+        const opponentCountry = countryName(countryIndex.byAlias, row.opponent_country);
+        return {
+          event_name: eventName,
+          event_date: coerceDate(row.event_date),
+          location: cleanStr(row.location),
+          fighter_name_display: fighterName,
+          opponent_name_display: cleanStr(row.opponent_name_display),
+          weight_class: cleanStr(row.weight_class),
+          fighter_country: fighterCountry,
+          opponent_country: opponentCountry,
+          fighter_flag: flagEmojiFor(countryIndex.byAlias, row.fighter_country),
+          opponent_flag: flagEmojiFor(countryIndex.byAlias, row.opponent_country),
+          fighter_is_champion: coerceBool(row.fighter_is_champion),
+          opponent_is_champion: coerceBool(row.opponent_is_champion),
+          fighter_status: cleanStr(row.fighter_status),
+          opponent_status: cleanStr(row.opponent_status),
+          fighter_wins: coerceInt(row.fighter_wins),
+          fighter_losses: coerceInt(row.fighter_losses),
+          opponent_wins: coerceInt(row.opponent_wins),
+          opponent_losses: coerceInt(row.opponent_losses),
+          fighter_finish_rate: coerceNum(row.fighter_finish_rate),
+          opponent_finish_rate: coerceNum(row.opponent_finish_rate),
+          fighter_sub_rate: coerceNum(row.fighter_sub_rate),
+          opponent_sub_rate: coerceNum(row.opponent_sub_rate),
+          fighter_win_streak: coerceInt(row.fighter_win_streak),
+          fighter_loss_streak: coerceInt(row.fighter_loss_streak),
+          opponent_win_streak: coerceInt(row.opponent_win_streak),
+          opponent_loss_streak: coerceInt(row.opponent_loss_streak),
+          model_prob: coerceNum(row.model_prob),
+          market_prob: coerceNum(row.market_prob),
+          edge: coerceNum(row.edge),
+          signal_strength: cleanStr(row.signal_strength),
+          recommended_bet: coerceBool(row.recommended_bet),
+          fighter_odds: coerceNum(row.fighter_odds),
+          opponent_odds: coerceNum(row.opponent_odds),
+          bet_on_name: cleanStr(row.bet_on_name),
+        };
+      })
+      .filter(Boolean) as UpcomingFightRow[];
+  }
+
+  const primaryRows = await readLatestDashboardRows(env, FOLDER_UPCOMING, columns);
+  cachedAllModels = {
+    catboost: normalizeRows(catboostRows, primaryRows),
+    ensemble: normalizeRows(ensembleRows, catboostRows),
+    logreg: normalizeRows(logregRows, catboostRows),
+  };
+  cacheExpiresAt = now + cacheTtlMilliseconds(env);
+  return cachedAllModels;
 }

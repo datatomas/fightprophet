@@ -1,44 +1,105 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { runtimeEnvFromLocals } from '../lib/country-master';
-import { getUpcomingPredictionsData } from '../lib/dashboard-data';
+import { getAllModelsPredictionsData } from '../lib/dashboard-data';
 
 const runtimeEnv = runtimeEnvFromLocals(Astro.locals);
-const predictionsData = await getUpcomingPredictionsData(runtimeEnv);
-const pageJson = JSON.stringify(predictionsData).replace(/</g, '\\u003c');
+const allModels = await getAllModelsPredictionsData(runtimeEnv);
+const pageJson = JSON.stringify(allModels).replace(/</g, '\\u003c');
 
-const fights = predictionsData.fights;
+// Default to catboost for KPIs (matches Streamlit default)
+const fights = allModels.catboost;
 const totalFights = fights.length;
 const eventCount = new Set(fights.map((f) => f.event_name)).size;
 const strongSignals = fights.filter((f) => f.signal_strength === 'STRONG').length;
 const recommendedBets = fights.filter((f) => f.recommended_bet).length;
+const hasData = totalFights > 0;
 ---
 
 <BaseLayout
   title="MMA Predictions — Upcoming UFC Fights | Fight Prophet"
   description="AI-powered MMA predictions for upcoming UFC fights — model probability vs market probability, confidence signals, and edge analysis for the next events."
 >
-  <article class="fp-predictions-page">
+  <article class="fp-pred-page">
+
+    <!-- ── HERO ── -->
     <header class="fp-tool-hero">
       <a class="fp-tool-breadcrumb" href="/">← Fight Prophet</a>
-      <p class="fp-section-label">Predictions</p>
+      <p class="fp-section-label">Upcoming Predictions</p>
       <h1>MMA Predictions</h1>
-      <p>
-        AI-generated predictions for upcoming MMA bouts. Model probability vs market line, confidence signals, and per-fight edge — all from the same pipeline that powers the analytics dashboard.
+      <p class="fp-hero-copy">
+        Fight Prophet uses machine learning trained on previous UFC fights to estimate how matchups may play out.
+        Start with <strong>CatBoost</strong> for the clearest default view, then compare with the other models if you want a second opinion.
       </p>
-      {totalFights > 0 && (
-        <div class="fp-kpi-strip" aria-label="Upcoming card summary">
-          <span><strong>{totalFights.toLocaleString()}</strong> upcoming fights</span>
-          <span><strong>{eventCount.toLocaleString()}</strong> {eventCount === 1 ? 'event' : 'events'}</span>
-          <span><strong>{strongSignals.toLocaleString()}</strong> strong signals</span>
-          <span><strong>{recommendedBets.toLocaleString()}</strong> recommended bets</span>
-        </div>
-      )}
     </header>
 
-    {totalFights > 0 ? (
+    {hasData ? (
       <>
+        <!-- ── KPI STRIP ── -->
+        <div class="kpi-strip" data-kpi-strip>
+          <div class="kpi-strip-item">
+            <div class="kpi-strip-icon">
+              <img src="/branding/b91c1c-fights-emoji.png" alt="Fights" width="46" height="46" />
+            </div>
+            <div class="kpi-strip-label">Total Fights</div>
+            <div class="kpi-strip-value" data-kpi-fights>{totalFights.toLocaleString()}</div>
+          </div>
+          <div class="kpi-strip-item">
+            <div class="kpi-strip-icon">
+              <img src="/branding/b91c1c-predictions-emoji.png" alt="Events" width="46" height="46" />
+            </div>
+            <div class="kpi-strip-label">Events</div>
+            <div class="kpi-strip-value" data-kpi-events>{eventCount.toLocaleString()}</div>
+          </div>
+          <div class="kpi-strip-item">
+            <div class="kpi-strip-icon">
+              <img src="/branding/b91c1c-signals-emoji.png" alt="Strong signals" width="46" height="46" />
+            </div>
+            <div class="kpi-strip-label">Strong Signals</div>
+            <div class="kpi-strip-value" data-kpi-strong>{strongSignals.toLocaleString()}</div>
+          </div>
+          <div class="kpi-strip-item">
+            <div class="kpi-strip-icon">
+              <img src="/branding/b91c1c-bets-emoji.png" alt="Recommended bets" width="46" height="46" />
+            </div>
+            <div class="kpi-strip-label">Recommended Bets</div>
+            <div class="kpi-strip-value" data-kpi-recs>{recommendedBets.toLocaleString()}</div>
+          </div>
+        </div>
+
+        <!-- ── MODEL GUIDE ── -->
+        <div class="fp-model-guide">
+          <div class="fp-model-guide-eyebrow">Available model views</div>
+          <div class="fp-model-guide-title">Welcome to Fight Prophet predictions</div>
+          <div class="fp-model-guide-copy">
+            Fight Prophet uses machine learning trained on previous UFC fights to estimate how matchups may play out.
+            Start with CatBoost for the clearest default view, then compare it with the other models if you want a second opinion.
+          </div>
+          <div class="fp-model-guide-grid">
+            <div class="fp-model-guide-item">
+              <div class="fp-model-guide-item-label">CatBoost</div>
+              <div class="fp-model-guide-item-copy">Gradient boosting optimised for structured / tabular MMA features.</div>
+            </div>
+            <div class="fp-model-guide-item">
+              <div class="fp-model-guide-item-label">Ensemble</div>
+              <div class="fp-model-guide-item-copy">Combines multiple learners to reduce single-model bias.</div>
+            </div>
+            <div class="fp-model-guide-item">
+              <div class="fp-model-guide-item-label">LogReg</div>
+              <div class="fp-model-guide-item-copy">Interpretable baseline that stabilises directional probability checks.</div>
+            </div>
+          </div>
+          <div class="fp-model-guide-reco">⭐ Best starting point: CatBoost</div>
+        </div>
+
+        <!-- ── CONTROLS ── -->
         <section class="fp-tool-controls" aria-label="Prediction filters">
+          <!-- model picker -->
+          <div class="fp-model-picker" role="group" aria-label="Select model">
+            <button type="button" class="fp-model-btn is-active" data-model="catboost">CatBoost</button>
+            <button type="button" class="fp-model-btn" data-model="ensemble">Ensemble</button>
+            <button type="button" class="fp-model-btn" data-model="logreg">LogReg</button>
+          </div>
           <label>
             <span>Event</span>
             <select data-pred-event>
@@ -56,6 +117,7 @@ const recommendedBets = fights.filter((f) => f.recommended_bet).length;
           </label>
         </section>
 
+        <!-- ── FIGHT CARDS ── -->
         <div class="fp-predictions-feed" data-predictions-feed aria-live="polite"></div>
       </>
     ) : (
@@ -66,30 +128,28 @@ const recommendedBets = fights.filter((f) => f.recommended_bet).length;
     )}
   </article>
 
-  <script type="application/json" id="fp-predictions-data" set:html={pageJson}></script>
+  <script type="application/json" id="fp-all-models-data" set:html={pageJson}></script>
 </BaseLayout>
 
 <script is:inline>
   (() => {
-    const dataNode = document.getElementById('fp-predictions-data');
+    const dataNode = document.getElementById('fp-all-models-data');
     if (!dataNode) return;
-    const payload = JSON.parse(dataNode.textContent || '{"fights":[]}');
-    const fights = Array.isArray(payload.fights) ? payload.fights : [];
-    if (!fights.length) return;
+    const allModels = JSON.parse(dataNode.textContent || '{}');
+    if (!allModels.catboost) return;
 
+    const feed = document.querySelector('[data-predictions-feed]');
     const eventSel = document.querySelector('[data-pred-event]');
     const signalSel = document.querySelector('[data-pred-signal]');
-    const feed = document.querySelector('[data-predictions-feed]');
+    const modelBtns = document.querySelectorAll('[data-model]');
+    const kpiFights = document.querySelector('[data-kpi-fights]');
+    const kpiEvents = document.querySelector('[data-kpi-events]');
+    const kpiStrong = document.querySelector('[data-kpi-strong]');
+    const kpiRecs = document.querySelector('[data-kpi-recs]');
 
-    // Populate event options
-    const eventNames = [...new Set(fights.map((f) => f.event_name).filter(Boolean))];
-    for (const name of eventNames) {
-      const opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
-      eventSel?.append(opt);
-    }
+    let currentModel = 'catboost';
 
+    // ── Helpers ──────────────────────────────────────────────────────────────
     const esc = (v) =>
       String(v ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
@@ -131,34 +191,54 @@ const recommendedBets = fights.filter((f) => f.recommended_bet).length;
         "women's bantamweight": 'WBW', "women's featherweight": 'WFW',
       };
       if (!wc) return '';
-      const key = wc.toLowerCase().trim();
-      return map[key] || wc.split(/\s+/).map((p) => p[0]).join('').toUpperCase().slice(0, 4);
+      return map[wc.toLowerCase().trim()] || wc.split(/\s+/).map((p) => p[0]).join('').toUpperCase().slice(0, 4);
     };
 
     const initials = (name) =>
       String(name || '').split(/\s+/).map((p) => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
 
-    function buildCardHtml(name, country, flag, wc, isChamp, wins, losses, finRate, subRate, wStreak, lStreak) {
+    const signalIcon = (sig) => {
+      const s = String(sig || '').toUpperCase();
+      if (s === 'STRONG') return `<img src="/branding/b91c1c-signals-emoji.png" alt="Strong" width="16" height="16" class="fp-inline-icon" />`;
+      if (s === 'MEDIUM') return `<img src="/branding/b91c1c-signals-mid-emoji.png" alt="Medium" width="16" height="16" class="fp-inline-icon" />`;
+      return `<img src="/branding/b91c1c-signals-low-emoji.png" alt="Weak" width="18" height="18" class="fp-inline-icon" />`;
+    };
+
+    // ── Fighter card HTML (mirrors Streamlit _build_fighter_card_html) ────────
+    function buildCardHtml(name, country, flag, wc, isChamp, status, wins, losses, finRate, subRate, wStreak, lStreak) {
       const init = initials(name);
       const abbr = wcAbbr(wc);
-      const record = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(losses)}` : '';
+      const wTxt = fmtInt(wins);
+      const lTxt = fmtInt(losses);
+      const record = wTxt !== '—' && lTxt !== '—' ? `${wTxt}-${lTxt}` : (wTxt !== '—' ? wTxt : '—');
       const typeLine = esc([wc || 'MMA Fighter', country].filter(Boolean).join(' / '));
       const cardCls = isChamp ? 'fp-card is-champ is-compact' : 'fp-card is-default is-compact';
       const profileHref = `/fighter-card/?fighter=${encodeURIComponent(name || '')}`;
-      const ratingInner = isChamp
-        ? `<span class="fp-card-rating-num">C</span>${abbr ? `<span class="fp-card-rating-pos">${esc(abbr)}</span>` : ''}`
-        : `<span class="fp-card-rating-num">${esc(record || fmtInt(wins))}</span>${abbr ? `<span class="fp-card-rating-pos">${esc(abbr)}</span>` : ''}`;
+      const statusLower = String(status || '').toLowerCase();
+      const statusHtml = statusLower
+        ? `<span class="fp-card-status fp-card-status--${esc(statusLower)}">${esc(statusLower)}</span>`
+        : '';
+      const flagHtml = flag ? `<span class="fp-card-flag" title="${esc(country)}">${esc(flag)}</span>` : '';
+      const topRightHtml = (statusHtml || flagHtml)
+        ? `<div class="fp-card-top-right">${statusHtml}${flagHtml}</div>`
+        : '';
+      const crownHtml = isChamp ? `<span class="fp-card-crown" aria-label="Champion">👑</span>` : '';
+      const ratingPos = abbr ? `<span class="fp-card-rating-pos">${esc(abbr)}</span>` : '';
+
       return `<a class="${cardCls}" href="${esc(profileHref)}">
         <div class="fp-card-frame"></div>
         <div class="fp-card-top">
-          <div class="fp-card-rating">${ratingInner}</div>
-          ${flag ? `<span class="fp-card-flag" title="${esc(country)}">${esc(flag)}</span>` : ''}
+          <div class="fp-card-rating">
+            <span class="fp-card-rating-num">${esc(record)}</span>
+            ${ratingPos}
+          </div>
+          ${topRightHtml}
         </div>
         <header class="fp-card-banner"><span class="fp-card-name">${esc(name || '')}</span></header>
         <div class="fp-card-portrait">
           <span class="fp-card-portrait-silhouette" aria-hidden="true">👤</span>
           <span class="fp-card-initials" aria-hidden="true">${esc(init)}</span>
-          ${isChamp ? '<span class="fp-card-crown" aria-label="Champion">👑</span>' : ''}
+          ${crownHtml}
         </div>
         <div class="fp-card-type-bar">[ ${typeLine} ]</div>
         <div class="fp-card-desc">
@@ -169,14 +249,16 @@ const recommendedBets = fights.filter((f) => f.recommended_bet).length;
             <span class="fp-card-stat"><em>L✗</em><b>${esc(fmtInt(lStreak))}</b></span>
           </div>
           <div class="fp-card-atkdef">
-            <span class="fp-card-atk">FIN/${esc(fmtPct(finRate))}</span>
+            <span class="fp-card-atk">ATK/${esc(wTxt)}</span>
             <span class="fp-card-sep">·</span>
-            <span class="fp-card-def">REC/${esc(record || '—')}</span>
+            <span class="fp-card-def">DEF/${esc(lTxt)}</span>
           </div>
         </div>
+        <span class="fp-card-country-fallback" aria-hidden="true"></span>
       </a>`;
     }
 
+    // ── Matchup shell (mirrors _render_fight_card) ────────────────────────────
     function buildMatchupHtml(fight) {
       const signal = String(fight.signal_strength || '');
       const signalKey = signal.toLowerCase();
@@ -198,16 +280,28 @@ const recommendedBets = fights.filter((f) => f.recommended_bet).length;
 
       const isUnderdog = marketBetSide != null && marketBetSide < 0.5;
       const valueLabel = isUnderdog ? 'Underdog value angle' : 'Best value bet';
-      const recChip = fight.recommended_bet ? ' <span class="fp-rec-chip">✅ Recommended</span>' : '';
+      const recChip = fight.recommended_bet
+        ? ` <span class="fp-rec-chip"><img src="/branding/b91c1c-bets-emoji.png" alt="" width="14" height="14" class="fp-inline-icon" /> Recommended</span>`
+        : '';
 
-      const fCard = buildCardHtml(fName, fight.fighter_country, fight.fighter_flag, fight.weight_class, fight.fighter_is_champion, fight.fighter_wins, fight.fighter_losses, fight.fighter_finish_rate, fight.fighter_sub_rate, fight.fighter_win_streak, fight.fighter_loss_streak);
-      const oCard = buildCardHtml(oName, fight.opponent_country, fight.opponent_flag, fight.weight_class, fight.opponent_is_champion, fight.opponent_wins, fight.opponent_losses, fight.opponent_finish_rate, fight.opponent_sub_rate, fight.opponent_win_streak, fight.opponent_loss_streak);
+      const fCard = buildCardHtml(fName, fight.fighter_country, fight.fighter_flag, fight.weight_class, fight.fighter_is_champion, fight.fighter_status, fight.fighter_wins, fight.fighter_losses, fight.fighter_finish_rate, fight.fighter_sub_rate, fight.fighter_win_streak, fight.fighter_loss_streak);
+      const oCard = buildCardHtml(oName, fight.opponent_country, fight.opponent_flag, fight.weight_class, fight.opponent_is_champion, fight.opponent_status, fight.opponent_wins, fight.opponent_losses, fight.opponent_finish_rate, fight.opponent_sub_rate, fight.opponent_win_streak, fight.opponent_loss_streak);
 
       const pickSummary = likelyWinner
         ? `<div class="fp-pick-summary">
-            <div class="fp-pick-winner"><strong>MODEL PREDICTION TO WIN:</strong> ${esc(likelyWinner)} <span class="fp-pick-confidence">(${fmtProb(likelyProb)})</span></div>
-            ${fight.bet_on_name ? `<div class="fp-pick-value">⚡ <b>${esc(valueLabel)}:</b> ${esc(fight.bet_on_name)} &nbsp;|&nbsp; Edge: <code>${esc(fmtEdge(fight.edge))}</code> &nbsp;|&nbsp; Market: <code>${esc(fmtProb(marketBetSide))}</code> &nbsp;|&nbsp; Signal: <b>${esc(signalLabel)}</b>${recChip}</div>` : ''}
-            <div class="fp-pick-note">Model probabilities reflect historical patterns — check the disclaimer for full context.</div>
+            <div class="fp-pick-winner">
+              <strong>MODEL PREDICTION TO WIN:</strong>
+              ${esc(likelyWinner)}
+              <span class="fp-pick-confidence">(${fmtProb(likelyProb)})</span>
+            </div>
+            ${fight.bet_on_name ? `
+              <div class="fp-pick-value">
+                ${signalIcon(signal)} <b>${esc(valueLabel)}:</b> ${esc(fight.bet_on_name)}
+                &nbsp;|&nbsp; Edge: <code>${esc(fmtEdge(fight.edge))}</code>
+                &nbsp;|&nbsp; Market: <code>${esc(fmtProb(marketBetSide))}</code>
+                &nbsp;|&nbsp; Signal: <b>${esc(signalLabel)}</b>${recChip}
+              </div>` : ''}
+            <div class="fp-pick-note">Model probabilities reflect historical patterns — check the disclaimer before acting on any output.</div>
           </div>`
         : '';
 
@@ -216,12 +310,14 @@ const recommendedBets = fights.filter((f) => f.recommended_bet).length;
           <div class="fp-matchup-head-copy">
             <div class="fp-matchup-eyebrow">${esc(matchupLabel)}</div>
           </div>
-          <div class="fp-matchup-signal ${esc(signalCls)}">⚡ ${esc(signalLabel)}</div>
+          <div class="fp-matchup-signal ${esc(signalCls)}">${signalIcon(signal)} ${esc(signalLabel)}</div>
         </div>
         <div class="fp-matchup-grid">
           <div class="fp-fighter-pane">
             ${fCard}
-            <div class="fp-odds-chip"><span class="fp-odds-chip-label">Odds</span>${esc(fmtOdds(fight.fighter_odds))}</div>
+            <div class="fp-odds-chip">
+              <span class="fp-odds-chip-label">Odds</span>${esc(fmtOdds(fight.fighter_odds))}
+            </div>
           </div>
           <div class="fp-versus-core">
             <div class="fp-versus-mark">⚔️</div>
@@ -245,14 +341,46 @@ const recommendedBets = fights.filter((f) => f.recommended_bet).length;
           </div>
           <div class="fp-fighter-pane">
             ${oCard}
-            <div class="fp-odds-chip"><span class="fp-odds-chip-label">Odds</span>${esc(fmtOdds(fight.opponent_odds))}</div>
+            <div class="fp-odds-chip">
+              <span class="fp-odds-chip-label">Odds</span>${esc(fmtOdds(fight.opponent_odds))}
+            </div>
           </div>
         </div>
         ${pickSummary}
       </section>`;
     }
 
+    // ── Populate event dropdown from current model data ───────────────────────
+    function refreshEventDropdown(fights) {
+      const current = eventSel?.value || '__all__';
+      const names = [...new Set(fights.map((f) => f.event_name).filter(Boolean))];
+      if (eventSel) {
+        eventSel.innerHTML = '<option value="__all__">All events</option>';
+        for (const name of names) {
+          const opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name;
+          if (name === current) opt.selected = true;
+          eventSel.append(opt);
+        }
+      }
+    }
+
+    // ── Update KPI strip ──────────────────────────────────────────────────────
+    function updateKpis(fights) {
+      const total = fights.length;
+      const evs = new Set(fights.map((f) => f.event_name)).size;
+      const strong = fights.filter((f) => f.signal_strength === 'STRONG').length;
+      const recs = fights.filter((f) => f.recommended_bet).length;
+      if (kpiFights) kpiFights.textContent = total.toLocaleString();
+      if (kpiEvents) kpiEvents.textContent = evs.toLocaleString();
+      if (kpiStrong) kpiStrong.textContent = strong.toLocaleString();
+      if (kpiRecs) kpiRecs.textContent = recs.toLocaleString();
+    }
+
+    // ── Filtered fights for current state ────────────────────────────────────
     function filteredFights() {
+      const fights = Array.isArray(allModels[currentModel]) ? allModels[currentModel] : [];
       const ev = String(eventSel?.value || '__all__');
       const sig = String(signalSel?.value || 'All');
       return fights.filter((f) =>
@@ -261,19 +389,18 @@ const recommendedBets = fights.filter((f) => f.recommended_bet).length;
       );
     }
 
+    // ── Render fight feed ─────────────────────────────────────────────────────
     function render() {
       const rows = filteredFights();
       if (!rows.length) {
         feed.innerHTML = '<p class="fp-list-empty">No fights match the current filters.</p>';
         return;
       }
-
       const byEvent = new Map();
       for (const f of rows) {
         if (!byEvent.has(f.event_name)) byEvent.set(f.event_name, []);
         byEvent.get(f.event_name).push(f);
       }
-
       let html = '';
       for (const [evName, evFights] of byEvent.entries()) {
         const first = evFights[0];
@@ -289,269 +416,125 @@ const recommendedBets = fights.filter((f) => f.recommended_bet).length;
       feed.innerHTML = html;
     }
 
+    // ── Model picker ──────────────────────────────────────────────────────────
+    modelBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        currentModel = btn.getAttribute('data-model') || 'catboost';
+        modelBtns.forEach((b) => b.classList.toggle('is-active', b === btn));
+        const allFights = Array.isArray(allModels[currentModel]) ? allModels[currentModel] : [];
+        refreshEventDropdown(allFights);
+        updateKpis(allFights);
+        render();
+      });
+    });
+
     eventSel?.addEventListener('change', render);
     signalSel?.addEventListener('change', render);
+
+    // Initial render
+    const initialFights = Array.isArray(allModels.catboost) ? allModels.catboost : [];
+    refreshEventDropdown(initialFights);
     render();
   })();
 </script>
 
+<!-- ── Global card CSS (exact port of Streamlit _FIGHTER_CARD_CSS) ── -->
 <style is:global>
-  /* === Fighter card (Yu-Gi-Oh style) — mirrors FighterCard.astro for dynamic renders === */
-  .fp-card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    margin-inline: auto;
-    aspect-ratio: 59 / 86;
-    min-height: 188px;
-    text-decoration: none;
-    color: #fef2f2;
-    border-radius: 0.42rem;
-    padding: 0.34rem 0.36rem 0.36rem;
-    overflow: hidden;
-    transition: transform 120ms ease, box-shadow 120ms ease;
-    isolation: isolate;
-  }
-  .fp-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    z-index: -1;
-  }
-  .fp-card-frame {
-    position: absolute;
-    inset: 0.18rem;
-    border-radius: 0.28rem;
-    z-index: 0;
-    pointer-events: none;
-  }
-  .fp-card.is-default::before {
-    background: linear-gradient(160deg, #ef4444 0%, #b91c1c 35%, #7f1d1d 70%, #2a0808 100%);
-  }
-  .fp-card.is-default .fp-card-frame {
-    background: radial-gradient(110% 80% at 50% 0%, rgba(220,38,38,0.18), transparent 70%), linear-gradient(180deg, #1a0c0c 0%, #100808 100%);
-    border: 1px solid rgba(185,28,28,0.7);
-    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.55), inset 0 0 18px rgba(0,0,0,0.5);
-  }
-  .fp-card.is-champ::before {
-    background: linear-gradient(160deg, #ffe27a 0%, #d09312 30%, #6c4404 60%, #2a1908 100%);
-  }
-  .fp-card.is-champ .fp-card-frame {
-    background: radial-gradient(110% 80% at 50% 0%, rgba(255,240,170,0.28), transparent 70%), linear-gradient(180deg, #4a311a 0%, #1c1207 100%);
-    border: 1px solid rgba(255,240,170,0.72);
-    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.45), inset 0 0 22px rgba(255,220,140,0.18);
-  }
-  .fp-card:hover { transform: translateY(-2px) scale(1.01); }
-  .fp-card.is-default:hover { box-shadow: 0 0 18px rgba(255,180,80,0.34); }
-  .fp-card.is-champ:hover { box-shadow: 0 0 22px rgba(255,220,130,0.55); }
+  .fp-card{position:relative;display:flex;flex-direction:column;width:100%;max-width:252px;margin-inline:auto;aspect-ratio:59/86;min-height:188px;border-radius:0.42rem;padding:0.34rem 0.36rem 0.36rem;overflow:hidden;isolation:isolate;color:#fef2f2;font-family:Inter,system-ui,sans-serif;text-decoration:none;transition:transform 120ms ease,box-shadow 120ms ease,filter 120ms ease;}
+  .fp-card::before{content:'';position:absolute;inset:0;border-radius:inherit;z-index:-1;}
+  .fp-card-frame{position:absolute;inset:0.18rem;border-radius:0.28rem;z-index:0;pointer-events:none;}
+  .fp-card.is-default::before{background:linear-gradient(160deg,#ef4444 0%,#b91c1c 35%,#7f1d1d 70%,#2a0808 100%);}
+  .fp-card.is-default .fp-card-frame{background:radial-gradient(110% 80% at 50% 0%,rgba(220,38,38,0.18),transparent 70%),linear-gradient(180deg,#1a0c0c 0%,#100808 100%);border:1px solid rgba(185,28,28,0.7);box-shadow:inset 0 0 0 1px rgba(0,0,0,0.55),inset 0 0 18px rgba(0,0,0,0.5);}
+  .fp-card.is-champ::before{background:linear-gradient(160deg,#ffe27a 0%,#d09312 30%,#6c4404 60%,#2a1908 100%);}
+  .fp-card.is-champ .fp-card-frame{background:radial-gradient(110% 80% at 50% 0%,rgba(255,240,170,0.28),transparent 70%),linear-gradient(180deg,#4a311a 0%,#1c1207 100%);border:1px solid rgba(255,240,170,0.72);box-shadow:inset 0 0 0 1px rgba(0,0,0,0.45),inset 0 0 22px rgba(255,220,140,0.18);}
+  .fp-card:hover{transform:translateY(-2px) scale(1.01);}
+  .fp-card.is-default:hover{box-shadow:0 0 18px rgba(255,180,80,0.34);}
+  .fp-card.is-champ:hover{box-shadow:0 0 22px rgba(255,220,130,0.55);}
 
-  .fp-card-banner {
-    position: relative;
-    z-index: 2;
-    padding: 0.18rem 0.32rem;
-    background: linear-gradient(180deg, #ef4444 0%, #b91c1c 60%, #7f1d1d 100%);
-    border: 1px solid rgba(248,113,113,0.65);
-    border-radius: 0.22rem;
-    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.22), 0 1px 0 rgba(0,0,0,0.3);
-    text-align: center;
-  }
-  .fp-card.is-champ .fp-card-banner {
-    background: linear-gradient(180deg, #fff0a8 0%, #d6a32a 50%, #8a5905 100%);
-    border-color: rgba(255,235,170,0.6);
-  }
-  .fp-card-name {
-    display: -webkit-box;
-    min-height: 1.5em;
-    font-size: 0.74rem;
-    font-weight: 900;
-    line-height: 1.08;
-    color: #fff5f5;
-    text-shadow: 0 1px 0 rgba(0,0,0,0.4);
-    overflow: hidden;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    text-wrap: balance;
-  }
-  .fp-card.is-champ .fp-card-name { color: #1a0e00; text-shadow: 0 1px 0 rgba(255,230,160,0.55); }
+  .fp-card-top{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:0.32rem;margin:0 0 0.18rem;min-height:1.5rem;}
+  .fp-card-rating{position:relative;display:inline-flex;flex-direction:row;align-items:center;gap:0.34rem;padding:0.2rem 0.46rem;background:rgba(0,0,0,0.55);border:1px solid rgba(185,28,28,0.65);border-radius:0.42rem;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.4);line-height:1;min-width:0;flex-shrink:1;overflow:hidden;}
+  .fp-card.is-champ .fp-card-rating{background:linear-gradient(180deg,rgba(255,240,170,0.92),rgba(180,120,30,0.85));border-color:rgba(255,240,170,0.85);}
+  .fp-card-rating-num{font-size:0.86rem;font-weight:900;color:#fee2e2;text-shadow:0 1px 2px rgba(0,0,0,0.6);}
+  .fp-card.is-champ .fp-card-rating-num{color:#1a0e00;text-shadow:0 1px 0 rgba(255,240,170,0.55);}
+  .fp-card-rating-pos{font-size:0.48rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:rgba(252,165,165,0.92);}
+  .fp-card.is-champ .fp-card-rating-pos{color:rgba(31,19,0,0.78);}
+  .fp-card-top-right{display:inline-flex;align-items:center;justify-content:flex-end;gap:0.22rem;min-width:0;flex-shrink:0;}
+  .fp-card-status{display:inline-flex;align-items:center;justify-content:center;padding:0.12rem 0.34rem;border-radius:999px;border:1px solid rgba(255,255,255,0.14);background:rgba(0,0,0,0.42);font-size:0.5rem;font-weight:900;line-height:1;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.04);}
+  .fp-card-status--active{color:#bbf7d0;border-color:rgba(34,197,94,0.42);background:rgba(20,83,45,0.52);}
+  .fp-card-status--inactive{color:#fecaca;border-color:rgba(248,113,113,0.5);background:rgba(69,10,10,0.62);}
+  .fp-card.is-champ .fp-card-status--active{color:#14532d;background:rgba(187,247,208,0.8);border-color:rgba(22,101,52,0.36);}
+  .fp-card.is-champ .fp-card-status--inactive{color:#7f1d1d;background:rgba(254,202,202,0.84);border-color:rgba(127,29,29,0.34);}
+  .fp-card-flag{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.55rem;line-height:1;background:rgba(0,0,0,0.45);border:1px solid rgba(185,28,28,0.6);border-radius:999px;padding:0.18rem 0.5rem;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06);}
+  .fp-card.is-champ .fp-card-flag{border-color:rgba(255,220,140,0.55);}
 
-  .fp-card-top {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.32rem;
-    margin: 0 0 0.18rem;
-    min-height: 1.5rem;
-  }
-  .fp-card-portrait {
-    position: relative;
-    z-index: 2;
-    flex: 1 1 auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 0.04rem;
-    border: 1.5px solid rgba(185,28,28,0.75);
-    border-radius: 0.16rem;
-    background: radial-gradient(circle at 50% 35%, rgba(248,113,113,0.16), transparent 56%), linear-gradient(180deg, #2a1010 0%, #0f0606 100%);
-    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.5), inset 0 -10px 18px rgba(0,0,0,0.45);
-    overflow: hidden;
-    min-height: 64px;
-  }
-  .fp-card.is-champ .fp-card-portrait {
-    border-color: rgba(255,240,170,0.85);
-    background: radial-gradient(circle at 50% 35%, rgba(255,240,200,0.24), transparent 58%), linear-gradient(180deg, #4a3214 0%, #1a1108 100%);
-  }
-  .fp-card-portrait-silhouette { font-size: 2.6rem; opacity: 0.18; line-height: 1; filter: blur(0.35px); }
-  .fp-card.is-champ .fp-card-portrait-silhouette { opacity: 0.24; }
-  .fp-card-initials {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    font-weight: 900;
-    letter-spacing: 0.06em;
-    color: rgba(254,226,226,0.95);
-    text-shadow: 0 2px 6px rgba(0,0,0,0.7);
-  }
-  .fp-card.is-champ .fp-card-initials { color: rgba(255,240,200,0.95); }
-  .fp-card-crown { position: absolute; top: 0.18rem; left: 0.22rem; font-size: 0.78rem; line-height: 1; z-index: 3; text-shadow: 0 0 4px rgba(0,0,0,0.6); }
-  .fp-card-flag {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    font-size: 1.55rem;
-    line-height: 1;
-    background: rgba(0,0,0,0.45);
-    border: 1px solid rgba(185,28,28,0.6);
-    border-radius: 999px;
-    padding: 0.18rem 0.5rem;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
-  }
-  .fp-card.is-champ .fp-card-flag { border-color: rgba(255,220,140,0.55); }
-  .fp-card-rating {
-    position: relative;
-    display: inline-flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.34rem;
-    padding: 0.2rem 0.46rem;
-    background: rgba(0,0,0,0.55);
-    border: 1px solid rgba(185,28,28,0.65);
-    border-radius: 0.42rem;
-    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4);
-    line-height: 1;
-    min-width: 0;
-    flex-shrink: 1;
-    overflow: hidden;
-  }
-  .fp-card.is-champ .fp-card-rating { background: linear-gradient(180deg, rgba(255,240,170,0.92), rgba(180,120,30,0.85)); border-color: rgba(255,240,170,0.85); }
-  .fp-card-rating-num { font-size: 0.86rem; font-weight: 900; color: #fee2e2; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
-  .fp-card.is-champ .fp-card-rating-num { color: #1a0e00; text-shadow: 0 1px 0 rgba(255,240,170,0.55); }
-  .fp-card-rating-pos { font-size: 0.48rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(252,165,165,0.92); }
-  .fp-card.is-champ .fp-card-rating-pos { color: rgba(31,19,0,0.78); }
-  .fp-card-type-bar {
-    position: relative;
-    z-index: 2;
-    margin: 0.18rem 0 0.14rem;
-    padding: 0.2rem 0.26rem;
-    background: linear-gradient(180deg, #3a1414 0%, #180808 100%);
-    border-top: 1px solid rgba(185,28,28,0.65);
-    border-bottom: 1px solid rgba(185,28,28,0.65);
-    font-size: 0.58rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: rgba(252,165,165,0.95);
-    text-align: center;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-  .fp-card.is-champ .fp-card-type-bar {
-    background: linear-gradient(180deg, #3c2a14 0%, #1a1107 100%);
-    border-top-color: rgba(255,220,140,0.55);
-    border-bottom-color: rgba(255,220,140,0.55);
-    color: rgba(255,240,180,0.95);
-  }
-  .fp-card-desc {
-    position: relative;
-    z-index: 2;
-    background: linear-gradient(180deg, rgba(185,28,28,0.12), rgba(0,0,0,0.22));
-    border: 1px solid rgba(185,28,28,0.32);
-    border-radius: 0.2rem;
-    padding: 0.26rem 0.3rem 0.3rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.22rem;
-  }
-  .fp-card.is-champ .fp-card-desc { background: linear-gradient(180deg, rgba(255,240,170,0.14), rgba(40,24,4,0.32)); border-color: rgba(255,240,170,0.36); }
-  .fp-card-stat-row { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0.12rem 0.42rem; font-size: 0.7rem; }
-  .fp-card-stat { display: flex; align-items: center; justify-content: space-between; gap: 0.24rem; line-height: 1; }
-  .fp-card-stat em { font-style: normal; font-weight: 800; letter-spacing: 0.08em; color: rgba(252,165,165,0.92); }
-  .fp-card-stat b { font-weight: 900; color: #fef2f2; font-size: 0.82rem; }
-  .fp-card.is-champ .fp-card-stat em { color: rgba(255,240,180,0.92); }
-  .fp-card.is-champ .fp-card-stat b { color: #fff5d6; }
-  .fp-card-atkdef {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.4rem;
-    padding-top: 0.2rem;
-    border-top: 1px solid rgba(185,28,28,0.4);
-    font-size: 0.8rem;
-    font-weight: 900;
-    letter-spacing: 0.04em;
-  }
-  .fp-card.is-champ .fp-card-atkdef { border-top-color: rgba(255,220,140,0.32); }
-  .fp-card-atk { color: #ff9a9a; }
-  .fp-card-def { color: #cbd5ff; }
-  .fp-card-sep { color: rgba(252,165,165,0.65); }
-  .fp-card.is-champ .fp-card-atk { color: #ffb38a; }
-  .fp-card.is-champ .fp-card-def { color: #9ec9ff; }
-  .fp-card.is-champ .fp-card-sep { color: rgba(255,220,140,0.6); }
+  .fp-card-banner{position:relative;z-index:2;padding:0.18rem 0.32rem;background:linear-gradient(180deg,#ef4444 0%,#b91c1c 60%,#7f1d1d 100%);border:1px solid rgba(248,113,113,0.65);border-radius:0.22rem;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.22),0 1px 0 rgba(0,0,0,0.3);text-align:center;}
+  .fp-card.is-champ .fp-card-banner{background:linear-gradient(180deg,#fff0a8 0%,#d6a32a 50%,#8a5905 100%);border-color:rgba(255,235,170,0.6);}
+  .fp-card-name{display:block;margin:0;font-size:0.7rem;font-weight:900;letter-spacing:0.01em;line-height:1.1;color:#fff5f5;text-shadow:0 1px 0 rgba(0,0,0,0.4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .fp-card.is-champ .fp-card-name{color:#1a0e00;text-shadow:0 1px 0 rgba(255,230,160,0.55);}
 
-  .fp-card.is-compact {
-    aspect-ratio: 59 / 86;
-    min-height: 166px;
-    padding: 0.26rem 0.28rem 0.28rem;
-    border-radius: 0.32rem;
-  }
-  .fp-card.is-compact .fp-card-frame { inset: 0.13rem; border-radius: 0.22rem; }
-  .fp-card.is-compact .fp-card-top { margin: 0 0 0.12rem; min-height: 1.22rem; gap: 0.22rem; }
-  .fp-card.is-compact .fp-card-banner { padding: 0.13rem 0.22rem; }
-  .fp-card.is-compact .fp-card-name { font-size: 0.76rem; line-height: 1.05; }
-  .fp-card.is-compact .fp-card-portrait { min-height: 58px; }
-  .fp-card.is-compact .fp-card-portrait-silhouette { font-size: 2.05rem; }
-  .fp-card.is-compact .fp-card-initials { font-size: 1.12rem; }
-  .fp-card.is-compact .fp-card-crown { font-size: 0.64rem; top: 0.12rem; left: 0.18rem; }
-  .fp-card.is-compact .fp-card-flag { font-size: 1.08rem; padding: 0.08rem 0.28rem; }
-  .fp-card.is-compact .fp-card-rating { padding: 0.12rem 0.28rem; gap: 0.14rem 0.2rem; border-radius: 0.28rem; }
-  .fp-card.is-compact .fp-card-rating-num { font-size: 0.84rem; }
-  .fp-card.is-compact .fp-card-rating-pos { font-size: 0.46rem; }
-  .fp-card.is-compact .fp-card-type-bar { margin: 0.13rem 0 0.1rem; padding: 0.13rem 0.18rem; font-size: 0.52rem; letter-spacing: 0.04em; }
-  .fp-card.is-compact .fp-card-desc { padding: 0.18rem 0.2rem 0.2rem; gap: 0.15rem; }
-  .fp-card.is-compact .fp-card-stat-row { font-size: 0.66rem; gap: 0.1rem 0.28rem; }
-  .fp-card.is-compact .fp-card-stat b { font-size: 0.8rem; }
-  .fp-card.is-compact .fp-card-atkdef { font-size: 0.72rem; padding-top: 0.16rem; gap: 0.22rem; justify-content: space-between; }
+  .fp-card-portrait{position:relative;z-index:2;flex:1 1 auto;display:flex;align-items:center;justify-content:center;margin:0 0.04rem;border:1.5px solid rgba(185,28,28,0.75);border-radius:0.16rem;background:radial-gradient(circle at 50% 35%,rgba(248,113,113,0.16),transparent 56%),linear-gradient(180deg,#2a1010 0%,#0f0606 100%);box-shadow:inset 0 0 0 1px rgba(0,0,0,0.5),inset 0 -10px 18px rgba(0,0,0,0.45);overflow:hidden;min-height:64px;}
+  .fp-card.is-champ .fp-card-portrait{border-color:rgba(255,240,170,0.85);background:radial-gradient(circle at 50% 35%,rgba(255,240,200,0.24),transparent 58%),linear-gradient(180deg,#4a3214 0%,#1a1108 100%);}
+  .fp-card-portrait-silhouette{display:inline-flex;align-items:center;justify-content:center;font-size:2.6rem;opacity:0.18;line-height:1;filter:blur(0.35px);}
+  .fp-card.is-champ .fp-card-portrait-silhouette{opacity:0.24;}
+  .fp-card-initials{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;letter-spacing:0.06em;color:rgba(254,226,226,0.95);text-shadow:0 2px 6px rgba(0,0,0,0.7);}
+  .fp-card.is-champ .fp-card-initials{color:rgba(255,240,200,0.95);}
+  .fp-card-crown{position:absolute;top:0.18rem;left:0.22rem;font-size:0.78rem;line-height:1;z-index:3;display:inline-flex;align-items:center;justify-content:center;text-shadow:0 0 4px rgba(0,0,0,0.6);}
+
+  .fp-card-type-bar{position:relative;z-index:2;margin:0.18rem 0 0.14rem;padding:0.2rem 0.26rem;background:linear-gradient(180deg,#3a1414 0%,#180808 100%);border-top:1px solid rgba(185,28,28,0.65);border-bottom:1px solid rgba(185,28,28,0.65);font-size:0.58rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:rgba(252,165,165,0.95);text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+  .fp-card.is-champ .fp-card-type-bar{background:linear-gradient(180deg,#3c2a14 0%,#1a1107 100%);border-top-color:rgba(255,220,140,0.55);border-bottom-color:rgba(255,220,140,0.55);color:rgba(255,240,180,0.95);}
+
+  .fp-card-desc{position:relative;z-index:2;background:linear-gradient(180deg,rgba(185,28,28,0.12),rgba(0,0,0,0.22));border:1px solid rgba(185,28,28,0.32);border-radius:0.2rem;padding:0.26rem 0.3rem 0.3rem;display:flex;flex-direction:column;gap:0.22rem;}
+  .fp-card.is-champ .fp-card-desc{background:linear-gradient(180deg,rgba(255,240,170,0.14),rgba(40,24,4,0.32));border-color:rgba(255,240,170,0.36);}
+  .fp-card-stat-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.12rem 0.42rem;font-size:0.7rem;}
+  .fp-card-stat{display:flex;align-items:center;justify-content:space-between;gap:0.24rem;line-height:1;}
+  .fp-card-stat em{font-style:normal;font-weight:800;letter-spacing:0.08em;color:rgba(252,165,165,0.92);}
+  .fp-card-stat b{font-weight:900;color:#fef2f2;font-size:0.82rem;}
+  .fp-card.is-champ .fp-card-stat em{color:rgba(255,240,180,0.92);}
+  .fp-card.is-champ .fp-card-stat b{color:#fff5d6;}
+  .fp-card-atkdef{display:flex;align-items:center;justify-content:flex-end;gap:0.4rem;padding-top:0.2rem;border-top:1px solid rgba(185,28,28,0.4);font-size:0.8rem;font-weight:900;letter-spacing:0.04em;}
+  .fp-card.is-champ .fp-card-atkdef{border-top-color:rgba(255,220,140,0.32);}
+  .fp-card-atk{color:#ff9a9a;}
+  .fp-card-def{color:#cbd5ff;}
+  .fp-card-sep{color:rgba(252,165,165,0.65);}
+  .fp-card.is-champ .fp-card-atk{color:#ffb38a;}
+  .fp-card.is-champ .fp-card-def{color:#9ec9ff;}
+  .fp-card.is-champ .fp-card-sep{color:rgba(255,220,140,0.6);}
+  .fp-card-country-fallback{display:none;}
+
+  .fp-card.is-compact{max-width:220px;aspect-ratio:59/86;min-height:152px;padding:0.26rem 0.28rem 0.28rem;border-radius:0.36rem;}
+  .fp-card.is-compact .fp-card-frame{inset:0.14rem;border-radius:0.24rem;}
+  .fp-card.is-compact .fp-card-top{margin:0 0 0.14rem;min-height:1.3rem;gap:0.24rem;}
+  .fp-card.is-compact .fp-card-banner{padding:0.14rem 0.26rem;}
+  .fp-card.is-compact .fp-card-name{font-size:0.6rem;}
+  .fp-card.is-compact .fp-card-portrait{min-height:56px;}
+  .fp-card.is-compact .fp-card-portrait-silhouette{font-size:2rem;}
+  .fp-card.is-compact .fp-card-initials{font-size:1.05rem;}
+  .fp-card.is-compact .fp-card-crown{font-size:0.64rem;top:0.12rem;left:0.18rem;}
+  .fp-card.is-compact .fp-card-top-right{gap:0.14rem;}
+  .fp-card.is-compact .fp-card-status{font-size:0.4rem;padding:0.08rem 0.22rem;letter-spacing:0.06em;}
+  .fp-card.is-compact .fp-card-flag{font-size:1.1rem;padding:0.1rem 0.32rem;}
+  .fp-card.is-compact .fp-card-rating{padding:0.12rem 0.32rem;gap:0.22rem;border-radius:0.32rem;}
+  .fp-card.is-compact .fp-card-rating-num{font-size:0.7rem;}
+  .fp-card.is-compact .fp-card-rating-pos{font-size:0.4rem;}
+  .fp-card.is-compact .fp-card-type-bar{margin:0.12rem 0 0.1rem;padding:0.14rem 0.2rem;font-size:0.5rem;letter-spacing:0.06em;}
+  .fp-card.is-compact .fp-card-desc{padding:0.18rem 0.22rem 0.2rem;gap:0.16rem;}
+  .fp-card.is-compact .fp-card-stat-row{font-size:0.58rem;gap:0.08rem 0.3rem;}
+  .fp-card.is-compact .fp-card-stat b{font-size:0.7rem;}
+  .fp-card.is-compact .fp-card-atkdef{font-size:0.7rem;padding-top:0.16rem;gap:0.32rem;}
+
+  @media (max-width:640px){.fp-card-name{font-size:0.64rem;}.fp-card-stat-row{font-size:0.6rem;}.fp-card-stat b{font-size:0.7rem;}.fp-card-atkdef{font-size:0.7rem;}}
 </style>
 
 <style>
-  .fp-predictions-page { display: grid; gap: 1rem; }
+  /* ── Page layout ── */
+  .fp-pred-page { display: grid; gap: 1rem; }
 
-  .fp-tool-hero,
-  .fp-tool-controls {
+  .fp-tool-hero {
     background: linear-gradient(150deg, rgba(22,22,26,0.92), rgba(36,36,42,0.68));
     border: 1px solid rgba(113,113,122,0.42);
     border-radius: 0.8rem;
+    padding: 1.35rem;
   }
-  .fp-tool-hero { padding: 1.35rem; }
   .fp-tool-breadcrumb {
     color: #fca5a5;
     font-size: 0.78rem;
@@ -562,40 +545,91 @@ const recommendedBets = fights.filter((f) => f.recommended_bet).length;
   }
   .fp-section-label { margin: 0.45rem 0 0; color: #a1a1aa; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
   .fp-tool-hero h1 { margin: 0.25rem 0 0.45rem; color: #fef2f2; font-size: clamp(1.7rem, 4vw, 2.45rem); line-height: 1.08; }
-  .fp-tool-hero p { max-width: 72ch; margin: 0; color: #d4d4d8; line-height: 1.6; }
+  .fp-hero-copy { max-width: 72ch; margin: 0; color: #d4d4d8; line-height: 1.6; }
 
-  .fp-kpi-strip { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 1rem; }
-  .fp-kpi-strip span {
-    display: inline-flex;
-    gap: 0.35rem;
-    align-items: center;
-    border: 1px solid rgba(239,68,68,0.28);
-    border-radius: 999px;
-    padding: 0.42rem 0.65rem;
-    color: #d4d4d8;
-    background: rgba(24,24,27,0.72);
+  /* ── KPI strip (exact Streamlit port) ── */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    background: linear-gradient(145deg, rgba(28,28,32,0.92), rgba(39,39,42,0.76));
+    border: 1px solid rgba(248,113,113,0.16);
+    border-top: 2px solid rgba(185,28,28,0.52);
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 18px rgba(0,0,0,0.2);
   }
-  .fp-kpi-strip strong { color: #fef2f2; }
+  .kpi-strip-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 118px;
+    padding: 0.85rem 0.8rem 0.78rem;
+    text-align: center;
+    border-right: 1px solid rgba(248,113,113,0.12);
+    background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0));
+  }
+  .kpi-strip-item:last-child { border-right: 0; }
+  .kpi-strip-icon { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; margin-bottom: 0.28rem; line-height: 1; }
+  .kpi-strip-icon img { object-fit: contain; }
+  .kpi-strip-label { color: #d4d4d8; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.18rem; font-weight: 700; line-height: 1.2; }
+  .kpi-strip-value { color: #ffffff; font-size: 1.14rem; font-weight: 800; line-height: 1.04; letter-spacing: 0.01em; }
 
+  /* ── Model guide ── */
+  .fp-model-guide {
+    padding: 0.95rem 1rem 1rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(248,113,113,0.18);
+    background: radial-gradient(120% 90% at 0% 0%, rgba(220,38,38,0.12), transparent 55%),
+                linear-gradient(145deg, rgba(28,28,32,0.92), rgba(39,39,42,0.76));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 18px rgba(0,0,0,0.2);
+  }
+  .fp-model-guide-eyebrow { color: #fca5a5; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.34rem; }
+  .fp-model-guide-title { color: #fef2f2; font-size: 1.02rem; font-weight: 800; line-height: 1.18; margin-bottom: 0.34rem; }
+  .fp-model-guide-copy { color: #d4d4d8; font-size: 0.84rem; line-height: 1.52; margin-bottom: 0.7rem; max-width: 76ch; }
+  .fp-model-guide-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 0.58rem; margin-bottom: 0.7rem; }
+  .fp-model-guide-item { padding: 0.68rem 0.72rem; border-radius: 0.82rem; border: 1px solid rgba(248,113,113,0.12); background: rgba(255,255,255,0.025); }
+  .fp-model-guide-item-label { color: #ffffff; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 0.22rem; }
+  .fp-model-guide-item-copy { color: #cbd5e1; font-size: 0.76rem; line-height: 1.45; }
+  .fp-model-guide-reco { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.38rem 0.62rem; border-radius: 999px; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.22); color: #bbf7d0; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  /* ── Controls ── */
   .fp-tool-controls {
     display: grid;
-    grid-template-columns: minmax(240px,1fr) minmax(180px,0.4fr);
+    grid-template-columns: auto minmax(200px,1fr) minmax(160px,0.4fr);
     gap: 0.75rem;
+    align-items: end;
+    background: linear-gradient(150deg, rgba(22,22,26,0.92), rgba(36,36,42,0.68));
+    border: 1px solid rgba(113,113,122,0.42);
+    border-radius: 0.8rem;
     padding: 0.9rem;
   }
   .fp-tool-controls label { display: grid; gap: 0.35rem; color: #a1a1aa; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
-  .fp-tool-controls select {
-    width: 100%;
-    min-height: 2.55rem;
-    border: 1px solid rgba(113,113,122,0.52);
-    border-radius: 0.55rem;
-    color: #f4f4f5;
+  .fp-tool-controls select { width: 100%; min-height: 2.55rem; border: 1px solid rgba(113,113,122,0.52); border-radius: 0.55rem; color: #f4f4f5; background: rgba(9,9,11,0.78); padding: 0.55rem 0.65rem; }
+
+  /* ── Model picker buttons ── */
+  .fp-model-picker { display: flex; gap: 0; border-radius: 0.55rem; overflow: hidden; border: 1px solid rgba(113,113,122,0.52); align-self: end; }
+  .fp-model-btn {
+    flex: 1;
+    padding: 0.6rem 0.85rem;
     background: rgba(9,9,11,0.78);
-    padding: 0.55rem 0.65rem;
+    border: none;
+    border-right: 1px solid rgba(113,113,122,0.52);
+    color: #a1a1aa;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 100ms, color 100ms;
+    white-space: nowrap;
   }
+  .fp-model-btn:last-child { border-right: none; }
+  .fp-model-btn:hover { background: rgba(127,29,29,0.26); color: #fca5a5; }
+  .fp-model-btn.is-active { background: rgba(185,28,28,0.38); color: #fef2f2; }
 
+  /* ── Feed & event groups ── */
   .fp-predictions-feed { display: grid; gap: 1rem; }
-
   .fp-event-group { display: grid; gap: 0.85rem; }
   .fp-event-group-head {
     background: linear-gradient(150deg, rgba(22,22,26,0.92), rgba(36,36,42,0.68));
@@ -606,158 +640,60 @@ const recommendedBets = fights.filter((f) => f.recommended_bet).length;
   .fp-event-group-head h2 { margin: 0 0 0.2rem; color: #fef2f2; font-size: 1.22rem; }
   .fp-event-group-head p { margin: 0; color: #a1a1aa; font-size: 0.84rem; }
 
-  /* === Matchup shell (from Streamlit _PREDICTION_MATCHUP_CSS) === */
-  .fp-matchup-shell {
-    position: relative;
-    padding: 1rem 1rem 0.92rem;
-    border-radius: 1.45rem;
-    overflow: hidden;
-    background: linear-gradient(145deg, rgba(10,14,22,0.98) 0%, rgba(24,24,27,0.97) 50%, rgba(63,18,24,0.96) 100%);
-    border: 1px solid rgba(244,63,94,0.18);
-    box-shadow: 0 18px 40px rgba(0,0,0,0.28), inset 0 0 0 1px rgba(255,255,255,0.04);
-  }
-  .fp-matchup-shell::before {
-    content: '';
-    position: absolute;
-    inset: -20% auto auto 12%;
-    width: 260px;
-    height: 220px;
-    background: radial-gradient(circle, rgba(239,68,68,0.18), transparent 62%);
-    pointer-events: none;
-  }
-  .fp-matchup-head {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    margin-bottom: 0.95rem;
-  }
-  .fp-matchup-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.28rem 0.65rem;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.08);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #e4e4e7;
-  }
-  .fp-matchup-signal {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.42rem;
-    padding: 0.34rem 0.72rem;
-    border-radius: 999px;
-    font-size: 0.74rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.08);
-    color: #e4e4e7;
-  }
-  .fp-matchup-signal--strong { color: #bbf7d0; border-color: rgba(34,197,94,0.24); background: rgba(34,197,94,0.12); }
-  .fp-matchup-signal--medium { color: #fde68a; border-color: rgba(234,179,8,0.24); background: rgba(234,179,8,0.12); }
-  .fp-matchup-signal--weak { color: #f4f4f5; border-color: rgba(212,212,216,0.36); background: rgba(161,161,170,0.16); }
+  /* ── Matchup shell (Streamlit _PREDICTION_MATCHUP_CSS port) ── */
+  .fp-matchup-shell{position:relative;margin:0 0 0;padding:1rem 1rem 0.92rem;border-radius:1.45rem;overflow:hidden;background:linear-gradient(145deg,rgba(10,14,22,0.98) 0%,rgba(24,24,27,0.97) 50%,rgba(63,18,24,0.96) 100%);border:1px solid rgba(244,63,94,0.18);box-shadow:0 18px 40px rgba(0,0,0,0.28),inset 0 0 0 1px rgba(255,255,255,0.04);}
+  .fp-matchup-shell::before{content:'';position:absolute;inset:-20% auto auto 12%;width:260px;height:220px;background:radial-gradient(circle,rgba(239,68,68,0.18),transparent 62%);pointer-events:none;}
+  .fp-matchup-head{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.95rem;}
+  .fp-matchup-eyebrow{display:inline-flex;align-items:center;gap:0.45rem;padding:0.28rem 0.65rem;border-radius:999px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#e4e4e7;}
+  .fp-matchup-signal{display:inline-flex;align-items:center;gap:0.42rem;padding:0.34rem 0.72rem;border-radius:999px;font-size:0.74rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);color:#e4e4e7;}
+  .fp-matchup-signal--strong{color:#bbf7d0;border-color:rgba(34,197,94,0.24);background:rgba(34,197,94,0.12);}
+  .fp-matchup-signal--medium{color:#fde68a;border-color:rgba(234,179,8,0.24);background:rgba(234,179,8,0.12);}
+  .fp-matchup-signal--weak{color:#f4f4f5;border-color:rgba(212,212,216,0.36);background:rgba(161,161,170,0.16);}
 
-  .fp-matchup-grid {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    grid-template-columns: minmax(0,1fr) 170px minmax(0,1fr);
-    gap: 0.95rem;
-    align-items: center;
-  }
-  .fp-fighter-pane { display: flex; flex-direction: column; align-items: center; gap: 0.55rem; }
-  .fp-odds-chip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.34rem;
-    padding: 0.28rem 0.7rem;
-    border-radius: 999px;
-    background: rgba(0,0,0,0.34);
-    border: 1px solid rgba(255,255,255,0.08);
-    font-size: 0.74rem;
-    font-weight: 700;
-    color: #f4f4f5;
-  }
-  .fp-odds-chip-label { color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.62rem; }
+  .fp-matchup-grid{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) 170px minmax(0,1fr);gap:0.95rem;align-items:center;}
+  .fp-fighter-pane{display:flex;flex-direction:column;align-items:center;gap:0.55rem;}
+  .fp-odds-chip{display:inline-flex;align-items:center;justify-content:center;gap:0.34rem;padding:0.28rem 0.7rem;border-radius:999px;background:rgba(0,0,0,0.34);border:1px solid rgba(255,255,255,0.08);font-size:0.74rem;font-weight:700;color:#f4f4f5;}
+  .fp-odds-chip-label{color:#a1a1aa;text-transform:uppercase;letter-spacing:0.08em;font-size:0.62rem;}
 
-  .fp-versus-core {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.72rem;
-    padding: 0.9rem 0.85rem;
-    border-radius: 1.1rem;
-    background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.02));
-    border: 1px solid rgba(255,255,255,0.08);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
-  }
-  .fp-versus-mark {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 4.2rem;
-    height: 4.2rem;
-    border-radius: 999px;
-    background: radial-gradient(circle at 30% 30%, rgba(248,113,113,0.42), rgba(127,29,29,0.18) 55%, rgba(0,0,0,0.08) 100%);
-    border: 1px solid rgba(248,113,113,0.25);
-    box-shadow: 0 0 26px rgba(239,68,68,0.22);
-    font-size: 1.6rem;
-  }
-  .fp-versus-title { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #d4d4d8; }
-  .fp-prob-stack { width: 100%; display: flex; flex-direction: column; gap: 0.42rem; }
-  .fp-prob-row { display: flex; flex-direction: column; gap: 0.18rem; }
-  .fp-prob-meta { display: flex; justify-content: space-between; gap: 0.4rem; font-size: 0.74rem; color: #e4e4e7; }
-  .fp-prob-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .fp-prob-value { font-family: ui-monospace, SFMono-Regular, monospace; color: #fecaca; }
-  .fp-prob-track { height: 0.4rem; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; }
-  .fp-prob-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #f59e0b, #ef4444); }
-  .fp-prob-fill--alt { background: linear-gradient(90deg, #93c5fd, #38bdf8); }
+  .fp-versus-core{display:flex;flex-direction:column;align-items:center;gap:0.72rem;padding:0.9rem 0.85rem;border-radius:1.1rem;background:linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.02);}
+  .fp-versus-mark{display:flex;align-items:center;justify-content:center;width:4.2rem;height:4.2rem;border-radius:999px;background:radial-gradient(circle at 30% 30%,rgba(248,113,113,0.42),rgba(127,29,29,0.18) 55%,rgba(0,0,0,0.08) 100%);border:1px solid rgba(248,113,113,0.25);box-shadow:0 0 26px rgba(239,68,68,0.22);font-size:1.6rem;}
+  .fp-versus-title{font-size:0.68rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#d4d4d8;}
+  .fp-prob-stack{width:100%;display:flex;flex-direction:column;gap:0.42rem;}
+  .fp-prob-row{display:flex;flex-direction:column;gap:0.18rem;}
+  .fp-prob-meta{display:flex;justify-content:space-between;gap:0.4rem;font-size:0.74rem;color:#e4e4e7;}
+  .fp-prob-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .fp-prob-value{font-family:ui-monospace,SFMono-Regular,monospace;color:#fecaca;}
+  .fp-prob-track{height:0.4rem;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden;}
+  .fp-prob-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,#f59e0b,#ef4444);}
+  .fp-prob-fill--alt{background:linear-gradient(90deg,#93c5fd,#38bdf8);}
 
-  .fp-pick-summary {
-    position: relative;
-    z-index: 1;
-    margin-top: 1rem;
-    padding: 0.82rem 0.95rem;
-    border-radius: 1rem;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.07);
-  }
-  .fp-pick-winner { font-size: 1.04rem; font-weight: 800; color: #fafafa; text-align: center; line-height: 1.32; }
-  .fp-pick-winner strong { color: #fca5a5; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.7rem; margin-right: 0.35rem; }
-  .fp-pick-confidence { font-size: 0.92rem; font-weight: 500; color: #d4d4d8; }
-  .fp-pick-value { margin-top: 0.42rem; text-align: center; font-size: 0.81rem; color: #a1a1aa; line-height: 1.35; }
-  .fp-pick-value b { color: #e4e4e7; }
-  .fp-pick-value code { font-family: ui-monospace, SFMono-Regular, monospace; color: #fef2f2; background: rgba(255,255,255,0.06); padding: 0.1rem 0.28rem; border-radius: 0.3rem; }
-  .fp-pick-note { margin-top: 0.28rem; text-align: center; font-size: 0.72rem; color: #71717a; }
-  .fp-rec-chip { display: inline-flex; align-items: center; gap: 0.2rem; padding: 0.1rem 0.42rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; background: rgba(139,92,246,0.16); border: 1px solid rgba(139,92,246,0.28); color: #c4b5fd; }
+  .fp-pick-summary{position:relative;z-index:1;margin-top:1rem;padding:0.82rem 0.95rem;border-radius:1rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);}
+  .fp-pick-winner{font-size:1.04rem;font-weight:800;color:#fafafa;text-align:center;line-height:1.32;}
+  .fp-pick-winner strong{color:#fca5a5;text-transform:uppercase;letter-spacing:0.06em;font-size:0.7rem;margin-right:0.35rem;}
+  .fp-pick-confidence{font-size:0.92rem;font-weight:500;color:#d4d4d8;}
+  .fp-pick-value{margin-top:0.42rem;text-align:center;font-size:0.81rem;color:#a1a1aa;line-height:1.35;}
+  .fp-pick-value b{color:#e4e4e7;}
+  .fp-pick-value code{font-family:ui-monospace,SFMono-Regular,monospace;color:#fef2f2;background:rgba(255,255,255,0.06);padding:0.1rem 0.28rem;border-radius:0.3rem;}
+  .fp-pick-note{margin-top:0.28rem;text-align:center;font-size:0.72rem;color:#71717a;}
+  .fp-rec-chip{display:inline-flex;align-items:center;gap:0.2rem;padding:0.1rem 0.42rem;border-radius:999px;font-size:0.72rem;font-weight:700;background:rgba(139,92,246,0.16);border:1px solid rgba(139,92,246,0.28);color:#c4b5fd;}
 
-  .fp-empty-state {
-    display: grid;
-    gap: 0.55rem;
-    padding: 1.35rem;
-    background: linear-gradient(150deg, rgba(22,22,26,0.92), rgba(36,36,42,0.68));
-    border: 1px solid rgba(113,113,122,0.42);
-    border-radius: 0.8rem;
-    color: #d4d4d8;
-  }
-  .fp-empty-state strong { color: #fef2f2; font-size: 1rem; }
-  .fp-list-empty { color: #a1a1aa; padding: 1rem; text-align: center; }
+  .fp-inline-icon{vertical-align:middle;object-fit:contain;}
 
-  @media (max-width: 900px) {
-    .fp-tool-controls,
-    .fp-matchup-grid { grid-template-columns: 1fr; }
-    .fp-versus-core { max-width: 340px; margin: 0 auto; }
-    .fp-fighter-pane { max-width: 260px; margin: 0 auto; }
+  /* ── Empty / error states ── */
+  .fp-empty-state{display:grid;gap:0.55rem;padding:1.35rem;background:linear-gradient(150deg,rgba(22,22,26,0.92),rgba(36,36,42,0.68));border:1px solid rgba(113,113,122,0.42);border-radius:0.8rem;color:#d4d4d8;}
+  .fp-empty-state strong{color:#fef2f2;font-size:1rem;}
+  .fp-list-empty{color:#a1a1aa;padding:1rem;text-align:center;}
+
+  /* ── Responsive ── */
+  @media (max-width:900px){
+    .kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .kpi-strip-item:nth-child(2){border-right:0;}
+    .kpi-strip-item:nth-child(2n){border-right:0;}
+    .kpi-strip-item:nth-child(odd){border-right:1px solid rgba(248,113,113,0.12);}
+    .fp-model-guide-grid{grid-template-columns:1fr;}
+    .fp-tool-controls{grid-template-columns:1fr;}
+    .fp-matchup-grid{grid-template-columns:1fr;}
+    .fp-versus-core{max-width:340px;margin:0 auto;}
+    .fp-fighter-pane{max-width:260px;margin:0 auto;}
   }
 </style>
