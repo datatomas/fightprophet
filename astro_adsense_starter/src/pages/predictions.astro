@@ -440,16 +440,26 @@ const hasData = totalFights > 0;
 
 <!-- ── Global card CSS (exact port of Streamlit _FIGHTER_CARD_CSS) ── -->
 <style is:global>
-  .fp-card{position:relative;display:flex;flex-direction:column;width:100%;max-width:252px;margin-inline:auto;aspect-ratio:59/86;min-height:188px;border-radius:0.42rem;padding:0.34rem 0.36rem 0.36rem;overflow:hidden;isolation:isolate;color:#fef2f2;font-family:Inter,system-ui,sans-serif;text-decoration:none;transition:transform 120ms ease,box-shadow 120ms ease,filter 120ms ease;}
+  .fp-card{position:relative;display:flex;flex-direction:column;width:100%;max-width:252px;margin-inline:auto;aspect-ratio:59/86;min-height:188px;border-radius:0.5rem;padding:0.34rem 0.36rem 0.36rem;overflow:hidden;isolation:isolate;color:#fef2f2;font-family:Inter,system-ui,sans-serif;text-decoration:none;transition:transform 180ms cubic-bezier(0.2,0.7,0.3,1),box-shadow 180ms ease,filter 180ms ease;will-change:transform;}
   .fp-card::before{content:'';position:absolute;inset:0;border-radius:inherit;z-index:-1;}
-  .fp-card-frame{position:absolute;inset:0.18rem;border-radius:0.28rem;z-index:0;pointer-events:none;}
+  /* Sheen overlay swept on hover */
+  .fp-card::after{content:'';position:absolute;top:-40%;left:-30%;width:60%;height:180%;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,0.14) 50%,transparent 65%);transform:translateX(-180%) rotate(8deg);transition:transform 700ms cubic-bezier(0.2,0.7,0.3,1);pointer-events:none;z-index:5;mix-blend-mode:overlay;}
+  .fp-card:hover::after{transform:translateX(280%) rotate(8deg);}
+  .fp-card-frame{position:absolute;inset:0.18rem;border-radius:0.34rem;z-index:0;pointer-events:none;}
+  .fp-card.is-default{box-shadow:0 6px 16px rgba(0,0,0,0.42),0 0 0 1px rgba(127,29,29,0.4);}
   .fp-card.is-default::before{background:linear-gradient(160deg,#ef4444 0%,#b91c1c 35%,#7f1d1d 70%,#2a0808 100%);}
-  .fp-card.is-default .fp-card-frame{background:radial-gradient(110% 80% at 50% 0%,rgba(220,38,38,0.18),transparent 70%),linear-gradient(180deg,#1a0c0c 0%,#100808 100%);border:1px solid rgba(185,28,28,0.7);box-shadow:inset 0 0 0 1px rgba(0,0,0,0.55),inset 0 0 18px rgba(0,0,0,0.5);}
+  .fp-card.is-default .fp-card-frame{background:radial-gradient(110% 80% at 50% 0%,rgba(220,38,38,0.22),transparent 70%),linear-gradient(180deg,#1a0c0c 0%,#100808 100%);border:1px solid rgba(185,28,28,0.78);box-shadow:inset 0 0 0 1px rgba(0,0,0,0.6),inset 0 0 22px rgba(0,0,0,0.55),inset 0 0 60px rgba(220,38,38,0.08);}
+  .fp-card.is-champ{box-shadow:0 6px 18px rgba(0,0,0,0.42),0 0 0 1px rgba(180,120,30,0.55),0 0 24px rgba(255,200,80,0.12);animation:fp-champ-pulse 4.5s ease-in-out infinite;}
   .fp-card.is-champ::before{background:linear-gradient(160deg,#ffe27a 0%,#d09312 30%,#6c4404 60%,#2a1908 100%);}
-  .fp-card.is-champ .fp-card-frame{background:radial-gradient(110% 80% at 50% 0%,rgba(255,240,170,0.28),transparent 70%),linear-gradient(180deg,#4a311a 0%,#1c1207 100%);border:1px solid rgba(255,240,170,0.72);box-shadow:inset 0 0 0 1px rgba(0,0,0,0.45),inset 0 0 22px rgba(255,220,140,0.18);}
-  .fp-card:hover{transform:translateY(-2px) scale(1.01);}
-  .fp-card.is-default:hover{box-shadow:0 0 18px rgba(255,180,80,0.34);}
-  .fp-card.is-champ:hover{box-shadow:0 0 22px rgba(255,220,130,0.55);}
+  .fp-card.is-champ .fp-card-frame{background:radial-gradient(110% 80% at 50% 0%,rgba(255,240,170,0.32),transparent 70%),linear-gradient(180deg,#4a311a 0%,#1c1207 100%);border:1px solid rgba(255,240,170,0.82);box-shadow:inset 0 0 0 1px rgba(0,0,0,0.5),inset 0 0 28px rgba(255,220,140,0.22);}
+  .fp-card:hover{transform:translateY(-4px) scale(1.025);}
+  .fp-card.is-default:hover{box-shadow:0 14px 28px rgba(0,0,0,0.55),0 0 26px rgba(255,180,80,0.42),0 0 0 1px rgba(248,113,113,0.55);}
+  .fp-card.is-champ:hover{box-shadow:0 14px 30px rgba(0,0,0,0.55),0 0 32px rgba(255,220,130,0.75),0 0 0 1px rgba(255,240,170,0.7);}
+
+  @keyframes fp-champ-pulse{
+    0%,100%{box-shadow:0 6px 18px rgba(0,0,0,0.42),0 0 0 1px rgba(180,120,30,0.55),0 0 24px rgba(255,200,80,0.12);}
+    50%{box-shadow:0 8px 22px rgba(0,0,0,0.48),0 0 0 1px rgba(220,160,60,0.75),0 0 38px rgba(255,210,100,0.32);}
+  }
 
   .fp-card-top{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:0.32rem;margin:0 0 0.18rem;min-height:1.5rem;}
   .fp-card-rating{position:relative;display:inline-flex;flex-direction:row;align-items:center;gap:0.34rem;padding:0.2rem 0.46rem;background:rgba(0,0,0,0.55);border:1px solid rgba(185,28,28,0.65);border-radius:0.42rem;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.4);line-height:1;min-width:0;flex-shrink:1;overflow:hidden;}
@@ -685,15 +695,28 @@ const hasData = totalFights > 0;
   .fp-list-empty{color:#a1a1aa;padding:1rem;text-align:center;}
 
   /* ── Responsive ── */
+  /* Cards always face left-vs-right. Only the center column shrinks on narrow screens. */
   @media (max-width:900px){
     .kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr));}
-    .kpi-strip-item:nth-child(2){border-right:0;}
     .kpi-strip-item:nth-child(2n){border-right:0;}
     .kpi-strip-item:nth-child(odd){border-right:1px solid rgba(248,113,113,0.12);}
     .fp-model-guide-grid{grid-template-columns:1fr;}
     .fp-tool-controls{grid-template-columns:1fr;}
-    .fp-matchup-grid{grid-template-columns:1fr;}
-    .fp-versus-core{max-width:340px;margin:0 auto;}
-    .fp-fighter-pane{max-width:260px;margin:0 auto;}
+    .fp-matchup-grid{grid-template-columns:minmax(0,1fr) 120px minmax(0,1fr);gap:0.6rem;}
+    .fp-versus-core{padding:0.7rem 0.55rem;gap:0.5rem;}
+    .fp-versus-mark{width:3rem;height:3rem;font-size:1.2rem;}
+    .fp-versus-title{font-size:0.58rem;}
+  }
+  @media (max-width:640px){
+    .fp-matchup-shell{padding:0.65rem 0.55rem 0.7rem;}
+    .fp-matchup-grid{grid-template-columns:minmax(0,1fr) 60px minmax(0,1fr);gap:0.35rem;}
+    .fp-fighter-pane{gap:0.3rem;}
+    .fp-versus-core{padding:0.4rem 0.25rem;border-radius:0.7rem;gap:0.3rem;}
+    .fp-versus-mark{width:2rem;height:2rem;font-size:0.9rem;}
+    .fp-versus-title{display:none;}
+    .fp-prob-meta{font-size:0.6rem;}
+    .fp-prob-name{max-width:60px;}
+    .fp-odds-chip{padding:0.18rem 0.45rem;font-size:0.62rem;}
+    .fp-odds-chip-label{font-size:0.5rem;}
   }
 </style>

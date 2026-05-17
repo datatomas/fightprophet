@@ -599,9 +599,15 @@ const structuredData = [
     height: 100dvh;
     width: var(--fp-rail-width);
     z-index: 60;
-    background: linear-gradient(180deg, rgba(14, 14, 18, 0.98), rgba(22, 12, 12, 0.96));
-    border-right: 1px solid rgba(220, 38, 38, 0.22);
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35), inset -1px 0 0 rgba(127, 29, 29, 0.28);
+    background:
+      radial-gradient(120% 60% at 0% 0%, rgba(127, 29, 29, 0.18), transparent 55%),
+      radial-gradient(80% 50% at 100% 100%, rgba(220, 38, 38, 0.10), transparent 60%),
+      linear-gradient(180deg, #050507 0%, #0a0608 45%, #100808 100%);
+    border-right: 1px solid rgba(220, 38, 38, 0.42);
+    box-shadow:
+      6px 0 32px rgba(0, 0, 0, 0.6),
+      inset -1px 0 0 rgba(220, 38, 38, 0.34),
+      inset 0 1px 0 rgba(255, 255, 255, 0.02);
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
@@ -699,54 +705,61 @@ const structuredData = [
     height: 36px;
     object-fit: contain;
     justify-self: center;
-    opacity: 0.95;
-    filter: brightness(1.45) saturate(1.45) contrast(1.18) drop-shadow(0 0 6px rgba(220, 38, 38, 0.26));
+    opacity: 0.92;
+    /* keep the icons their true red — no brightness washout */
+    filter: saturate(1.25) contrast(1.05) drop-shadow(0 0 6px rgba(220, 38, 38, 0.45));
     transition: filter 120ms ease, transform 120ms ease, opacity 120ms ease;
   }
 
   .fp-app-rail-nav-link {
     display: flex;
     align-items: center;
-    padding: 0.52rem 0.7rem;
-    border-radius: 0.65rem;
-    border: 1px solid transparent;
+    padding: 0.55rem 0.75rem;
+    border-radius: 0.72rem;
+    border: 1px solid rgba(127, 29, 29, 0.18);
+    background: rgba(9, 9, 11, 0.55);
     text-decoration: none;
     font-size: 0.9rem;
     font-weight: 600;
     color: #d4d4d8;
-    transition: background 80ms ease, border-color 80ms ease;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+    transition: background 100ms ease, border-color 100ms ease, transform 100ms ease, box-shadow 100ms ease;
   }
   .fp-app-rail-nav-link:hover {
-    background: rgba(220, 38, 38, 0.12);
-    border-color: rgba(220, 38, 38, 0.22);
+    background: linear-gradient(160deg, rgba(127, 29, 29, 0.32), rgba(69, 10, 10, 0.42));
+    border-color: rgba(220, 38, 38, 0.45);
     color: #fef2f2;
+    transform: translateX(2px);
+    box-shadow: 0 6px 14px rgba(127, 29, 29, 0.28), inset 0 0 0 1px rgba(248, 113, 113, 0.12);
   }
   .fp-app-rail-nav-link:hover .fp-app-rail-nav-icon {
     opacity: 1;
-    transform: scale(1.04);
-    filter: brightness(1.68) saturate(1.65) contrast(1.22) drop-shadow(0 0 10px rgba(248, 113, 113, 0.42));
+    transform: scale(1.06);
+    filter: saturate(1.45) contrast(1.12) drop-shadow(0 0 10px rgba(248, 113, 113, 0.62));
   }
   .fp-app-rail-nav-link.is-active {
-    background: rgba(220, 38, 38, 0.18);
-    border-color: rgba(248, 113, 113, 0.38);
+    background: linear-gradient(160deg, rgba(185, 28, 28, 0.42), rgba(69, 10, 10, 0.62));
+    border-color: rgba(248, 113, 113, 0.55);
     color: #fef2f2;
     font-weight: 700;
+    box-shadow: 0 0 18px rgba(220, 38, 38, 0.28), inset 0 0 0 1px rgba(248, 113, 113, 0.22);
   }
   .fp-app-rail-nav-link.is-active .fp-app-rail-nav-icon,
   .fp-app-rail-nav-link.is-primary-nav .fp-app-rail-nav-icon {
     opacity: 1;
-    transform: scale(1.05);
-    filter: brightness(1.82) saturate(1.75) contrast(1.24) drop-shadow(0 0 12px rgba(248, 113, 113, 0.48));
+    transform: scale(1.06);
+    filter: saturate(1.55) contrast(1.15) drop-shadow(0 0 12px rgba(248, 113, 113, 0.7));
   }
   .fp-app-rail-nav-link.is-primary-nav {
-    background: linear-gradient(160deg, rgba(127, 20, 20, 0.55), rgba(90, 20, 20, 0.45));
-    border-color: rgba(248, 113, 113, 0.35);
+    background: linear-gradient(160deg, rgba(185, 28, 28, 0.55), rgba(90, 20, 20, 0.62));
+    border-color: rgba(248, 113, 113, 0.45);
     color: #fef2f2;
     font-weight: 700;
+    box-shadow: 0 4px 14px rgba(127, 29, 29, 0.42), inset 0 0 0 1px rgba(248, 113, 113, 0.18);
   }
   .fp-app-rail-nav-link.is-primary-nav:hover {
-    background: linear-gradient(160deg, rgba(220, 38, 38, 0.42), rgba(127, 20, 20, 0.55));
-    border-color: rgba(248, 113, 113, 0.55);
+    background: linear-gradient(160deg, rgba(220, 38, 38, 0.52), rgba(127, 20, 20, 0.65));
+    border-color: rgba(248, 113, 113, 0.65);
   }
 
   /* App links */
