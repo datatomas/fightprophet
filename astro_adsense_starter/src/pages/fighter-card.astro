@@ -73,7 +73,11 @@ const historyRows = fighterData.debug.historyCount;
               <h2>Fighter Index</h2>
               <span data-fighter-match-count>{totalProfiles.toLocaleString()} fighters</span>
             </div>
-            <div class="fp-fighter-list" data-fighter-list></div>
+            <label class="fp-fighter-select-label">
+              <span>Choose fighter</span>
+              <select data-fighter-select aria-label="Choose fighter"></select>
+            </label>
+            <p class="fp-list-empty" data-fighter-empty hidden>No fighters match these filters.</p>
           </section>
 
           <section class="fp-fighter-detail" aria-live="polite">
@@ -190,7 +194,8 @@ const historyRows = fighterData.debug.historyCount;
 
     const search = document.querySelector('[data-fighter-search]');
     const status = document.querySelector('[data-fighter-status]');
-    const list = document.querySelector('[data-fighter-list]');
+    const fighterSelect = document.querySelector('[data-fighter-select]');
+    const emptyState = document.querySelector('[data-fighter-empty]');
     const matchCount = document.querySelector('[data-fighter-match-count]');
     const profileName = document.querySelector('[data-profile-name]');
     const profileMeta = document.querySelector('[data-profile-meta]');
@@ -398,29 +403,27 @@ const historyRows = fighterData.debug.historyCount;
       if (!rows.some((profile) => profile.fighter_id === selectedProfile.fighter_id)) {
         selectedProfile = rows[0] || profiles[0];
       }
-      list.innerHTML = rows.slice(0, 140).map((profile) => `
-        <button type="button" class="fp-fighter-row${profile.fighter_id === selectedProfile.fighter_id ? ' is-active' : ''}" data-fighter-id="${escapeHtml(profile.fighter_id)}">
-          <span>
-            <strong>${escapeHtml(profile.name)}</strong>
-            <em>${escapeHtml([profile.country, profile.fighter_status].filter(Boolean).join(' / '))}</em>
-          </span>
-          <b>${escapeHtml(record(profile))}</b>
-        </button>
-      `).join('') || '<p class="fp-list-empty">No fighters match these filters.</p>';
-      list.querySelectorAll('[data-fighter-id]').forEach((button) => {
-        button.addEventListener('click', () => {
-          const profile = rows.find((candidate) => candidate.fighter_id === button.getAttribute('data-fighter-id'));
-          if (profile) {
-            selectProfile(profile);
-            renderList();
-          }
-        });
-      });
+      if (fighterSelect) {
+        fighterSelect.disabled = rows.length === 0;
+        fighterSelect.innerHTML = rows.slice(0, 500).map((profile) => {
+          const meta = [profile.country, profile.fighter_status, record(profile)].filter(Boolean).join(' / ');
+          return `<option value="${escapeHtml(profile.fighter_id)}">${escapeHtml(profile.name)}${meta ? ` — ${escapeHtml(meta)}` : ''}</option>`;
+        }).join('');
+        fighterSelect.value = selectedProfile?.fighter_id || '';
+      }
+      if (emptyState) emptyState.hidden = rows.length > 0;
       if (selectedProfile) selectProfile(selectedProfile, false);
     }
 
     search?.addEventListener('input', renderList);
     status?.addEventListener('change', renderList);
+    fighterSelect?.addEventListener('change', () => {
+      const profile = filteredProfiles().find((candidate) => candidate.fighter_id === fighterSelect.value);
+      if (profile) {
+        selectProfile(profile);
+        renderList();
+      }
+    });
     if (requested) search.value = params.get('fighter') || '';
     renderList();
   })();
@@ -605,75 +608,62 @@ const historyRows = fighterData.debug.historyCount;
     font-weight: 900;
     white-space: nowrap;
   }
-  .fp-fighter-list {
-    max-height: 760px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    /* Custom dark scrollbar */
-    scrollbar-width: thin;
-    scrollbar-color: rgba(185,28,28,0.4) transparent;
-  }
-  .fp-fighter-list::-webkit-scrollbar { width: 4px; }
-  .fp-fighter-list::-webkit-scrollbar-thumb { background: rgba(185,28,28,0.38); border-radius: 999px; }
-
-  .fp-fighter-row {
-    display: flex;
-    width: 100%;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.55rem;
-    text-align: left;
-    border: none;
-    border-bottom: 1px solid rgba(39, 39, 42, 0.7);
-    border-left: 3px solid transparent;
-    border-radius: 0;
-    padding: 0.58rem 0.6rem;
-    color: #d4d4d8;
-    background: transparent;
-    cursor: pointer;
-    transition: background 80ms ease, border-left-color 80ms ease, color 80ms ease;
-  }
-  .fp-fighter-row:first-child { border-radius: 0.4rem 0.4rem 0 0; }
-  .fp-fighter-row:last-child  { border-bottom: none; border-radius: 0 0 0.4rem 0.4rem; }
-  .fp-fighter-row:hover {
-    background: rgba(185, 28, 28, 0.10);
-    border-left-color: rgba(220, 38, 38, 0.52);
-    color: #f4f4f5;
-  }
-  .fp-fighter-row.is-active {
-    background: rgba(185, 28, 28, 0.18);
-    border-left-color: #ef4444;
-    color: #fef2f2;
-  }
-  .fp-fighter-row span {
+  .fp-fighter-select-label {
+    position: relative;
     display: grid;
-    gap: 0.1rem;
+    gap: 0.38rem;
+    padding: 0.62rem;
+    box-sizing: border-box;
+    background: rgba(9, 9, 11, 0.62);
+    border: 1px solid rgba(113, 113, 122, 0.42);
+    border-radius: 0.62rem;
+  }
+  .fp-fighter-select-label span {
+    color: #67e8f9;
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .fp-fighter-select-label select {
+    width: 100%;
     min-width: 0;
-  }
-  .fp-fighter-row strong {
-    color: inherit;
-    font-size: 0.88rem;
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
+    min-height: 2.55rem;
+    padding: 0.55rem 2.1rem 0.55rem 0.65rem;
+    color: #fef2f2;
+    background: rgba(9, 9, 11, 0.86);
+    border: 1px solid rgba(248, 113, 113, 0.22);
+    border-radius: 0.55rem;
+    outline: 0;
+    appearance: none;
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 800;
+    cursor: pointer;
     text-overflow: ellipsis;
   }
-  .fp-fighter-row em {
+  .fp-fighter-select-label select:disabled {
     color: #71717a;
-    font-size: 0.72rem;
-    font-style: normal;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    cursor: not-allowed;
   }
-  .fp-fighter-row b {
-    flex-shrink: 0;
-    color: #a1a1aa;
-    font-size: 0.72rem;
-    font-weight: 600;
-    font-family: ui-monospace, SFMono-Regular, monospace;
+  .fp-fighter-select-label select option {
+    color: #fef2f2;
+    background: #18181b;
   }
-  .fp-fighter-row.is-active b { color: #fca5a5; }
+  .fp-fighter-select-label::after {
+    content: '⌄';
+    position: absolute;
+    right: 1.25rem;
+    bottom: 1.22rem;
+    color: #fca5a5;
+    font-size: 1rem;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .fp-fighter-select-label:focus-within {
+    border-color: rgba(248, 113, 113, 0.62);
+    box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.18);
+  }
   .fp-profile-kpis {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));

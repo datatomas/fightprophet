@@ -11,6 +11,7 @@ const pageJson = JSON.stringify({ titleHistory }).replace(/</g, '\\u003c');
 const totalDivisions = champions.length;
 const activeChampions = champions.filter((champ) => !champ.is_vacant).length;
 const totalTitleFights = titleHistory.length;
+const initialTitleHistoryLimit = 30;
 const hasData = totalDivisions > 0;
 
 function flagEmoji(iso2?: string): string {
@@ -139,45 +140,9 @@ function fighterHref(name?: string): string {
         <section class="fp-panel">
           <div class="fp-panel-head">
             <div>
-              <p class="fp-section-label">Title Vacates</p>
-              <h2>Manual Title Vacates</h2>
-            </div>
-          </div>
-          {manualVacates.length > 0 ? (
-            <div class="fp-table-wrap">
-              <table class="fp-data-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Division</th>
-                    <th>Champion</th>
-                    <th>Reason</th>
-                    <th>Notes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {manualVacates.map((row) => (
-                    <tr>
-                      <td>{row.vacated_on || '—'}</td>
-                      <td>{row.weight_class || '—'}</td>
-                      <td>{row.champion_name || '—'}</td>
-                      <td>{row.reason || '—'}</td>
-                      <td>{row.notes || '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p class="fp-muted">No title vacates dataset found.</p>
-          )}
-        </section>
-
-        <section class="fp-panel">
-          <div class="fp-panel-head">
-            <div>
               <p class="fp-section-label">Lineage</p>
               <h2>Title Fight History</h2>
+              <p class="fp-muted" data-history-count>Showing {Math.min(initialTitleHistoryLimit, titleHistory.length).toLocaleString()} of {titleHistory.length.toLocaleString()} title fights.</p>
             </div>
             <label class="fp-filter-label">
               <span>Filter by division</span>
@@ -207,7 +172,7 @@ function fighterHref(name?: string): string {
                 </tr>
               </thead>
               <tbody data-history-body>
-                {titleHistory.slice(0, 250).map((row) => (
+                {titleHistory.slice(0, initialTitleHistoryLimit).map((row) => (
                   <tr>
                     <td>{row.winner_name || '—'}</td>
                     <td>{row.loser_name || '—'}</td>
@@ -225,8 +190,50 @@ function fighterHref(name?: string): string {
               </tbody>
             </table>
           </div>
-          {titleHistory.length > 250 && <p class="fp-muted" data-history-count>Showing 250 of {titleHistory.length.toLocaleString()} title fights.</p>}
+          {titleHistory.length > initialTitleHistoryLimit && (
+            <button type="button" class="fp-show-more-btn" data-history-show-more>
+              Show more title fights
+            </button>
+          )}
         </section>
+
+        <details class="fp-panel fp-collapsible-panel">
+          <summary>
+            <span>
+              <span class="fp-section-label">Title Vacates</span>
+              <strong>Manual Title Vacates</strong>
+            </span>
+            <em>{manualVacates.length.toLocaleString()} record{manualVacates.length === 1 ? '' : 's'}</em>
+          </summary>
+          {manualVacates.length > 0 ? (
+            <div class="fp-table-wrap">
+              <table class="fp-data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Division</th>
+                    <th>Champion</th>
+                    <th>Reason</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {manualVacates.map((row) => (
+                    <tr>
+                      <td>{row.vacated_on || '—'}</td>
+                      <td>{row.weight_class || '—'}</td>
+                      <td>{row.champion_name || '—'}</td>
+                      <td>{row.reason || '—'}</td>
+                      <td>{row.notes || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p class="fp-muted">No title vacates dataset found.</p>
+          )}
+        </details>
       </>
     ) : (
       <section class="fp-empty-state">
@@ -243,16 +250,19 @@ function fighterHref(name?: string): string {
     const dataNode = document.getElementById('fp-title-history-data');
     const filter = document.querySelector('[data-history-filter]');
     const body = document.querySelector('[data-history-body]');
+    const count = document.querySelector('[data-history-count]');
+    const showMore = document.querySelector('[data-history-show-more]');
     if (!dataNode || !filter || !body) return;
     const payload = JSON.parse(dataNode.textContent || '{}');
     const titleHistory = Array.isArray(payload.titleHistory) ? payload.titleHistory : [];
+    const pageSize = 30;
+    let visibleLimit = pageSize;
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
     const cell = (v) => esc(v || '—');
     const render = () => {
       const division = filter.value;
-      const rows = titleHistory
-        .filter((row) => division === '__all__' || row.weight_class === division)
-        .slice(0, 250);
+      const filtered = titleHistory.filter((row) => division === '__all__' || row.weight_class === division);
+      const rows = filtered.slice(0, visibleLimit);
       body.innerHTML = rows.map((row) => `<tr>
         <td>${cell(row.winner_name)}</td>
         <td>${cell(row.loser_name)}</td>
@@ -266,8 +276,22 @@ function fighterHref(name?: string): string {
         <td>${row.title_defense_number ?? '—'}</td>
         <td>${cell(row.event_name)}</td>
       </tr>`).join('');
+      if (count) {
+        count.textContent = `Showing ${rows.length.toLocaleString()} of ${filtered.length.toLocaleString()} title fights.`;
+      }
+      if (showMore) {
+        showMore.hidden = rows.length >= filtered.length;
+      }
     };
-    filter.addEventListener('change', render);
+    filter.addEventListener('change', () => {
+      visibleLimit = pageSize;
+      render();
+    });
+    showMore?.addEventListener('click', () => {
+      visibleLimit += pageSize;
+      render();
+    });
+    render();
   })();
 </script>
 
@@ -316,6 +340,71 @@ function fighterHref(name?: string): string {
   .fp-muted { margin: 0; color: #a1a1aa; font-size: 0.86rem; }
   .fp-filter-label { display: grid; gap: 0.35rem; color: #a1a1aa; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
   .fp-filter-label select { min-width: 220px; min-height: 2.45rem; border: 1px solid rgba(113,113,122,0.52); border-radius: 0.55rem; color: #f4f4f5; background: rgba(9,9,11,0.78); padding: 0.55rem 0.65rem; }
+  .fp-show-more-btn {
+    justify-self: center;
+    min-height: 2.45rem;
+    padding: 0.55rem 0.9rem;
+    border: 1px solid rgba(248,113,113,0.36);
+    border-radius: 0.55rem;
+    color: #fef2f2;
+    background: rgba(127,29,29,0.34);
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .fp-show-more-btn:hover {
+    background: rgba(185,28,28,0.48);
+    border-color: rgba(248,113,113,0.58);
+  }
+  .fp-collapsible-panel {
+    padding: 0;
+    overflow: hidden;
+  }
+  .fp-collapsible-panel summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.95rem 1rem;
+    color: #fef2f2;
+    cursor: pointer;
+    list-style: none;
+  }
+  .fp-collapsible-panel summary::-webkit-details-marker { display: none; }
+  .fp-collapsible-panel summary::after {
+    content: '+';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 999px;
+    border: 1px solid rgba(248,113,113,0.34);
+    color: #fca5a5;
+    font-weight: 900;
+    flex-shrink: 0;
+  }
+  .fp-collapsible-panel[open] summary::after { content: '−'; }
+  .fp-collapsible-panel summary > span {
+    display: grid;
+    gap: 0.14rem;
+  }
+  .fp-collapsible-panel summary strong {
+    font-size: 1.02rem;
+  }
+  .fp-collapsible-panel summary em {
+    margin-left: auto;
+    color: #a1a1aa;
+    font-size: 0.82rem;
+    font-style: normal;
+    white-space: nowrap;
+  }
+  .fp-collapsible-panel > .fp-table-wrap,
+  .fp-collapsible-panel > .fp-muted {
+    margin: 0 1rem 1rem;
+  }
   .fp-empty-state { display: grid; gap: 0.55rem; padding: 1.35rem; background: linear-gradient(150deg,rgba(22,22,26,0.92),rgba(36,36,42,0.68)); border: 1px solid rgba(113,113,122,0.42); border-radius: 0.8rem; color: #d4d4d8; }
   .fp-empty-state strong { color: #fef2f2; font-size: 1rem; }
 

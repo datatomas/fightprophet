@@ -1083,6 +1083,114 @@ function normalizeModelStats(rows: Record<string, any>[]): ModelStats {
   };
 }
 
+function mergeModelStats(primary: ModelStats, fallback: Partial<ModelStats>): ModelStats {
+  return {
+    accuracy: primary.accuracy ?? fallback.accuracy ?? null,
+    total_fights: primary.total_fights ?? fallback.total_fights ?? null,
+    correct_picks: primary.correct_picks ?? fallback.correct_picks ?? null,
+    wrong_picks: primary.wrong_picks ?? fallback.wrong_picks ?? null,
+    f1: primary.f1 ?? fallback.f1 ?? null,
+    auc: primary.auc ?? fallback.auc ?? null,
+    brier: primary.brier ?? fallback.brier ?? null,
+    log_loss: primary.log_loss ?? fallback.log_loss ?? null,
+    events_covered: primary.events_covered ?? fallback.events_covered ?? null,
+  };
+}
+
+function computeFightLabMetrics(rows: FightLabRow[]): Partial<ModelStats> {
+  const invalidWinners = new Set(['', 'nan', 'nat', 'none', 'draw', 'no contest']);
+  const pickCorrectCount = rows.filter((row) => row.model_correct === true).length;
+  const pickWrongCount = rows.filter((row) => row.model_correct === false).length;
+  const pickAccuracy = rows.length > 0 && pickCorrectCount + pickWrongCount > 0
+    ? pickCorrectCount / rows.length
+    : null;
+  const scored = rows
+    .map((row) => {
+      const fighterName = row.fighter_name_display.trim();
+      const winnerName = row.winner_name_display.trim();
+      const winnerKey = winnerName.toLowerCase();
+      const probRaw = row.model_prob;
+      if (!fighterName || invalidWinners.has(winnerKey) || probRaw == null || Number.isNaN(Number(probRaw))) {
+        return null;
+      }
+      const probability = Math.max(0, Math.min(1, Number(probRaw)));
+      const actual = winnerName === fighterName ? 1 : 0;
+      const predicted = probability >= 0.5 ? 1 : 0;
+      return { probability, actual, predicted };
+    })
+    .filter(Boolean) as Array<{ probability: number; actual: number; predicted: number }>;
+
+  const n = scored.length;
+  if (!n) {
+    return {
+      accuracy: pickAccuracy,
+      total_fights: rows.length,
+      correct_picks: pickCorrectCount,
+      wrong_picks: pickWrongCount,
+      f1: null,
+      auc: null,
+      brier: null,
+      log_loss: null,
+    };
+  }
+
+  let correct = 0;
+  let tp = 0;
+  let fp = 0;
+  let fn = 0;
+  let brierSum = 0;
+  let logLossSum = 0;
+  const eps = 1e-6;
+
+  for (const item of scored) {
+    if (item.predicted === item.actual) correct += 1;
+    if (item.predicted === 1 && item.actual === 1) tp += 1;
+    if (item.predicted === 1 && item.actual === 0) fp += 1;
+    if (item.predicted === 0 && item.actual === 1) fn += 1;
+    brierSum += (item.probability - item.actual) ** 2;
+    const clipped = Math.max(eps, Math.min(1 - eps, item.probability));
+    logLossSum += -(item.actual * Math.log(clipped) + (1 - item.actual) * Math.log(1 - clipped));
+  }
+
+  const precision = tp + fp > 0 ? tp / (tp + fp) : null;
+  const recall = tp + fn > 0 ? tp / (tp + fn) : null;
+  const f1 = precision != null && recall != null && precision + recall > 0
+    ? (2 * precision * recall) / (precision + recall)
+    : null;
+
+  const positives = scored.filter((item) => item.actual === 1).length;
+  const negatives = scored.length - positives;
+  let auc: number | null = null;
+  if (positives > 0 && negatives > 0) {
+    const sorted = [...scored].sort((a, b) => a.probability - b.probability);
+    let rankSumPositive = 0;
+    let idx = 0;
+    while (idx < sorted.length) {
+      let end = idx + 1;
+      while (end < sorted.length && sorted[end].probability === sorted[idx].probability) end += 1;
+      const averageRank = (idx + 1 + end) / 2;
+      for (let i = idx; i < end; i += 1) {
+        if (sorted[i].actual === 1) rankSumPositive += averageRank;
+      }
+      idx = end;
+    }
+    auc = (rankSumPositive - (positives * (positives + 1)) / 2) / (positives * negatives);
+    auc = Math.max(0, Math.min(1, auc));
+  }
+
+  return {
+    accuracy: pickAccuracy ?? correct / n,
+    total_fights: rows.length,
+    correct_picks: pickCorrectCount || correct,
+    wrong_picks: pickWrongCount || (n - correct),
+    f1,
+    auc,
+    brier: brierSum / n,
+    log_loss: logLossSum / n,
+    events_covered: new Set(rows.map((row) => row.event_name).filter(Boolean)).size,
+  };
+}
+
 export async function getFightLabData(env?: RuntimeEnv): Promise<FightLabData> {
   const now = Date.now();
   if (cachedFightLab && now < cacheExpiresAt) return cachedFightLab;
@@ -1130,9 +1238,10 @@ export async function getFightLabData(env?: RuntimeEnv): Promise<FightLabData> {
       .map((r) => normalizeFightLabRow(r, countryIndex.byAlias))
       .filter(Boolean) as FightLabRow[];
     labRows.sort((a, b) => dateValue(b.event_date) - dateValue(a.event_date));
+    const statsFromRows = computeFightLabMetrics(labRows);
     return {
       rows: labRows,
-      stats: normalizeModelStats(stats.length > 0 ? stats : fallbackS),
+      stats: mergeModelStats(normalizeModelStats(stats.length > 0 ? stats : fallbackS), statsFromRows),
     };
   }
 
