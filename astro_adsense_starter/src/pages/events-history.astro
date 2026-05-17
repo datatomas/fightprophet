@@ -1,32 +1,467 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import AppSectionLanding from '../components/AppSectionLanding.astro';
+import { runtimeEnvFromLocals } from '../lib/country-master';
+import { getEventsHistoryData } from '../lib/dashboard-data';
+
+const runtimeEnv = runtimeEnvFromLocals(Astro.locals);
+const eventsData = await getEventsHistoryData(runtimeEnv);
+const pageJson = JSON.stringify(eventsData).replace(/</g, '\\u003c');
+
+const totalEvents = eventsData.events.length;
+const totalFights = eventsData.fights.length;
+const upcomingEvents = eventsData.events.filter((event) => event.event_phase === 'Upcoming').length;
+const pastEvents = totalEvents - upcomingEvents;
 ---
 
 <BaseLayout
   title="UFC & MMA Events History | Fight Prophet"
-  description="Browse historical UFC and MMA events with full fight cards, results, and model retro-predictions for each bout. A complete archive built for analytics, not just box scores."
+  description="Browse historical UFC and MMA events with fight cards, results, model probabilities, signal strength, and event-level summaries."
 >
-  <AppSectionLanding
-    pageSlug="events-history"
-    heading="UFC & MMA Events History"
-    intro="Every tracked event in one place. Open a card to see the bouts, the official result, and how the model would have rated each fight in advance."
-    bullets={[
-      { title: 'Full event archive', body: 'Years of UFC and MMA events with fighters, results, and weight classes.' },
-      { title: 'Retro-predictions', body: 'See what the model would have said before each historical bout.' },
-      { title: 'Quick navigation', body: 'Jump from any event into individual fighter cards or rankings.' },
-      { title: 'Event-level summaries', body: 'Card-wide hit rates and notable upsets surfaced automatically.' },
-    ]}
-    whatYouWillSee={[
-      'A chronological list of past events with fight cards',
-      'Per-fight result, method, and round',
-      'Model probability vs market probability for that night',
-      'Links into each fighter card and ranking history',
-    ]}
-    readingNotes={[
-      { title: 'Event context', body: 'Events are not just listed as box scores; they connect cards, fighters, results, and model history.' },
-      { title: 'Retrospective analysis', body: 'Historical cards can be used to inspect where the model found signal, where it missed, and which fights moved rankings.' },
-      { title: 'Navigation depth', body: 'Each event can lead into fighter cards, rankings, and Fight Lab rather than ending on a copied result list.' },
-    ]}
-  />
+  <article class="fp-events-page">
+    <header class="fp-tool-hero">
+      <a class="fp-tool-breadcrumb" href="/">← Fight Prophet</a>
+      <p class="fp-section-label">Events History</p>
+      <h1>UFC &amp; MMA Events History</h1>
+      <p>
+        Browse tracked cards with fight-level results, model signal, market context, and event summaries from the same dashboard exports that power the analytics app.
+      </p>
+      <div class="fp-kpi-strip" aria-label="Events archive summary">
+        <span><strong>{totalEvents.toLocaleString()}</strong> events</span>
+        <span><strong>{totalFights.toLocaleString()}</strong> fight rows</span>
+        <span><strong>{upcomingEvents.toLocaleString()}</strong> upcoming</span>
+        <span><strong>{pastEvents.toLocaleString()}</strong> past</span>
+      </div>
+    </header>
+
+    {totalEvents > 0 ? (
+      <>
+        <section class="fp-tool-controls" aria-label="Event filters">
+          <label>
+            <span>Search</span>
+            <input type="search" data-event-search placeholder="UFC 300, London, Holloway" autocomplete="off" />
+          </label>
+          <label>
+            <span>Window</span>
+            <select data-event-phase>
+              <option value="All">All</option>
+              <option value="Upcoming">Upcoming</option>
+              <option value="Past">Past</option>
+            </select>
+          </label>
+          <label>
+            <span>Location</span>
+            <select data-event-location>
+              <option value="All">All locations</option>
+            </select>
+          </label>
+        </section>
+
+        <div class="fp-events-layout">
+          <section class="fp-events-list-panel" aria-label="Matching events">
+            <div class="fp-panel-head">
+              <h2>Event Archive</h2>
+              <span data-event-match-count>{totalEvents.toLocaleString()} events</span>
+            </div>
+            <div class="fp-events-list" data-event-list></div>
+          </section>
+
+          <section class="fp-event-detail" aria-live="polite">
+            <div class="fp-panel-head">
+              <div>
+                <h2 data-selected-event-name>Event</h2>
+                <p data-selected-event-meta></p>
+              </div>
+              <span class="fp-phase-badge" data-selected-event-phase></span>
+            </div>
+
+            <div class="fp-event-kpis">
+              <div><span>Date</span><strong data-kpi-date>—</strong></div>
+              <div><span>Fights</span><strong data-kpi-fights>—</strong></div>
+              <div><span>Fighters</span><strong data-kpi-fighters>—</strong></div>
+              <div><span>Model Hit Rate</span><strong data-kpi-model>—</strong></div>
+            </div>
+
+            <div class="fp-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Fight</th>
+                    <th>Winner</th>
+                    <th>Signal</th>
+                    <th>Model</th>
+                    <th>Market</th>
+                    <th>Edge</th>
+                  </tr>
+                </thead>
+                <tbody data-fight-table></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </>
+    ) : (
+      <section class="fp-empty-state">
+        <strong>Events history is temporarily unavailable.</strong>
+        <span>The public archive reads from the exported dashboard parquet feed. If this is empty, the latest export has not landed yet.</span>
+      </section>
+    )}
+  </article>
+
+  <script type="application/json" id="fp-events-data" set:html={pageJson}></script>
 </BaseLayout>
+
+<script is:inline>
+  (() => {
+    const dataNode = document.getElementById('fp-events-data');
+    if (!dataNode) return;
+    const payload = JSON.parse(dataNode.textContent || '{"events":[],"fights":[]}');
+    const events = Array.isArray(payload.events) ? payload.events : [];
+    const fights = Array.isArray(payload.fights) ? payload.fights : [];
+    if (!events.length) return;
+
+    const search = document.querySelector('[data-event-search]');
+    const phase = document.querySelector('[data-event-phase]');
+    const location = document.querySelector('[data-event-location]');
+    const list = document.querySelector('[data-event-list]');
+    const matchCount = document.querySelector('[data-event-match-count]');
+    const fightTable = document.querySelector('[data-fight-table]');
+    const selectedName = document.querySelector('[data-selected-event-name]');
+    const selectedMeta = document.querySelector('[data-selected-event-meta]');
+    const selectedPhase = document.querySelector('[data-selected-event-phase]');
+    const kpiDate = document.querySelector('[data-kpi-date]');
+    const kpiFights = document.querySelector('[data-kpi-fights]');
+    const kpiFighters = document.querySelector('[data-kpi-fighters]');
+    const kpiModel = document.querySelector('[data-kpi-model]');
+
+    let selectedEvent = events.find((event) => event.event_phase === 'Upcoming') || events[0];
+
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    }[ch]));
+    const pct = (value) => {
+      if (value == null || Number.isNaN(Number(value))) return '—';
+      const num = Number(value);
+      return `${Math.round((num <= 1 ? num * 100 : num) * 10) / 10}%`;
+    };
+    const edge = (value) => {
+      if (value == null || Number.isNaN(Number(value))) return '—';
+      const num = Number(value);
+      const shown = Math.round((num <= 1 && num >= -1 ? num * 100 : num) * 10) / 10;
+      return `${shown > 0 ? '+' : ''}${shown}%`;
+    };
+    const modelHitRate = (event) => {
+      if (!event || !event.model_total_count) return '—';
+      return `${Math.round((event.model_correct_count / event.model_total_count) * 100)}%`;
+    };
+
+    const locations = [...new Set(events.map((event) => event.location).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    for (const loc of locations) {
+      const opt = document.createElement('option');
+      opt.value = loc;
+      opt.textContent = loc;
+      location?.append(opt);
+    }
+
+    function filteredEvents() {
+      const query = String(search?.value || '').trim().toLowerCase();
+      const phaseValue = String(phase?.value || 'All');
+      const locValue = String(location?.value || 'All');
+      return events.filter((event) => {
+        const haystack = `${event.event_name} ${event.location} ${event.event_phase}`.toLowerCase();
+        return (!query || haystack.includes(query))
+          && (phaseValue === 'All' || event.event_phase === phaseValue)
+          && (locValue === 'All' || event.location === locValue);
+      });
+    }
+
+    function selectEvent(event) {
+      selectedEvent = event;
+      selectedName.textContent = event.event_name || 'Event';
+      selectedMeta.textContent = [event.location, event.event_phase].filter(Boolean).join(' / ');
+      selectedPhase.textContent = event.event_phase || '';
+      selectedPhase.classList.toggle('is-upcoming', event.event_phase === 'Upcoming');
+      kpiDate.textContent = event.event_date || '—';
+      kpiFights.textContent = Number(event.fight_count || 0).toLocaleString();
+      kpiFighters.textContent = Number(event.unique_fighters || 0).toLocaleString();
+      kpiModel.textContent = modelHitRate(event);
+
+      const rows = fights.filter((fight) => fight.event_name === event.event_name);
+      if (!rows.length) {
+        fightTable.innerHTML = '<tr><td colspan="7">Fight-level rows are not available for this event yet.</td></tr>';
+        return;
+      }
+      fightTable.innerHTML = rows.map((fight) => `
+        <tr>
+          <td>${escapeHtml(fight.event_date || event.event_date || '')}</td>
+          <td><strong>${escapeHtml(fight.fighter_name_display || 'TBD')}</strong><span>${escapeHtml(fight.opponent_name_display ? ` vs ${fight.opponent_name_display}` : '')}</span></td>
+          <td>${escapeHtml(fight.winner_name_display || fight.result || '—')}</td>
+          <td>${escapeHtml(fight.signal_strength || '—')}</td>
+          <td>${pct(fight.model_prob)}</td>
+          <td>${pct(fight.market_prob)}</td>
+          <td>${edge(fight.edge)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderList() {
+      const rows = filteredEvents();
+      matchCount.textContent = `${rows.length.toLocaleString()} events`;
+      if (!rows.some((event) => event.event_name === selectedEvent.event_name)) {
+        selectedEvent = rows[0] || events[0];
+      }
+      list.innerHTML = rows.slice(0, 120).map((event) => `
+        <button type="button" class="fp-event-row${event.event_name === selectedEvent.event_name ? ' is-active' : ''}" data-event-name="${escapeHtml(event.event_name)}">
+          <span>
+            <strong>${escapeHtml(event.event_name)}</strong>
+            <em>${escapeHtml([event.event_date, event.location].filter(Boolean).join(' / '))}</em>
+          </span>
+          <b>${escapeHtml(event.event_phase)}</b>
+        </button>
+      `).join('') || '<p class="fp-list-empty">No events match these filters.</p>';
+      list.querySelectorAll('[data-event-name]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const event = rows.find((candidate) => candidate.event_name === button.getAttribute('data-event-name'));
+          if (event) {
+            selectEvent(event);
+            renderList();
+          }
+        });
+      });
+      if (selectedEvent) selectEvent(selectedEvent);
+    }
+
+    search?.addEventListener('input', renderList);
+    phase?.addEventListener('change', renderList);
+    location?.addEventListener('change', renderList);
+    renderList();
+  })();
+</script>
+
+<style>
+  .fp-events-page {
+    display: grid;
+    gap: 1rem;
+  }
+  .fp-tool-hero,
+  .fp-tool-controls,
+  .fp-events-list-panel,
+  .fp-event-detail {
+    background: linear-gradient(150deg, rgba(22, 22, 26, 0.92), rgba(36, 36, 42, 0.68));
+    border: 1px solid rgba(113, 113, 122, 0.42);
+    border-radius: 0.8rem;
+  }
+  .fp-tool-hero {
+    padding: 1.35rem;
+  }
+  .fp-tool-breadcrumb {
+    color: #fca5a5;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+  .fp-tool-hero h1 {
+    margin: 0.25rem 0 0.45rem;
+    color: #fef2f2;
+    font-size: clamp(1.7rem, 4vw, 2.45rem);
+    line-height: 1.08;
+  }
+  .fp-tool-hero p {
+    max-width: 72ch;
+    margin: 0;
+    color: #d4d4d8;
+    line-height: 1.6;
+  }
+  .fp-kpi-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-top: 1rem;
+  }
+  .fp-kpi-strip span {
+    display: inline-flex;
+    gap: 0.35rem;
+    align-items: center;
+    border: 1px solid rgba(239, 68, 68, 0.28);
+    border-radius: 999px;
+    padding: 0.42rem 0.65rem;
+    color: #d4d4d8;
+    background: rgba(24, 24, 27, 0.72);
+  }
+  .fp-kpi-strip strong {
+    color: #fef2f2;
+  }
+  .fp-tool-controls {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(150px, 0.28fr) minmax(180px, 0.38fr);
+    gap: 0.75rem;
+    padding: 0.9rem;
+  }
+  .fp-tool-controls label {
+    display: grid;
+    gap: 0.35rem;
+    color: #a1a1aa;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .fp-tool-controls input,
+  .fp-tool-controls select {
+    width: 100%;
+    min-height: 2.55rem;
+    border: 1px solid rgba(113, 113, 122, 0.52);
+    border-radius: 0.55rem;
+    color: #f4f4f5;
+    background: rgba(9, 9, 11, 0.78);
+    padding: 0.55rem 0.65rem;
+  }
+  .fp-events-layout {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.42fr) minmax(0, 1fr);
+    gap: 0.9rem;
+    align-items: start;
+  }
+  .fp-events-list-panel,
+  .fp-event-detail {
+    padding: 0.95rem;
+    min-width: 0;
+  }
+  .fp-panel-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+  }
+  .fp-panel-head h2 {
+    margin: 0;
+    color: #fef2f2;
+    font-size: 1.05rem;
+  }
+  .fp-panel-head p,
+  .fp-panel-head span {
+    margin: 0.16rem 0 0;
+    color: #a1a1aa;
+    font-size: 0.84rem;
+  }
+  .fp-events-list {
+    display: grid;
+    gap: 0.45rem;
+    max-height: 680px;
+    overflow: auto;
+    padding-right: 0.2rem;
+  }
+  .fp-event-row {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.75rem;
+    text-align: left;
+    border: 1px solid rgba(63, 63, 70, 0.82);
+    border-radius: 0.55rem;
+    padding: 0.62rem;
+    color: #e4e4e7;
+    background: rgba(9, 9, 11, 0.5);
+    cursor: pointer;
+  }
+  .fp-event-row:hover,
+  .fp-event-row.is-active {
+    border-color: rgba(248, 113, 113, 0.62);
+    background: rgba(127, 29, 29, 0.26);
+  }
+  .fp-event-row span {
+    display: grid;
+    gap: 0.18rem;
+  }
+  .fp-event-row strong {
+    color: #f4f4f5;
+  }
+  .fp-event-row em {
+    color: #a1a1aa;
+    font-size: 0.78rem;
+    font-style: normal;
+  }
+  .fp-event-row b,
+  .fp-phase-badge {
+    align-self: flex-start;
+    border-radius: 999px;
+    padding: 0.18rem 0.42rem;
+    color: #fecaca;
+    background: rgba(127, 29, 29, 0.52);
+    font-size: 0.72rem;
+  }
+  .fp-phase-badge.is-upcoming {
+    color: #bbf7d0;
+    background: rgba(21, 128, 61, 0.35);
+  }
+  .fp-event-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin-bottom: 0.9rem;
+  }
+  .fp-event-kpis div {
+    border: 1px solid rgba(63, 63, 70, 0.82);
+    border-radius: 0.6rem;
+    padding: 0.65rem;
+    background: rgba(9, 9, 11, 0.45);
+  }
+  .fp-event-kpis span {
+    display: block;
+    color: #a1a1aa;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .fp-event-kpis strong {
+    color: #fef2f2;
+    font-size: 1rem;
+  }
+  .fp-table-wrap {
+    overflow: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #d4d4d8;
+    font-size: 0.88rem;
+  }
+  th,
+  td {
+    border-bottom: 1px solid rgba(63, 63, 70, 0.78);
+    padding: 0.58rem 0.5rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    color: #fca5a5;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  td strong,
+  td span {
+    display: block;
+  }
+  td span {
+    color: #a1a1aa;
+    margin-top: 0.12rem;
+  }
+  .fp-list-empty {
+    color: #a1a1aa;
+  }
+  @media (max-width: 900px) {
+    .fp-tool-controls,
+    .fp-events-layout,
+    .fp-event-kpis {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

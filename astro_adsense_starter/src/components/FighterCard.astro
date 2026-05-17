@@ -1,6 +1,5 @@
 ---
 import type { CountryEntry, CountryMasterIndex } from '../lib/country-master';
-import { buildAppPageUrl } from '../lib/app-url';
 
 interface Props {
   name: string;
@@ -15,7 +14,6 @@ interface Props {
   wins?: number | null;
   losses?: number | null;
   points?: number | null;
-  appUrl?: string;
   rank?: number | null;
   globalRank?: number | null;
   divisionRank?: number | null;
@@ -35,14 +33,13 @@ const {
   wins = null,
   losses = null,
   points = null,
-  appUrl = 'https://app.fightprophet.com',
   rank = null,
   globalRank = null,
   divisionRank = null,
   compact = false,
 } = Astro.props as Props;
 
-const profileUrl = buildAppPageUrl(appUrl, 'fighter-card', { fighter: name });
+const profileUrl = `/fighter-card/?fighter=${encodeURIComponent(name)}`;
 const countryIndex = ((Astro.locals.countryMaster as CountryMasterIndex | undefined)?.byAlias ?? {});
 
 function normalizeCountryKey(value: string): string {

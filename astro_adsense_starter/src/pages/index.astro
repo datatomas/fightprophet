@@ -6,7 +6,6 @@ import NewsletterSignup from '../components/NewsletterSignup.astro';
 import { runtimeEnvFromLocals, getCountryMasterIndex } from '../lib/country-master';
 import { getAllRankedFighterCards, getHomepageGoatCards, getHomepageRankingsDebug, groupRankedFightersByDivision } from '../lib/champions';
 
-const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
 const rankingsAnchorUrl = '/#fp-rankings';
 const predictionsPageUrl = '/predictions/';
 
@@ -218,7 +217,6 @@ const analysisNotes = [
                           globalRank={c.global_rank ?? null}
                           divisionRank={c.rank ?? null}
                           compact={true}
-                          appUrl={appUrl}
                         />
                       </div>
                     </div>

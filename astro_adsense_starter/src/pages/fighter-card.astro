@@ -1,32 +1,613 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import AppSectionLanding from '../components/AppSectionLanding.astro';
+import { runtimeEnvFromLocals } from '../lib/country-master';
+import { getFighterCardsData } from '../lib/dashboard-data';
+
+const runtimeEnv = runtimeEnvFromLocals(Astro.locals);
+const fighterData = await getFighterCardsData(runtimeEnv);
+const pageJson = JSON.stringify(fighterData).replace(/</g, '\\u003c');
+
+const totalProfiles = fighterData.profiles.length;
+const activeProfiles = fighterData.profiles.filter((profile) => profile.fighter_status === 'active').length;
+const championProfiles = fighterData.profiles.filter((profile) => profile.is_current_champion).length;
+const historyRows = fighterData.debug.historyCount;
 ---
 
 <BaseLayout
-  title="MMA Fighter Cards — Stats, Records & Model View | Fight Prophet"
-  description="Data-rich MMA fighter cards with records, finishing rates, method breakdowns, ranking history, and Fight Prophet model context for every tracked fighter."
+  title="MMA Fighter Cards — Stats, Records & Fight History | Fight Prophet"
+  description="Search public MMA fighter cards with records, country, status, method breakdowns, striking and grappling stats, belt context, and recent fight history."
 >
-  <AppSectionLanding
-    pageSlug="fighter-card"
-    heading="MMA Fighter Cards"
-    intro="Open a data-rich card for any tracked fighter and get the key stats fast: record, finishing rates, win methods, ranking history, and how the model has rated past matchups."
-    bullets={[
-      { title: 'Complete fight record', body: 'Wins, losses, no contests, draws — with method and round.' },
-      { title: 'Win method breakdown', body: 'KO/TKO, submission, decision, and the rate of each.' },
-      { title: 'Ranking history', body: 'Trajectory inside the division over time.' },
-      { title: 'Model context', body: 'How Fight Prophet has rated this fighter in past matchups.' },
-    ]}
-    whatYouWillSee={[
-      'A search box to jump to any fighter by name',
-      'Career record summary with finishing rates',
-      'Recent fight log with opponents and outcomes',
-      'Quick links into events and rankings',
-    ]}
-    readingNotes={[
-      { title: 'Fighter-level context', body: 'Records, finish rates, streaks, and ranking movement are shown together so a fighter is not reduced to a win-loss line.' },
-      { title: 'Model history', body: 'The page links fighter stats back to how the model has viewed past matchups when that history exists.' },
-      { title: 'Data correction path', body: 'Country, status, and unusual profile issues can be corrected through manual overrides and reader reports.' },
-    ]}
-  />
+  <article class="fp-fighters-page">
+    <header class="fp-tool-hero">
+      <a class="fp-tool-breadcrumb" href="/">← Fight Prophet</a>
+      <p class="fp-section-label">Fighter Cards</p>
+      <h1>MMA Fighter Cards</h1>
+      <p>
+        Search tracked UFC fighters and inspect career snapshots, method mix, activity status, belt context, striking and grappling metrics, and recent fight history.
+      </p>
+      <div class="fp-kpi-strip" aria-label="Fighter archive summary">
+        <span><strong>{totalProfiles.toLocaleString()}</strong> fighters</span>
+        <span><strong>{activeProfiles.toLocaleString()}</strong> active</span>
+        <span><strong>{championProfiles.toLocaleString()}</strong> champions</span>
+        <span><strong>{historyRows.toLocaleString()}</strong> fight rows</span>
+      </div>
+    </header>
+
+    {totalProfiles > 0 ? (
+      <>
+        <section class="fp-tool-controls" aria-label="Fighter filters">
+          <label>
+            <span>Search</span>
+            <input type="search" data-fighter-search placeholder="Fighter, country, status" autocomplete="off" />
+          </label>
+          <label>
+            <span>Status</span>
+            <select data-fighter-status>
+              <option value="All">All</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="champion">Current champions</option>
+            </select>
+          </label>
+        </section>
+
+        <div class="fp-fighters-layout">
+          <section class="fp-fighter-picker" aria-label="Matching fighters">
+            <div class="fp-panel-head">
+              <h2>Fighter Index</h2>
+              <span data-fighter-match-count>{totalProfiles.toLocaleString()} fighters</span>
+            </div>
+            <div class="fp-fighter-list" data-fighter-list></div>
+          </section>
+
+          <section class="fp-fighter-detail" aria-live="polite">
+            <header class="fp-fighter-header">
+              <div>
+                <span class="fp-fighter-status" data-profile-status></span>
+                <h2 data-profile-name>Fighter</h2>
+                <p data-profile-meta></p>
+              </div>
+              <div class="fp-record-mark" data-profile-record>—</div>
+            </header>
+
+            <div class="fp-profile-kpis">
+              <div><span>Win Rate</span><strong data-kpi-win-rate>—</strong></div>
+              <div><span>Finish Rate</span><strong data-kpi-finish-rate>—</strong></div>
+              <div><span>Win Streak</span><strong data-kpi-win-streak>—</strong></div>
+              <div><span>Last Fight</span><strong data-kpi-last-fight>—</strong></div>
+            </div>
+
+            <div class="fp-profile-grid">
+              <section>
+                <h3>Career Snapshot</h3>
+                <dl data-career-list></dl>
+              </section>
+              <section>
+                <h3>Striking &amp; Grappling</h3>
+                <dl data-skills-list></dl>
+              </section>
+              <section>
+                <h3>Method Mix</h3>
+                <dl data-method-list></dl>
+              </section>
+            </div>
+
+            <section class="fp-history-panel">
+              <div class="fp-panel-head">
+                <h3>Recent Fight History</h3>
+                <span data-history-count></span>
+              </div>
+              <div class="fp-table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Opponent</th>
+                      <th>Result</th>
+                      <th>Method</th>
+                      <th>Round</th>
+                      <th>Stats</th>
+                    </tr>
+                  </thead>
+                  <tbody data-history-table></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+        </div>
+      </>
+    ) : (
+      <section class="fp-empty-state">
+        <strong>Fighter cards are temporarily unavailable.</strong>
+        <span>The public cards read from the exported dashboard parquet feed. If this is empty, the latest export has not landed yet.</span>
+      </section>
+    )}
+  </article>
+
+  <script type="application/json" id="fp-fighter-data" set:html={pageJson}></script>
 </BaseLayout>
+
+<script is:inline>
+  (() => {
+    const dataNode = document.getElementById('fp-fighter-data');
+    if (!dataNode) return;
+    const payload = JSON.parse(dataNode.textContent || '{"profiles":[],"history":{}}');
+    const profiles = Array.isArray(payload.profiles) ? payload.profiles : [];
+    const history = payload.history && typeof payload.history === 'object' ? payload.history : {};
+    if (!profiles.length) return;
+
+    const search = document.querySelector('[data-fighter-search]');
+    const status = document.querySelector('[data-fighter-status]');
+    const list = document.querySelector('[data-fighter-list]');
+    const matchCount = document.querySelector('[data-fighter-match-count]');
+    const profileName = document.querySelector('[data-profile-name]');
+    const profileMeta = document.querySelector('[data-profile-meta]');
+    const profileStatus = document.querySelector('[data-profile-status]');
+    const profileRecord = document.querySelector('[data-profile-record]');
+    const winRate = document.querySelector('[data-kpi-win-rate]');
+    const finishRate = document.querySelector('[data-kpi-finish-rate]');
+    const winStreak = document.querySelector('[data-kpi-win-streak]');
+    const lastFight = document.querySelector('[data-kpi-last-fight]');
+    const careerList = document.querySelector('[data-career-list]');
+    const skillsList = document.querySelector('[data-skills-list]');
+    const methodList = document.querySelector('[data-method-list]');
+    const historyCount = document.querySelector('[data-history-count]');
+    const historyTable = document.querySelector('[data-history-table]');
+
+    const params = new URLSearchParams(window.location.search);
+    const requested = String(params.get('fighter') || '').trim().toLowerCase();
+    let selectedProfile = profiles.find((profile) => profile.name.toLowerCase() === requested)
+      || profiles.find((profile) => profile.name.toLowerCase().includes(requested) && requested)
+      || profiles[0];
+
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    }[ch]));
+    const fmtInt = (value) => value == null || Number.isNaN(Number(value)) ? '—' : Number(value).toLocaleString();
+    const fmtPct = (value, decimals = 0) => {
+      if (value == null || Number.isNaN(Number(value))) return '—';
+      const num = Number(value);
+      const pct = num <= 1 ? num * 100 : num;
+      return `${pct.toFixed(decimals)}%`;
+    };
+    const fmtNum = (value, decimals = 2) => value == null || Number.isNaN(Number(value)) ? '—' : Number(value).toFixed(decimals);
+    const record = (profile) => `${fmtInt(profile.wins)}-${fmtInt(profile.losses)}-${fmtInt(profile.draws || 0)}`;
+    const profileUrl = (profile) => `/fighter-card/?fighter=${encodeURIComponent(profile.name)}`;
+
+    function filteredProfiles() {
+      const query = String(search?.value || '').trim().toLowerCase();
+      const statusValue = String(status?.value || 'All');
+      return profiles.filter((profile) => {
+        const statusMatch = statusValue === 'All'
+          || profile.fighter_status === statusValue
+          || (statusValue === 'champion' && profile.is_current_champion);
+        return statusMatch && (!query || String(profile.search_text || profile.name).includes(query));
+      });
+    }
+
+    function dl(items) {
+      return items.map(([label, value]) => `
+        <div>
+          <dt>${escapeHtml(label)}</dt>
+          <dd>${escapeHtml(value || '—')}</dd>
+        </div>
+      `).join('');
+    }
+
+    function selectProfile(profile, pushState = true) {
+      selectedProfile = profile;
+      if (pushState) window.history.replaceState({}, '', profileUrl(profile));
+
+      profileName.textContent = profile.name;
+      profileMeta.textContent = [
+        profile.country,
+        profile.current_belt_weight_classes,
+        profile.stance,
+      ].filter(Boolean).join(' / ');
+      profileStatus.textContent = profile.is_current_champion ? 'Current Champion' : (profile.fighter_status || 'Fighter');
+      profileStatus.classList.toggle('is-champion', !!profile.is_current_champion);
+      profileRecord.textContent = record(profile);
+      winRate.textContent = fmtPct(profile.win_rate, 1);
+      finishRate.textContent = fmtPct(profile.finish_rate, 1);
+      winStreak.textContent = fmtInt(profile.win_streak);
+      lastFight.textContent = profile.last_fight_date || '—';
+
+      careerList.innerHTML = dl([
+        ['Country', profile.country],
+        ['Status', profile.fighter_status],
+        ['Age', fmtInt(profile.age)],
+        ['Height', profile.height],
+        ['Weight', profile.weight],
+        ['Reach', profile.reach],
+        ['First Fight', profile.first_fight_date],
+        ['Title Fights', fmtInt(profile.title_fights)],
+      ]);
+      skillsList.innerHTML = dl([
+        ['SLpM', fmtNum(profile.slpm, 2)],
+        ['SApM', fmtNum(profile.sapm, 2)],
+        ['Str Acc', fmtPct(profile.str_acc)],
+        ['Str Def', fmtPct(profile.str_def)],
+        ['TD Avg', fmtNum(profile.td_avg, 2)],
+        ['TD Acc', fmtPct(profile.td_acc)],
+        ['TD Def', fmtPct(profile.td_def)],
+        ['Sub Avg', fmtNum(profile.sub_avg, 2)],
+      ]);
+      methodList.innerHTML = dl([
+        ['KO/TKO Wins', fmtInt(profile.ko_wins)],
+        ['Submission Wins', fmtInt(profile.sub_wins)],
+        ['Decision Wins', fmtInt(profile.dec_wins)],
+        ['Bayes KO/TKO', fmtPct(profile.ko_rate_win_shrunk)],
+        ['Bayes Sub', fmtPct(profile.sub_rate_win_shrunk)],
+        ['Bayes Finish', fmtPct(profile.finish_rate_win_shrunk)],
+        ['Method Sample', fmtInt(profile.wins_method_known_count)],
+        ['Bonuses', fmtInt(profile.bonuses_won_count)],
+      ]);
+
+      const rows = history[profile.fighter_id] || [];
+      historyCount.textContent = `${rows.length.toLocaleString()} rows`;
+      if (!rows.length) {
+        historyTable.innerHTML = '<tr><td colspan="6">Recent fight rows are not available for this fighter yet.</td></tr>';
+        return;
+      }
+      historyTable.innerHTML = rows.map((row) => `
+        <tr>
+          <td>${escapeHtml(row.event_date || '')}<span>${escapeHtml(row.event_name || '')}</span></td>
+          <td><strong>${escapeHtml(row.opponent_name_display || '—')}</strong><span>${escapeHtml(row.weight_class || '')}${row.is_title_fight ? ' / title fight' : ''}</span></td>
+          <td><b class="fp-result fp-result-${escapeHtml(String(row.result || '').toLowerCase())}">${escapeHtml(row.result || '—')}</b><span>${escapeHtml(row.winner_name_display || '')}</span></td>
+          <td>${escapeHtml(row.method || row.method_category || '—')}</td>
+          <td>${escapeHtml(row.round ?? '—')}<span>${escapeHtml(row.time || '')}</span></td>
+          <td>KD ${fmtInt(row.kd_for)}-${fmtInt(row.kd_against)}<span>STR ${fmtInt(row.str_for)}-${fmtInt(row.str_against)} / TD ${fmtInt(row.td_for)}-${fmtInt(row.td_against)}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    function renderList() {
+      const rows = filteredProfiles();
+      matchCount.textContent = `${rows.length.toLocaleString()} fighters`;
+      if (!rows.some((profile) => profile.fighter_id === selectedProfile.fighter_id)) {
+        selectedProfile = rows[0] || profiles[0];
+      }
+      list.innerHTML = rows.slice(0, 140).map((profile) => `
+        <button type="button" class="fp-fighter-row${profile.fighter_id === selectedProfile.fighter_id ? ' is-active' : ''}" data-fighter-id="${escapeHtml(profile.fighter_id)}">
+          <span>
+            <strong>${escapeHtml(profile.name)}</strong>
+            <em>${escapeHtml([profile.country, profile.fighter_status].filter(Boolean).join(' / '))}</em>
+          </span>
+          <b>${escapeHtml(record(profile))}</b>
+        </button>
+      `).join('') || '<p class="fp-list-empty">No fighters match these filters.</p>';
+      list.querySelectorAll('[data-fighter-id]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const profile = rows.find((candidate) => candidate.fighter_id === button.getAttribute('data-fighter-id'));
+          if (profile) {
+            selectProfile(profile);
+            renderList();
+          }
+        });
+      });
+      if (selectedProfile) selectProfile(selectedProfile, false);
+    }
+
+    search?.addEventListener('input', renderList);
+    status?.addEventListener('change', renderList);
+    if (requested) search.value = params.get('fighter') || '';
+    renderList();
+  })();
+</script>
+
+<style>
+  .fp-fighters-page {
+    display: grid;
+    gap: 1rem;
+  }
+  .fp-tool-hero,
+  .fp-tool-controls,
+  .fp-fighter-picker,
+  .fp-fighter-detail {
+    background: linear-gradient(150deg, rgba(22, 22, 26, 0.92), rgba(36, 36, 42, 0.68));
+    border: 1px solid rgba(113, 113, 122, 0.42);
+    border-radius: 0.8rem;
+  }
+  .fp-tool-hero {
+    padding: 1.35rem;
+  }
+  .fp-tool-breadcrumb {
+    color: #fca5a5;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+  .fp-tool-hero h1 {
+    margin: 0.25rem 0 0.45rem;
+    color: #fef2f2;
+    font-size: clamp(1.7rem, 4vw, 2.45rem);
+    line-height: 1.08;
+  }
+  .fp-tool-hero p {
+    max-width: 72ch;
+    margin: 0;
+    color: #d4d4d8;
+    line-height: 1.6;
+  }
+  .fp-kpi-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-top: 1rem;
+  }
+  .fp-kpi-strip span {
+    display: inline-flex;
+    gap: 0.35rem;
+    align-items: center;
+    border: 1px solid rgba(239, 68, 68, 0.28);
+    border-radius: 999px;
+    padding: 0.42rem 0.65rem;
+    color: #d4d4d8;
+    background: rgba(24, 24, 27, 0.72);
+  }
+  .fp-kpi-strip strong {
+    color: #fef2f2;
+  }
+  .fp-tool-controls {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(160px, 0.3fr);
+    gap: 0.75rem;
+    padding: 0.9rem;
+  }
+  .fp-tool-controls label {
+    display: grid;
+    gap: 0.35rem;
+    color: #a1a1aa;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .fp-tool-controls input,
+  .fp-tool-controls select {
+    width: 100%;
+    min-height: 2.55rem;
+    border: 1px solid rgba(113, 113, 122, 0.52);
+    border-radius: 0.55rem;
+    color: #f4f4f5;
+    background: rgba(9, 9, 11, 0.78);
+    padding: 0.55rem 0.65rem;
+  }
+  .fp-fighters-layout {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.38fr) minmax(0, 1fr);
+    gap: 0.9rem;
+    align-items: start;
+  }
+  .fp-fighter-picker,
+  .fp-fighter-detail {
+    min-width: 0;
+    padding: 0.95rem;
+  }
+  .fp-panel-head,
+  .fp-fighter-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.8rem;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+  }
+  .fp-panel-head h2,
+  .fp-panel-head h3,
+  .fp-fighter-header h2 {
+    margin: 0;
+    color: #fef2f2;
+    font-size: 1.08rem;
+  }
+  .fp-fighter-header h2 {
+    margin-top: 0.18rem;
+    font-size: clamp(1.55rem, 4vw, 2.25rem);
+    line-height: 1.05;
+  }
+  .fp-panel-head span,
+  .fp-fighter-header p {
+    margin: 0.16rem 0 0;
+    color: #a1a1aa;
+    font-size: 0.84rem;
+  }
+  .fp-fighter-status {
+    display: inline-flex;
+    border-radius: 999px;
+    padding: 0.2rem 0.48rem;
+    color: #d4d4d8;
+    background: rgba(63, 63, 70, 0.72);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .fp-fighter-status.is-champion {
+    color: #fef3c7;
+    background: rgba(180, 83, 9, 0.35);
+  }
+  .fp-record-mark {
+    border: 1px solid rgba(248, 113, 113, 0.45);
+    border-radius: 0.65rem;
+    padding: 0.55rem 0.7rem;
+    color: #fef2f2;
+    background: rgba(127, 29, 29, 0.28);
+    font-size: 1.15rem;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+  .fp-fighter-list {
+    display: grid;
+    gap: 0.45rem;
+    max-height: 760px;
+    overflow: auto;
+    padding-right: 0.2rem;
+  }
+  .fp-fighter-row {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.75rem;
+    text-align: left;
+    border: 1px solid rgba(63, 63, 70, 0.82);
+    border-radius: 0.55rem;
+    padding: 0.62rem;
+    color: #e4e4e7;
+    background: rgba(9, 9, 11, 0.5);
+    cursor: pointer;
+  }
+  .fp-fighter-row:hover,
+  .fp-fighter-row.is-active {
+    border-color: rgba(248, 113, 113, 0.62);
+    background: rgba(127, 29, 29, 0.26);
+  }
+  .fp-fighter-row span {
+    display: grid;
+    gap: 0.18rem;
+  }
+  .fp-fighter-row strong {
+    color: #f4f4f5;
+  }
+  .fp-fighter-row em {
+    color: #a1a1aa;
+    font-size: 0.78rem;
+    font-style: normal;
+  }
+  .fp-fighter-row b {
+    align-self: flex-start;
+    color: #fecaca;
+    font-size: 0.76rem;
+  }
+  .fp-profile-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin-bottom: 0.85rem;
+  }
+  .fp-profile-kpis div,
+  .fp-profile-grid section,
+  .fp-history-panel {
+    border: 1px solid rgba(63, 63, 70, 0.82);
+    border-radius: 0.65rem;
+    background: rgba(9, 9, 11, 0.45);
+  }
+  .fp-profile-kpis div {
+    padding: 0.65rem;
+  }
+  .fp-profile-kpis span {
+    display: block;
+    color: #a1a1aa;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .fp-profile-kpis strong {
+    color: #fef2f2;
+    font-size: 1rem;
+  }
+  .fp-profile-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+  .fp-profile-grid section {
+    padding: 0.75rem;
+  }
+  .fp-profile-grid h3 {
+    margin: 0 0 0.5rem;
+    color: #fef2f2;
+    font-size: 0.98rem;
+  }
+  dl {
+    display: grid;
+    gap: 0.42rem;
+    margin: 0;
+  }
+  dl div {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.65rem;
+    border-bottom: 1px solid rgba(63, 63, 70, 0.45);
+    padding-bottom: 0.34rem;
+  }
+  dt {
+    color: #a1a1aa;
+    font-size: 0.78rem;
+  }
+  dd {
+    margin: 0;
+    color: #f4f4f5;
+    font-weight: 700;
+    text-align: right;
+  }
+  .fp-history-panel {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+  }
+  .fp-table-wrap {
+    overflow: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #d4d4d8;
+    font-size: 0.88rem;
+  }
+  th,
+  td {
+    border-bottom: 1px solid rgba(63, 63, 70, 0.78);
+    padding: 0.58rem 0.5rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    color: #fca5a5;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  td strong,
+  td span {
+    display: block;
+  }
+  td span {
+    color: #a1a1aa;
+    margin-top: 0.12rem;
+  }
+  .fp-result {
+    text-transform: uppercase;
+  }
+  .fp-result-win {
+    color: #86efac;
+  }
+  .fp-result-loss {
+    color: #fca5a5;
+  }
+  .fp-list-empty {
+    color: #a1a1aa;
+  }
+  @media (max-width: 1020px) {
+    .fp-fighters-layout,
+    .fp-profile-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 760px) {
+    .fp-tool-controls,
+    .fp-profile-kpis,
+    .fp-fighter-header {
+      grid-template-columns: 1fr;
+    }
+    .fp-fighter-header {
+      display: grid;
+    }
+    .fp-record-mark {
+      width: fit-content;
+    }
+  }
+</style>
