@@ -321,7 +321,7 @@ const hasData = totalFights > 0;
           </div>
           <div class="fp-versus-core">
             <div class="fp-versus-mark">⚔️</div>
-            <div class="fp-versus-title">MODEL PROBS</div>
+            <div class="fp-versus-label">VS</div>
             <div class="fp-prob-stack">
               <div class="fp-prob-row">
                 <div class="fp-prob-meta">
@@ -660,20 +660,57 @@ const hasData = totalFights > 0;
   .fp-matchup-signal--medium{color:#fde68a;border-color:rgba(234,179,8,0.24);background:rgba(234,179,8,0.12);}
   .fp-matchup-signal--weak{color:#f4f4f5;border-color:rgba(212,212,216,0.36);background:rgba(161,161,170,0.16);}
 
-  .fp-matchup-grid{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) 170px minmax(0,1fr);gap:0.95rem;align-items:center;}
-  .fp-fighter-pane{display:flex;flex-direction:column;align-items:center;gap:0.55rem;}
-  .fp-odds-chip{display:inline-flex;align-items:center;justify-content:center;gap:0.34rem;padding:0.28rem 0.7rem;border-radius:999px;background:rgba(0,0,0,0.34);border:1px solid rgba(255,255,255,0.08);font-size:0.74rem;font-weight:700;color:#f4f4f5;}
+  /* ── Matchup grid: always left-card | VS | right-card, never collapses ── */
+  .fp-matchup-grid{
+    position:relative;z-index:1;
+    display:flex;flex-direction:row;
+    align-items:stretch;
+    gap:0.65rem;
+  }
+  .fp-fighter-pane{
+    flex:1 1 0;min-width:0;
+    display:flex;flex-direction:column;align-items:center;gap:0.5rem;
+  }
+  .fp-fighter-pane .fp-card{width:100%;}
+
+  .fp-odds-chip{display:inline-flex;align-items:center;justify-content:center;gap:0.34rem;padding:0.28rem 0.7rem;border-radius:999px;background:rgba(0,0,0,0.34);border:1px solid rgba(255,255,255,0.08);font-size:0.74rem;font-weight:700;color:#f4f4f5;width:100%;box-sizing:border-box;}
   .fp-odds-chip-label{color:#a1a1aa;text-transform:uppercase;letter-spacing:0.08em;font-size:0.62rem;}
 
-  .fp-versus-core{display:flex;flex-direction:column;align-items:center;gap:0.72rem;padding:0.9rem 0.85rem;border-radius:1.1rem;background:linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.02);}
-  .fp-versus-mark{display:flex;align-items:center;justify-content:center;width:4.2rem;height:4.2rem;border-radius:999px;background:radial-gradient(circle at 30% 30%,rgba(248,113,113,0.42),rgba(127,29,29,0.18) 55%,rgba(0,0,0,0.08) 100%);border:1px solid rgba(248,113,113,0.25);box-shadow:0 0 26px rgba(239,68,68,0.22);font-size:1.6rem;}
-  .fp-versus-title{font-size:0.68rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#d4d4d8;}
-  .fp-prob-stack{width:100%;display:flex;flex-direction:column;gap:0.42rem;}
-  .fp-prob-row{display:flex;flex-direction:column;gap:0.18rem;}
-  .fp-prob-meta{display:flex;justify-content:space-between;gap:0.4rem;font-size:0.74rem;color:#e4e4e7;}
-  .fp-prob-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .fp-prob-value{font-family:ui-monospace,SFMono-Regular,monospace;color:#fecaca;}
-  .fp-prob-track{height:0.4rem;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden;}
+  /* VS divider column — always a fixed narrow strip */
+  .fp-versus-core{
+    flex:0 0 100px;width:100px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem;
+    padding:0.65rem 0.4rem;
+    border-radius:0.9rem;
+    background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01));
+    border:1px solid rgba(255,255,255,0.07);
+    position:relative;
+  }
+  /* Vertical lines on each side of the VS column */
+  .fp-versus-core::before,.fp-versus-core::after{
+    content:'';position:absolute;top:20%;bottom:20%;width:1px;
+    background:linear-gradient(180deg,transparent,rgba(248,113,113,0.45) 40%,rgba(248,113,113,0.45) 60%,transparent);
+  }
+  .fp-versus-core::before{left:0;}
+  .fp-versus-core::after{right:0;}
+  .fp-versus-mark{
+    display:flex;align-items:center;justify-content:center;
+    width:3.4rem;height:3.4rem;border-radius:0.6rem;
+    background:radial-gradient(circle at 30% 30%,rgba(248,113,113,0.5),rgba(127,29,29,0.25) 60%,rgba(0,0,0,0.1) 100%);
+    border:1px solid rgba(248,113,113,0.35);
+    box-shadow:0 0 20px rgba(239,68,68,0.28),inset 0 0 0 1px rgba(255,255,255,0.06);
+    font-size:1.5rem;
+    transform:rotate(-10deg);
+  }
+  .fp-versus-label{font-size:0.62rem;font-weight:900;letter-spacing:0.16em;text-transform:uppercase;color:rgba(252,165,165,0.9);}
+  .fp-versus-title{font-size:0.55rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#71717a;text-align:center;}
+
+  .fp-prob-stack{width:100%;display:flex;flex-direction:column;gap:0.35rem;}
+  .fp-prob-row{display:flex;flex-direction:column;gap:0.14rem;}
+  .fp-prob-meta{display:flex;justify-content:space-between;gap:0.25rem;font-size:0.62rem;color:#e4e4e7;}
+  .fp-prob-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55px;}
+  .fp-prob-value{font-family:ui-monospace,SFMono-Regular,monospace;color:#fecaca;font-size:0.68rem;flex-shrink:0;}
+  .fp-prob-track{height:0.3rem;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden;}
   .fp-prob-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,#f59e0b,#ef4444);}
   .fp-prob-fill--alt{background:linear-gradient(90deg,#93c5fd,#38bdf8);}
 
@@ -694,29 +731,23 @@ const hasData = totalFights > 0;
   .fp-empty-state strong{color:#fef2f2;font-size:1rem;}
   .fp-list-empty{color:#a1a1aa;padding:1rem;text-align:center;}
 
-  /* ── Responsive ── */
-  /* Cards always face left-vs-right. Only the center column shrinks on narrow screens. */
+  /* ── Responsive — matchup NEVER collapses to vertical ── */
   @media (max-width:900px){
     .kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr));}
     .kpi-strip-item:nth-child(2n){border-right:0;}
     .kpi-strip-item:nth-child(odd){border-right:1px solid rgba(248,113,113,0.12);}
     .fp-model-guide-grid{grid-template-columns:1fr;}
     .fp-tool-controls{grid-template-columns:1fr;}
-    .fp-matchup-grid{grid-template-columns:minmax(0,1fr) 120px minmax(0,1fr);gap:0.6rem;}
-    .fp-versus-core{padding:0.7rem 0.55rem;gap:0.5rem;}
-    .fp-versus-mark{width:3rem;height:3rem;font-size:1.2rem;}
-    .fp-versus-title{font-size:0.58rem;}
+    /* VS core shrinks but stays inline */
+    .fp-versus-core{flex-basis:70px;width:70px;}
   }
-  @media (max-width:640px){
-    .fp-matchup-shell{padding:0.65rem 0.55rem 0.7rem;}
-    .fp-matchup-grid{grid-template-columns:minmax(0,1fr) 60px minmax(0,1fr);gap:0.35rem;}
-    .fp-fighter-pane{gap:0.3rem;}
-    .fp-versus-core{padding:0.4rem 0.25rem;border-radius:0.7rem;gap:0.3rem;}
-    .fp-versus-mark{width:2rem;height:2rem;font-size:0.9rem;}
-    .fp-versus-title{display:none;}
-    .fp-prob-meta{font-size:0.6rem;}
-    .fp-prob-name{max-width:60px;}
-    .fp-odds-chip{padding:0.18rem 0.45rem;font-size:0.62rem;}
-    .fp-odds-chip-label{font-size:0.5rem;}
+  @media (max-width:560px){
+    .fp-matchup-shell{padding:0.6rem 0.5rem;}
+    .fp-matchup-grid{gap:0.35rem;}
+    .fp-versus-core{flex-basis:48px;width:48px;padding:0.5rem 0.2rem;}
+    .fp-versus-mark{width:2.4rem;height:2.4rem;font-size:1.1rem;}
+    .fp-versus-label{font-size:0.52rem;}
+    .fp-prob-stack{display:none;}  /* hide prob bars on tiny phones — shown in pick summary */
+    .fp-odds-chip{font-size:0.6rem;padding:0.15rem 0.35rem;}
   }
 </style>

@@ -381,7 +381,7 @@ async function expandAzureParquetBlobPaths(env: RuntimeEnv | undefined, remotePa
 async function readParquetRowsAzure(
   env: RuntimeEnv | undefined,
   remotePath: string,
-  columns: string[],
+  columns?: string[],
 ): Promise<Record<string, any>[]> {
   const blobPaths = await expandAzureParquetBlobPaths(env, remotePath);
   const rows: Record<string, any>[] = [];
@@ -393,7 +393,10 @@ async function readParquetRowsAzure(
     const response = await fetch(url, { headers });
     if (!response.ok) continue;
     const file = await response.arrayBuffer();
-    const fileRows = await parquetReadObjects({ file, columns, compressors });
+    // columns=undefined reads all columns; columns=[] or array reads specified columns
+    const opts: Parameters<typeof parquetReadObjects>[0] = { file, compressors };
+    if (columns && columns.length > 0) opts.columns = columns;
+    const fileRows = await parquetReadObjects(opts);
     rows.push(...fileRows as Record<string, any>[]);
   }
 
@@ -403,7 +406,7 @@ async function readParquetRowsAzure(
 async function readLatestDashboardRows(
   env: RuntimeEnv | undefined,
   folder: string,
-  columns: string[],
+  columns?: string[],
 ): Promise<Record<string, any>[]> {
   const base = resolveBase(env);
   if (!isAzure(base)) return [];
@@ -1050,18 +1053,33 @@ function normalizeFightLabRow(
   };
 }
 
+function firstNum(row: Record<string, any>, ...keys: string[]): number | null {
+  for (const k of keys) {
+    const v = coerceNum(row[k]);
+    if (v != null) return v;
+  }
+  return null;
+}
+function firstInt(row: Record<string, any>, ...keys: string[]): number | null {
+  for (const k of keys) {
+    const v = coerceInt(row[k]);
+    if (v != null) return v;
+  }
+  return null;
+}
+
 function normalizeModelStats(rows: Record<string, any>[]): ModelStats {
   const row = rows[0] ?? {};
   return {
-    accuracy: coerceNum(row.accuracy),
-    total_fights: coerceInt(row.total_fights),
-    correct_picks: coerceInt(row.correct_picks ?? row.model_correct_count),
-    wrong_picks: coerceInt(row.wrong_picks ?? row.model_wrong_count),
-    f1: coerceNum(row.f1 ?? row.f1_score),
-    auc: coerceNum(row.auc ?? row.roc_auc),
-    brier: coerceNum(row.brier ?? row.brier_score),
-    log_loss: coerceNum(row.log_loss),
-    events_covered: coerceInt(row.events_covered ?? row.event_count),
+    accuracy:       firstNum(row, 'accuracy', 'acc', 'model_accuracy'),
+    total_fights:   firstInt(row, 'total_fights', 'total_picks', 'n_fights', 'count', 'total'),
+    correct_picks:  firstInt(row, 'correct_picks', 'model_correct_count', 'n_correct', 'correct'),
+    wrong_picks:    firstInt(row, 'wrong_picks', 'model_wrong_count', 'n_wrong', 'wrong'),
+    f1:             firstNum(row, 'f1', 'f1_score', 'f1score', 'f_1'),
+    auc:            firstNum(row, 'auc', 'roc_auc', 'auc_score', 'auroc'),
+    brier:          firstNum(row, 'brier', 'brier_score', 'brier_loss'),
+    log_loss:       firstNum(row, 'log_loss', 'logloss', 'cross_entropy'),
+    events_covered: firstInt(row, 'events_covered', 'event_count', 'n_events', 'events'),
   };
 }
 
@@ -1088,9 +1106,9 @@ export async function getFightLabData(env?: RuntimeEnv): Promise<FightLabData> {
     readLatestDashboardRows(env, FOLDER_HISTORICAL_CATBOOST, histCols),
     readLatestDashboardRows(env, FOLDER_HISTORICAL_ENSEMBLE, histCols),
     readLatestDashboardRows(env, FOLDER_HISTORICAL_LOGREG, histCols),
-    readLatestDashboardRows(env, FOLDER_STATS_CATBOOST, statsCols),
-    readLatestDashboardRows(env, FOLDER_STATS_ENSEMBLE, statsCols),
-    readLatestDashboardRows(env, FOLDER_STATS_LOGREG, statsCols),
+    readLatestDashboardRows(env, FOLDER_STATS_CATBOOST),  // read all columns — schema varies by export
+    readLatestDashboardRows(env, FOLDER_STATS_ENSEMBLE),
+    readLatestDashboardRows(env, FOLDER_STATS_LOGREG),
     getCountryMasterIndex(env),
   ]);
 
