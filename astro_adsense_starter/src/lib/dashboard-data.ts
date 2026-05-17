@@ -138,8 +138,52 @@ export interface FighterCardsData {
   };
 }
 
+export interface UpcomingFightRow {
+  event_name: string;
+  event_date: string;
+  location: string;
+  fighter_name_display: string;
+  opponent_name_display: string;
+  weight_class: string;
+  fighter_country: string;
+  opponent_country: string;
+  fighter_flag: string;
+  opponent_flag: string;
+  fighter_is_champion: boolean;
+  opponent_is_champion: boolean;
+  fighter_wins: number | null;
+  fighter_losses: number | null;
+  opponent_wins: number | null;
+  opponent_losses: number | null;
+  fighter_finish_rate: number | null;
+  opponent_finish_rate: number | null;
+  fighter_sub_rate: number | null;
+  opponent_sub_rate: number | null;
+  fighter_win_streak: number | null;
+  fighter_loss_streak: number | null;
+  opponent_win_streak: number | null;
+  opponent_loss_streak: number | null;
+  model_prob: number | null;
+  market_prob: number | null;
+  edge: number | null;
+  signal_strength: string;
+  recommended_bet: boolean;
+  fighter_odds: number | null;
+  opponent_odds: number | null;
+  bet_on_name: string;
+}
+
+export interface UpcomingPredictionsData {
+  fights: UpcomingFightRow[];
+  debug: {
+    fetched: boolean;
+    fightCount: number;
+  };
+}
+
 let cachedEvents: EventsHistoryData | null = null;
 let cachedFighters: FighterCardsData | null = null;
+let cachedPredictions: UpcomingPredictionsData | null = null;
 let cacheExpiresAt = 0;
 
 function envValue(env: RuntimeEnv | undefined, key: string, fallback = ''): string {
@@ -390,6 +434,14 @@ function coerceBool(value: unknown): boolean {
 function phaseForDate(date: string): 'Upcoming' | 'Past' {
   if (!date) return 'Past';
   return dateValue(date) >= Date.now() - 24 * 60 * 60 * 1000 ? 'Upcoming' : 'Past';
+}
+
+function flagEmojiFor(index: Record<string, { canonical_name: string; iso2?: string }>, value: unknown): string {
+  const raw = cleanStr(value);
+  if (!raw) return '';
+  const code = (index[raw.toUpperCase()] as { iso2?: string } | undefined)?.iso2 ?? (raw.length === 2 ? raw.toUpperCase() : '');
+  if (!/^[A-Z]{2}$/.test(code)) return '';
+  return String.fromCodePoint(...[...code].map((ch) => ch.charCodeAt(0) + 127397));
 }
 
 function countryName(index: Record<string, { canonical_name: string }>, value: unknown): string {
@@ -729,4 +781,87 @@ export async function getFighterCardsData(env?: RuntimeEnv): Promise<FighterCard
   };
   cacheExpiresAt = now + cacheTtlMilliseconds(env);
   return cachedFighters;
+}
+
+export async function getUpcomingPredictionsData(env?: RuntimeEnv): Promise<UpcomingPredictionsData> {
+  const now = Date.now();
+  if (cachedPredictions && now < cacheExpiresAt) return cachedPredictions;
+
+  const columns = [
+    'event_name', 'event_date', 'location',
+    'fighter_name_display', 'opponent_name_display',
+    'weight_class',
+    'fighter_country', 'opponent_country',
+    'fighter_is_champion', 'opponent_is_champion',
+    'fighter_wins', 'fighter_losses',
+    'opponent_wins', 'opponent_losses',
+    'fighter_finish_rate', 'opponent_finish_rate',
+    'fighter_sub_rate', 'opponent_sub_rate',
+    'fighter_win_streak', 'fighter_loss_streak',
+    'opponent_win_streak', 'opponent_loss_streak',
+    'model_prob', 'market_prob', 'edge',
+    'signal_strength', 'recommended_bet',
+    'fighter_odds', 'opponent_odds',
+    'bet_on_name',
+  ];
+
+  const [primaryRows, countryIndex] = await Promise.all([
+    readLatestDashboardRows(env, FOLDER_UPCOMING, columns),
+    getCountryMasterIndex(env),
+  ]);
+  const rows =
+    primaryRows.length > 0
+      ? primaryRows
+      : await readLatestDashboardRows(env, FOLDER_UPCOMING_CATBOOST, columns);
+
+  const fights: UpcomingFightRow[] = rows
+    .map((row): UpcomingFightRow | null => {
+      const eventName = cleanStr(row.event_name);
+      const fighterName = cleanStr(row.fighter_name_display);
+      if (!eventName || !fighterName) return null;
+      const fighterCountry = countryName(countryIndex.byAlias, row.fighter_country);
+      const opponentCountry = countryName(countryIndex.byAlias, row.opponent_country);
+      return {
+        event_name: eventName,
+        event_date: coerceDate(row.event_date),
+        location: cleanStr(row.location),
+        fighter_name_display: fighterName,
+        opponent_name_display: cleanStr(row.opponent_name_display),
+        weight_class: cleanStr(row.weight_class),
+        fighter_country: fighterCountry,
+        opponent_country: opponentCountry,
+        fighter_flag: flagEmojiFor(countryIndex.byAlias, row.fighter_country),
+        opponent_flag: flagEmojiFor(countryIndex.byAlias, row.opponent_country),
+        fighter_is_champion: coerceBool(row.fighter_is_champion),
+        opponent_is_champion: coerceBool(row.opponent_is_champion),
+        fighter_wins: coerceInt(row.fighter_wins),
+        fighter_losses: coerceInt(row.fighter_losses),
+        opponent_wins: coerceInt(row.opponent_wins),
+        opponent_losses: coerceInt(row.opponent_losses),
+        fighter_finish_rate: coerceNum(row.fighter_finish_rate),
+        opponent_finish_rate: coerceNum(row.opponent_finish_rate),
+        fighter_sub_rate: coerceNum(row.fighter_sub_rate),
+        opponent_sub_rate: coerceNum(row.opponent_sub_rate),
+        fighter_win_streak: coerceInt(row.fighter_win_streak),
+        fighter_loss_streak: coerceInt(row.fighter_loss_streak),
+        opponent_win_streak: coerceInt(row.opponent_win_streak),
+        opponent_loss_streak: coerceInt(row.opponent_loss_streak),
+        model_prob: coerceNum(row.model_prob),
+        market_prob: coerceNum(row.market_prob),
+        edge: coerceNum(row.edge),
+        signal_strength: cleanStr(row.signal_strength),
+        recommended_bet: coerceBool(row.recommended_bet),
+        fighter_odds: coerceNum(row.fighter_odds),
+        opponent_odds: coerceNum(row.opponent_odds),
+        bet_on_name: cleanStr(row.bet_on_name),
+      };
+    })
+    .filter(Boolean) as UpcomingFightRow[];
+
+  cachedPredictions = {
+    fights,
+    debug: { fetched: rows.length > 0, fightCount: fights.length },
+  };
+  cacheExpiresAt = now + cacheTtlMilliseconds(env);
+  return cachedPredictions;
 }
