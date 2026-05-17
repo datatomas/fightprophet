@@ -147,3 +147,14 @@ If Fight Prophet is useful to you, consider [supporting us on Ko-fi](https://ko-
 Fight Prophet is not just a picks page — it's the home of MA intelligence.
 
 The long-term goal is to build a strong MMA analytics product with a real community around it: fans, builders, designers, analysts, and contributors who want better tools, better presentation, and a better conversation around fights.
+
+
+# manual deploy
+source /home/ares/.config/ml_kuda_sports_lab/pipeline.env
+
+az containerapp registry set \
+  --name ca-fightprophet-prd-01 \
+  --resource-group fightprophet_rg_prb \
+  --server ghcr.io \
+  --username datatomas \
+  --password "$GHCR_PAT"
