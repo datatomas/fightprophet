@@ -1,5 +1,4 @@
 ---
-import { buildAppPageUrl } from '../lib/app-url';
 import AdSlot from './AdSlot.astro';
 
 interface Bullet {
@@ -42,8 +41,8 @@ const {
   noAd = false,
 } = Astro.props as Props;
 
-const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
-const targetUrl = buildAppPageUrl(appUrl, pageSlug);
+const normalizedSlug = String(pageSlug || '').trim().replace(/^\/+|\/+$/g, '');
+const targetUrl = normalizedSlug ? `/${normalizedSlug}/` : '/';
 ---
 
 <article class="fp-landing">

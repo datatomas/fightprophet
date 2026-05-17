@@ -4,8 +4,7 @@
 
 This front end and the MMA rankings logic are open source as part of the FightProphet project — the home of MA intelligence.
 
-- The Astro front end provides the public website and rankings UI.
-- The Streamlit dashboard for MMA predictions and analytics is also open source. See [../src/ml_kuda_sports_lab/front_end/README.md](../src/ml_kuda_sports_lab/front_end/README.md) for details and usage.
+- The Astro front end provides the public website, rankings, predictions, fighter cards, Fight Lab, belt holders, and events archive.
 
 Contributions are welcome!
 
@@ -29,7 +28,6 @@ Copy `.env.example` to `.env` and set:
 - `PUBLIC_CONTACT_EMAIL=hello@fightprophet.com` for the public contact/privacy pages
 - `PUBLIC_KOFI_WIDGET_ENABLED=false` during AdSense review, so support widgets do not compete with publisher content
 - `PUBLIC_SITE_URL=https://yourdomain.com`
-- `PUBLIC_APP_URL=https://app.fightprophet.com`
 - `PUBLIC_BUTTONDOWN_SUBSCRIBE_URL=https://buttondown.com/api/emails/embed-subscribe/fightprophet`
 
 ## 3) Replace placeholders
@@ -97,11 +95,11 @@ npx wrangler pages deploy dist --project-name fightprophet
 
 Ad revenue is paid by Google to your AdSense account and then to your configured payout method (bank, etc.) once account verification and payout thresholds are met.
 
-## 6) App entry + subscription capture
+## 6) Public site + subscription capture
 
 The home page now includes:
 
-- **Open Fight Prophet App** button (uses `PUBLIC_APP_URL`)
+- Internal navigation to predictions, rankings, fighter cards, Fight Lab, belt holders, and events history
 - **Fight Prophet Weekly** form (POSTs to Buttondown via `PUBLIC_BUTTONDOWN_SUBSCRIBE_URL`)
 
 No Azure subscription endpoint is required for newsletter capture. Buttondown stores subscribers, handles unsubscribe flows, and provides the hosted archive at `https://buttondown.com/fightprophet`.
@@ -111,7 +109,7 @@ No Azure subscription endpoint is required for newsletter capture. Buttondown st
 - Publish `privacy` page and link it in footer/nav
 - Publish `about`, `contact`, `methodology`, `editorial-policy`, and `responsible-use` pages and link them in the footer
 - Serve `ads.txt` from your site root (`/ads.txt`)
-- Keep main navigation on `fightprophet.com`; link to the app as the deeper CTA, not as the only page content
+- Keep main navigation and tool entry points on `fightprophet.com`
 - Remove copied/RSS article bodies and avoid claiming third-party news as Fight Prophet content
 - Replace placeholder ad slots before enabling visible ad units; the starter suppresses slot `1234567890`
 - Implement consent management where required (EEA/UK/other regulated regions)
@@ -141,7 +139,6 @@ AZURE_STORAGE_KEY=$AZURE_STORAGE_KEY
 AZURE_STORAGE_CONTAINER=${AZURE_STORAGE_CONTAINER:-fightprophet-dashboard}
 PARQUET_PREFIX=${PARQUET_PREFIX:-mma/diamond}
 PUBLIC_SITE_URL=${PUBLIC_SITE_URL:-https://fightprophet.com}
-PUBLIC_APP_URL=$PUBLIC_APP_URL
 PUBLIC_ADSENSE_CLIENT=$PUBLIC_ADSENSE_CLIENT
 PUBLIC_ADSENSE_ENABLED=$PUBLIC_ADSENSE_ENABLED
 PUBLIC_BUTTONDOWN_SUBSCRIBE_URL=${PUBLIC_BUTTONDOWN_SUBSCRIBE_URL:-https://buttondown.com/api/emails/embed-subscribe/fightprophet}

@@ -14,7 +14,6 @@ const {
 } = Astro.props as Props;
 
 const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'https://fightprophet.com').replace(/\/$/, '');
-const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
 const canonicalUrl = new URL(Astro.url.pathname, siteUrl).toString();
 const ogImageUrl = new URL('/branding/fightprophet_logo_white.png', siteUrl).toString();
 const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION || '';
@@ -71,8 +70,6 @@ const structuredData = [
     <meta name="robots" content={robots} />
     {googleSiteVerification && <meta name="google-site-verification" content={googleSiteVerification} />}
     <link rel="canonical" href={canonicalUrl} />
-    <link rel="preconnect" href={appUrl} crossorigin />
-    <link rel="dns-prefetch" href={appUrl} />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -118,14 +115,6 @@ const structuredData = [
 
     <!-- Backdrop (mobile only) -->
     <div class="fp-rail-backdrop" id="fp-rail-backdrop" hidden></div>
-    <div class="fp-app-transition" id="fp-app-transition" aria-hidden="true" hidden>
-      <div class="fp-app-transition-card">
-        <div class="fp-app-transition-spinner" aria-hidden="true"></div>
-        <strong>Opening interactive tool</strong>
-        <span>Loading predictions, rankings, and fighter data...</span>
-      </div>
-    </div>
-
     <!-- Left rail -->
     <aside class="fp-app-rail-shell" id="fp-app-rail-shell" aria-label="Site navigation">
       <button type="button" class="fp-rail-close" id="fp-rail-close" aria-label="Close navigation">×</button>
@@ -236,7 +225,7 @@ const structuredData = [
   </body>
 </html>
 
-<script is:inline define:vars={{ appUrl }}>
+<script is:inline>
   (() => {
     const DESKTOP_BP = 901;
     const FP_LANG_KEY = 'fp_lang';
@@ -245,36 +234,9 @@ const structuredData = [
     const toggle = document.getElementById('fp-rail-toggle');
     const closeBtn = document.getElementById('fp-rail-close');
     const backdrop = document.getElementById('fp-rail-backdrop');
-    const transition = document.getElementById('fp-app-transition');
     const body = document.body;
-    const appOrigin = (() => {
-      try { return new URL(appUrl).origin; } catch { return ''; }
-    })();
-    let warmStarted = false;
 
     const isMobile = () => window.innerWidth < DESKTOP_BP;
-    const canWarm = () => Boolean(appOrigin);
-    const warmApp = () => {
-      if (!canWarm() || warmStarted) return;
-      warmStarted = true;
-      try {
-        fetch(appOrigin + '/_stcore/health', {
-          mode: 'no-cors', credentials: 'omit', cache: 'no-store', keepalive: true,
-        }).catch(() => {});
-      } catch (e) { /* no-op */ }
-    };
-    const showAppTransition = () => {
-      if (!transition) return;
-      transition.hidden = false;
-      transition.setAttribute('aria-hidden', 'false');
-      requestAnimationFrame(() => { transition.dataset.visible = 'true'; });
-    };
-    const isPrimaryNavClick = (event) =>
-      event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
-    const isAppLink = (anchor) => {
-      if (!canWarm()) return false;
-      try { return new URL(anchor.href, window.location.href).origin === appOrigin; } catch { return false; }
-    };
 
     const setOpen = (open) => {
       if (!rail) return;
@@ -392,38 +354,6 @@ const structuredData = [
       });
     });
 
-    // Forward the current lang to the Streamlit app via ?lang=…
-    const decorateAppLinkWithLang = (anchor) => {
-      try {
-        const url = new URL(anchor.href, window.location.href);
-        if (url.origin !== appOrigin) return;
-        if (url.searchParams.get('lang') !== currentLang) {
-          url.searchParams.set('lang', currentLang);
-          anchor.href = url.toString();
-        }
-      } catch (e) { /* ignore malformed hrefs */ }
-    };
-
-    document.querySelectorAll('a[href]').forEach((anchor) => {
-      if (!isAppLink(anchor)) return;
-      decorateAppLinkWithLang(anchor);
-      const earlyWarm = () => warmApp();
-      anchor.addEventListener('mouseenter', earlyWarm, { passive: true });
-      anchor.addEventListener('focus', earlyWarm, { passive: true });
-      anchor.addEventListener('touchstart', earlyWarm, { passive: true });
-      anchor.addEventListener('click', (event) => {
-        decorateAppLinkWithLang(anchor);
-        warmApp();
-        if (!isPrimaryNavClick(event)) return;
-        showAppTransition();
-      });
-    });
-
-    window.addEventListener('fp-lang-change', () => {
-      document.querySelectorAll('a[href]').forEach((anchor) => {
-        if (isAppLink(anchor)) decorateAppLinkWithLang(anchor);
-      });
-    });
   })();
 </script>
 
@@ -517,64 +447,6 @@ const structuredData = [
     backdrop-filter: blur(2px);
     z-index: 50;
   }
-
-  .fp-app-transition {
-    position: fixed;
-    inset: 0;
-    z-index: 120;
-    display: grid;
-    place-items: center;
-    padding: 1.5rem;
-    background: rgba(9, 9, 11, 0.3);
-    backdrop-filter: blur(2px);
-    opacity: 0;
-    transition: opacity 180ms ease;
-    pointer-events: none;
-  }
-
-  .fp-app-transition[data-visible="true"] {
-    opacity: 1;
-  }
-
-  .fp-app-transition-card {
-    display: grid;
-    gap: 0.45rem;
-    min-width: min(92vw, 320px);
-    padding: 1rem 1.05rem;
-    border-radius: 1rem;
-    border: 1px solid rgba(248, 113, 113, 0.34);
-    background: linear-gradient(155deg, rgba(18, 18, 22, 0.94), rgba(45, 18, 18, 0.88));
-    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34), 0 0 28px rgba(220, 38, 38, 0.14);
-    color: #f4f4f5;
-    text-align: center;
-  }
-
-  .fp-app-transition-card strong {
-    font-size: 0.96rem;
-    letter-spacing: 0.02em;
-  }
-
-  .fp-app-transition-card span {
-    font-size: 0.84rem;
-    color: #d4d4d8;
-  }
-
-  .fp-app-transition-spinner {
-    width: 1.8rem;
-    height: 1.8rem;
-    margin: 0 auto 0.1rem;
-    border-radius: 999px;
-    border: 2px solid rgba(255, 255, 255, 0.16);
-    border-top-color: #f87171;
-    animation: fp-app-transition-spin 700ms linear infinite;
-  }
-
-  @keyframes fp-app-transition-spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
   /* ── Close button (inside rail, mobile only) ──────────────────────── */
   .fp-rail-close {
     display: none;

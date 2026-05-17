@@ -78,7 +78,11 @@ const pastEvents = totalEvents - upcomingEvents;
               <h2>Event Archive</h2>
               <span data-event-match-count>{totalEvents.toLocaleString()} events</span>
             </div>
-            <div class="fp-events-list" data-event-list></div>
+            <label class="fp-event-select-label">
+              <span>Choose event</span>
+              <select data-event-select aria-label="Choose event"></select>
+            </label>
+            <p class="fp-list-empty" data-event-empty hidden>No events match these filters.</p>
           </section>
 
           <section class="fp-event-detail" aria-live="polite">
@@ -139,7 +143,8 @@ const pastEvents = totalEvents - upcomingEvents;
     const search = document.querySelector('[data-event-search]');
     const phase = document.querySelector('[data-event-phase]');
     const location = document.querySelector('[data-event-location]');
-    const list = document.querySelector('[data-event-list]');
+    const eventSelect = document.querySelector('[data-event-select]');
+    const emptyState = document.querySelector('[data-event-empty]');
     const matchCount = document.querySelector('[data-event-match-count]');
     const fightTable = document.querySelector('[data-fight-table]');
     const selectedName = document.querySelector('[data-selected-event-name]');
@@ -243,30 +248,28 @@ const pastEvents = totalEvents - upcomingEvents;
       if (!rows.some((event) => event.event_name === selectedEvent.event_name)) {
         selectedEvent = rows[0] || events[0];
       }
-      list.innerHTML = rows.slice(0, 120).map((event) => `
-        <button type="button" class="fp-event-row${event.event_name === selectedEvent.event_name ? ' is-active' : ''}" data-event-name="${escapeHtml(event.event_name)}">
-          <span>
-            <strong>${escapeHtml(event.event_name)}</strong>
-            <em>${escapeHtml([event.event_date, event.location].filter(Boolean).join(' / '))}</em>
-          </span>
-          <b>${escapeHtml(event.event_phase)}</b>
-        </button>
-      `).join('') || '<p class="fp-list-empty">No events match these filters.</p>';
-      list.querySelectorAll('[data-event-name]').forEach((button) => {
-        button.addEventListener('click', () => {
-          const event = rows.find((candidate) => candidate.event_name === button.getAttribute('data-event-name'));
-          if (event) {
-            selectEvent(event);
-            renderList();
-          }
-        });
-      });
+      if (eventSelect) {
+        eventSelect.disabled = rows.length === 0;
+        eventSelect.innerHTML = rows.slice(0, 500).map((event) => {
+          const meta = [event.event_date, event.location, event.event_phase].filter(Boolean).join(' / ');
+          return `<option value="${escapeHtml(event.event_name)}">${escapeHtml(event.event_name)}${meta ? ` — ${escapeHtml(meta)}` : ''}</option>`;
+        }).join('');
+        eventSelect.value = selectedEvent?.event_name || '';
+      }
+      if (emptyState) emptyState.hidden = rows.length > 0;
       if (selectedEvent) selectEvent(selectedEvent);
     }
 
     search?.addEventListener('input', renderList);
     phase?.addEventListener('change', renderList);
     location?.addEventListener('change', renderList);
+    eventSelect?.addEventListener('change', () => {
+      const event = filteredEvents().find((candidate) => candidate.event_name === eventSelect.value);
+      if (event) {
+        selectEvent(event);
+        renderList();
+      }
+    });
     renderList();
   })();
 </script>
@@ -389,62 +392,63 @@ const pastEvents = totalEvents - upcomingEvents;
     color: #a1a1aa;
     font-size: 0.84rem;
   }
-  .fp-events-list {
-    max-height: 680px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(185,28,28,0.4) transparent;
-  }
-  .fp-events-list::-webkit-scrollbar { width: 4px; }
-  .fp-events-list::-webkit-scrollbar-thumb { background: rgba(185,28,28,0.38); border-radius: 999px; }
-
-  .fp-event-row {
-    display: flex;
-    width: 100%;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.55rem;
-    text-align: left;
-    border: none;
-    border-bottom: 1px solid rgba(39, 39, 42, 0.7);
-    border-left: 3px solid transparent;
-    border-radius: 0;
-    padding: 0.58rem 0.6rem;
-    color: #d4d4d8;
-    background: transparent;
-    cursor: pointer;
-    transition: background 80ms ease, border-left-color 80ms ease, color 80ms ease;
-  }
-  .fp-event-row:hover {
-    background: rgba(185, 28, 28, 0.10);
-    border-left-color: rgba(220, 38, 38, 0.52);
-    color: #f4f4f5;
-  }
-  .fp-event-row.is-active {
-    background: rgba(185, 28, 28, 0.18);
-    border-left-color: #ef4444;
-    color: #fef2f2;
-  }
-  .fp-event-row span {
+  .fp-event-select-label {
+    position: relative;
     display: grid;
-    gap: 0.1rem;
-    min-width: 0;
+    gap: 0.38rem;
+    padding: 0.62rem;
+    box-sizing: border-box;
+    background: rgba(9, 9, 11, 0.62);
+    border: 1px solid rgba(113, 113, 122, 0.42);
+    border-radius: 0.62rem;
   }
-  .fp-event-row strong {
-    color: inherit;
-    font-size: 0.88rem;
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
+  .fp-event-select-label span {
+    color: #67e8f9;
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .fp-event-select-label select {
+    width: 100%;
+    min-width: 0;
+    min-height: 2.55rem;
+    padding: 0.55rem 2.1rem 0.55rem 0.65rem;
+    color: #fef2f2;
+    background: rgba(9, 9, 11, 0.86);
+    border: 1px solid rgba(248, 113, 113, 0.22);
+    border-radius: 0.55rem;
+    outline: 0;
+    appearance: none;
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 800;
+    cursor: pointer;
     text-overflow: ellipsis;
   }
-  .fp-event-row em {
+  .fp-event-select-label select:disabled {
     color: #71717a;
-    font-size: 0.72rem;
-    font-style: normal;
+    cursor: not-allowed;
   }
-  .fp-event-row b,
+  .fp-event-select-label select option {
+    color: #fef2f2;
+    background: #18181b;
+  }
+  .fp-event-select-label::after {
+    content: '⌄';
+    position: absolute;
+    right: 1.25rem;
+    bottom: 1.22rem;
+    color: #fca5a5;
+    font-size: 1rem;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .fp-event-select-label:focus-within {
+    border-color: rgba(248, 113, 113, 0.62);
+    box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.18);
+  }
+
   .fp-phase-badge {
     flex-shrink: 0;
     border-radius: 999px;
