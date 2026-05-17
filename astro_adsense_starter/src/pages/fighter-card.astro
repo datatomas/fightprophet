@@ -26,10 +26,26 @@ const historyRows = fighterData.debug.historyCount;
         Search tracked UFC fighters and inspect career snapshots, method mix, activity status, belt context, striking and grappling metrics, and recent fight history.
       </p>
       <div class="fp-kpi-strip" aria-label="Fighter archive summary">
-        <span><strong>{totalProfiles.toLocaleString()}</strong> fighters</span>
-        <span><strong>{activeProfiles.toLocaleString()}</strong> active</span>
-        <span><strong>{championProfiles.toLocaleString()}</strong> champions</span>
-        <span><strong>{historyRows.toLocaleString()}</strong> fight rows</span>
+        <div class="fp-kpi-strip-item">
+          <div class="fp-kpi-strip-icon"><img src="/branding/b91c1c-fighterscard-emoji.png" alt="" width="42" height="42" /></div>
+          <div class="fp-kpi-strip-label">Fighters</div>
+          <div class="fp-kpi-strip-value" data-kpi-total>{totalProfiles.toLocaleString()}</div>
+        </div>
+        <div class="fp-kpi-strip-item">
+          <div class="fp-kpi-strip-icon"><img src="/branding/b91c1c-correct-emoji.png" alt="" width="42" height="42" /></div>
+          <div class="fp-kpi-strip-label">Active</div>
+          <div class="fp-kpi-strip-value" data-kpi-active>{activeProfiles.toLocaleString()}</div>
+        </div>
+        <div class="fp-kpi-strip-item">
+          <div class="fp-kpi-strip-icon"><img src="/branding/b91c1c-champion-emoji.png" alt="" width="42" height="42" /></div>
+          <div class="fp-kpi-strip-label">Champions</div>
+          <div class="fp-kpi-strip-value" data-kpi-champs>{championProfiles.toLocaleString()}</div>
+        </div>
+        <div class="fp-kpi-strip-item">
+          <div class="fp-kpi-strip-icon"><img src="/branding/b91c1c-fights-emoji.png" alt="" width="42" height="42" /></div>
+          <div class="fp-kpi-strip-label">Fight Rows</div>
+          <div class="fp-kpi-strip-value" data-kpi-rows>{historyRows.toLocaleString()}</div>
+        </div>
       </div>
     </header>
 
@@ -71,10 +87,55 @@ const historyRows = fighterData.debug.historyCount;
             </header>
 
             <div class="fp-profile-kpis">
-              <div><span>Win Rate</span><strong data-kpi-win-rate>—</strong></div>
-              <div><span>Finish Rate</span><strong data-kpi-finish-rate>—</strong></div>
-              <div><span>Win Streak</span><strong data-kpi-win-streak>—</strong></div>
-              <div><span>Last Fight</span><strong data-kpi-last-fight>—</strong></div>
+              <div>
+                <div class="fp-profile-kpi-icon"><img src="/branding/b91c1c-correct-emoji.png" alt="" width="28" height="28" /></div>
+                <span>Win Rate</span><strong data-kpi-win-rate>—</strong>
+              </div>
+              <div>
+                <div class="fp-profile-kpi-icon"><img src="/branding/b91c1c-signals-emoji.png" alt="" width="28" height="28" /></div>
+                <span>Finish Rate</span><strong data-kpi-finish-rate>—</strong>
+              </div>
+              <div>
+                <div class="fp-profile-kpi-icon"><img src="/branding/b91c1c-bonus-emoji.png" alt="" width="28" height="28" /></div>
+                <span>Win Streak</span><strong data-kpi-win-streak>—</strong>
+              </div>
+              <div>
+                <div class="fp-profile-kpi-icon"><img src="/branding/b91c1c-events-emoji.png" alt="" width="28" height="28" /></div>
+                <span>Last Fight</span><strong data-kpi-last-fight>—</strong>
+              </div>
+            </div>
+
+            <div class="fp-meta-icons">
+              <div class="fp-meta-icon-card" style="--accent:#22c55e">
+                <img src="/branding/b91c1c-strikingdefence-emoji.png" alt="" width="36" height="36" />
+                <span>Str Def</span>
+                <strong data-meta-str-def>—</strong>
+              </div>
+              <div class="fp-meta-icon-card" style="--accent:#eab308">
+                <img src="/branding/b91c1c-takedowndefence-emoji.png" alt="" width="36" height="36" />
+                <span>TD Def</span>
+                <strong data-meta-td-def>—</strong>
+              </div>
+              <div class="fp-meta-icon-card" style="--accent:#ef4444">
+                <img src="/branding/b91c1c-strikingaccuracy-emoji.png" alt="" width="36" height="36" />
+                <span>SApM</span>
+                <strong data-meta-sapm>—</strong>
+              </div>
+              <div class="fp-meta-icon-card" style="--accent:#f59e0b">
+                <img src="/branding/b91c1c-bonus-emoji.png" alt="" width="36" height="36" />
+                <span>Bonuses</span>
+                <strong data-meta-bonuses>—</strong>
+              </div>
+              <div class="fp-meta-icon-card" style="--accent:#22c55e">
+                <img src="/branding/b91c1c-correct-emoji.png" alt="" width="36" height="36" />
+                <span>Best Win Streak</span>
+                <strong data-meta-win-streak>—</strong>
+              </div>
+              <div class="fp-meta-icon-card" style="--accent:#ef4444">
+                <img src="/branding/b91c1c-incorrect-emoji.png" alt="" width="36" height="36" />
+                <span>Worst Loss Streak</span>
+                <strong data-meta-loss-streak>—</strong>
+              </div>
             </div>
 
             <div class="fp-profile-grid">
@@ -153,6 +214,12 @@ const historyRows = fighterData.debug.historyCount;
     const methodList = document.querySelector('[data-method-list]');
     const historyCount = document.querySelector('[data-history-count]');
     const historyTable = document.querySelector('[data-history-table]');
+    const metaStrDef = document.querySelector('[data-meta-str-def]');
+    const metaTdDef = document.querySelector('[data-meta-td-def]');
+    const metaSapm = document.querySelector('[data-meta-sapm]');
+    const metaBonuses = document.querySelector('[data-meta-bonuses]');
+    const metaWinStreak = document.querySelector('[data-meta-win-streak]');
+    const metaLossStreak = document.querySelector('[data-meta-loss-streak]');
 
     const params = new URLSearchParams(window.location.search);
     const requested = String(params.get('fighter') || '').trim().toLowerCase();
@@ -215,6 +282,12 @@ const historyRows = fighterData.debug.historyCount;
       finishRate.textContent = fmtPct(profile.finish_rate, 1);
       winStreak.textContent = fmtInt(profile.win_streak);
       lastFight.textContent = profile.last_fight_date || '—';
+      if (metaStrDef) metaStrDef.textContent = fmtPct(profile.str_def);
+      if (metaTdDef) metaTdDef.textContent = fmtPct(profile.td_def);
+      if (metaSapm) metaSapm.textContent = fmtNum(profile.sapm, 2);
+      if (metaBonuses) metaBonuses.textContent = fmtInt(profile.bonuses_won_count);
+      if (metaWinStreak) metaWinStreak.textContent = fmtInt(profile.longest_win_streak);
+      if (metaLossStreak) metaLossStreak.textContent = fmtInt(profile.longest_loss_streak);
 
       careerList.innerHTML = dl([
         ['Country', profile.country],
@@ -335,25 +408,62 @@ const historyRows = fighterData.debug.historyCount;
     color: #d4d4d8;
     line-height: 1.6;
   }
+  /* ── Icon KPI strip (matches Streamlit kpi-strip) ── */
   .fp-kpi-strip {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.55rem;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
     margin-top: 1rem;
+    background: linear-gradient(145deg, rgba(28,28,32,0.92), rgba(39,39,42,0.76));
+    border: 1px solid rgba(248,113,113,0.16);
+    border-top: 2px solid rgba(185,28,28,0.52);
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 18px rgba(0,0,0,0.2);
   }
-  .fp-kpi-strip span {
-    display: inline-flex;
-    gap: 0.35rem;
+  .fp-kpi-strip-item {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    border: 1px solid rgba(239, 68, 68, 0.28);
-    border-radius: 999px;
-    padding: 0.42rem 0.65rem;
-    color: #d4d4d8;
-    background: rgba(24, 24, 27, 0.72);
+    justify-content: center;
+    min-height: 100px;
+    padding: 0.75rem 0.65rem;
+    text-align: center;
+    border-right: 1px solid rgba(248,113,113,0.12);
+    background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0));
   }
-  .fp-kpi-strip strong {
-    color: #fef2f2;
+  .fp-kpi-strip-item:last-child { border-right: 0; }
+  .fp-kpi-strip-icon { margin-bottom: 0.22rem; line-height: 1; }
+  .fp-kpi-strip-icon img { object-fit: contain; display: block; }
+  .fp-kpi-strip-label { color: #d4d4d8; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.12rem; font-weight: 700; }
+  .fp-kpi-strip-value { color: #fff; font-size: 1.08rem; font-weight: 800; line-height: 1; }
+
+  /* ── Meta icon cards (Str Def, TD Def, SApM, Bonuses, Streaks) ── */
+  .fp-meta-icons {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
   }
+  .fp-meta-icon-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    padding: 0.6rem 0.4rem;
+    border-radius: 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--accent, #ef4444) 22%, rgba(63,63,70,0.6));
+    background: color-mix(in srgb, var(--accent, #ef4444) 8%, rgba(9,9,11,0.55));
+    text-align: center;
+  }
+  .fp-meta-icon-card img { object-fit: contain; }
+  .fp-meta-icon-card span { color: #a1a1aa; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; line-height: 1.2; }
+  .fp-meta-icon-card strong { color: #fff; font-size: 0.96rem; font-weight: 800; }
+
+  /* ── Profile KPI icon ── */
+  .fp-profile-kpi-icon { margin-bottom: 0.15rem; line-height: 1; }
+  .fp-profile-kpi-icon img { object-fit: contain; display: block; margin: 0 auto; }
   .fp-tool-controls {
     display: grid;
     grid-template-columns: minmax(220px, 1fr) minmax(160px, 0.3fr);
@@ -498,17 +608,22 @@ const historyRows = fighterData.debug.historyCount;
   }
   .fp-profile-kpis div {
     padding: 0.65rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
   }
   .fp-profile-kpis span {
     display: block;
     color: #a1a1aa;
-    font-size: 0.74rem;
+    font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
   .fp-profile-kpis strong {
     color: #fef2f2;
-    font-size: 1rem;
+    font-size: 1.08rem;
+    font-weight: 800;
   }
   .fp-profile-grid {
     display: grid;
@@ -593,21 +708,18 @@ const historyRows = fighterData.debug.historyCount;
   }
   @media (max-width: 1020px) {
     .fp-fighters-layout,
-    .fp-profile-grid {
-      grid-template-columns: 1fr;
-    }
+    .fp-profile-grid { grid-template-columns: 1fr; }
+    .fp-meta-icons { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .fp-kpi-strip { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .fp-kpi-strip-item:nth-child(2) { border-right: 0; }
+    .fp-kpi-strip-item:nth-child(3) { border-right: 1px solid rgba(248,113,113,0.12); }
   }
   @media (max-width: 760px) {
     .fp-tool-controls,
     .fp-profile-kpis,
-    .fp-fighter-header {
-      grid-template-columns: 1fr;
-    }
-    .fp-fighter-header {
-      display: grid;
-    }
-    .fp-record-mark {
-      width: fit-content;
-    }
+    .fp-fighter-header { grid-template-columns: 1fr; }
+    .fp-fighter-header { display: grid; }
+    .fp-record-mark { width: fit-content; }
+    .fp-meta-icons { grid-template-columns: repeat(2, minmax(0,1fr)); }
   }
 </style>

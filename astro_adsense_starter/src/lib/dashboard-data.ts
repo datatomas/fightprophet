@@ -15,6 +15,12 @@ const FOLDER_UPCOMING_LOGREG = 'dashboard_upcoming_cards_logreg';
 const FOLDER_EVENTS = 'dashboard_upcoming_events';
 const FOLDER_HISTORICAL = 'dashboard_hist_historical_all';
 const FOLDER_HISTORICAL_CATBOOST = 'dashboard_hist_historical_all_catboost';
+const FOLDER_HISTORICAL_ENSEMBLE = 'dashboard_hist_historical_all_ensemble';
+const FOLDER_HISTORICAL_LOGREG = 'dashboard_hist_historical_all_logreg';
+const FOLDER_STATS = 'dashboard_model_stats';
+const FOLDER_STATS_CATBOOST = 'dashboard_model_stats_catboost';
+const FOLDER_STATS_ENSEMBLE = 'dashboard_model_stats_ensemble';
+const FOLDER_STATS_LOGREG = 'dashboard_model_stats_logreg';
 const FOLDER_FIGHTER_PROFILES = 'dashboard_fighter_profiles';
 const FOLDER_FIGHTER_HISTORY = 'dashboard_fighter_history';
 
@@ -968,4 +974,155 @@ export async function getAllModelsPredictionsData(env?: RuntimeEnv): Promise<All
   };
   cacheExpiresAt = now + cacheTtlMilliseconds(env);
   return cachedAllModels;
+}
+
+// ── Fight Lab ─────────────────────────────────────────────────────────────────
+
+export interface FightLabRow {
+  event_date: string;
+  event_name: string;
+  fighter_name_display: string;
+  fighter_country: string;
+  fighter_flag: string;
+  opponent_name_display: string;
+  opponent_country: string;
+  opponent_flag: string;
+  bet_on_name: string;
+  winner_name_display: string;
+  model_correct: boolean | null;
+  model_prob: number | null;
+  market_prob: number | null;
+  edge: number | null;
+  signal_strength: string;
+  weight_class: string;
+}
+
+export interface ModelStats {
+  accuracy: number | null;
+  total_fights: number | null;
+  correct_picks: number | null;
+  wrong_picks: number | null;
+  f1: number | null;
+  auc: number | null;
+  brier: number | null;
+  log_loss: number | null;
+  events_covered: number | null;
+}
+
+export interface FightLabModelData {
+  rows: FightLabRow[];
+  stats: ModelStats;
+}
+
+export interface FightLabData {
+  catboost: FightLabModelData;
+  ensemble: FightLabModelData;
+  logreg: FightLabModelData;
+}
+
+let cachedFightLab: FightLabData | null = null;
+
+function normalizeFightLabRow(
+  row: Record<string, any>,
+  countryIndex: Record<string, { canonical_name: string; iso2?: string }>,
+): FightLabRow | null {
+  const fighterName = cleanStr(row.fighter_name_display);
+  if (!fighterName) return null;
+  const fighterCountry = countryName(countryIndex, row.fighter_country);
+  const opponentCountry = countryName(countryIndex, row.opponent_country);
+  return {
+    event_date: coerceDate(row.event_date),
+    event_name: cleanStr(row.event_name),
+    fighter_name_display: fighterName,
+    fighter_country: fighterCountry,
+    fighter_flag: flagEmojiFor(countryIndex, row.fighter_country),
+    opponent_name_display: cleanStr(row.opponent_name_display),
+    opponent_country: opponentCountry,
+    opponent_flag: flagEmojiFor(countryIndex, row.opponent_country),
+    bet_on_name: cleanStr(row.bet_on_name),
+    winner_name_display: cleanStr(row.winner_name_display),
+    model_correct: row.model_correct == null ? null : coerceBool(row.model_correct),
+    model_prob: coerceNum(row.model_prob),
+    market_prob: coerceNum(row.market_prob),
+    edge: coerceNum(row.edge),
+    signal_strength: cleanStr(row.signal_strength),
+    weight_class: cleanStr(row.weight_class),
+  };
+}
+
+function normalizeModelStats(rows: Record<string, any>[]): ModelStats {
+  const row = rows[0] ?? {};
+  return {
+    accuracy: coerceNum(row.accuracy),
+    total_fights: coerceInt(row.total_fights),
+    correct_picks: coerceInt(row.correct_picks ?? row.model_correct_count),
+    wrong_picks: coerceInt(row.wrong_picks ?? row.model_wrong_count),
+    f1: coerceNum(row.f1 ?? row.f1_score),
+    auc: coerceNum(row.auc ?? row.roc_auc),
+    brier: coerceNum(row.brier ?? row.brier_score),
+    log_loss: coerceNum(row.log_loss),
+    events_covered: coerceInt(row.events_covered ?? row.event_count),
+  };
+}
+
+export async function getFightLabData(env?: RuntimeEnv): Promise<FightLabData> {
+  const now = Date.now();
+  if (cachedFightLab && now < cacheExpiresAt) return cachedFightLab;
+
+  const histCols = [
+    'event_date', 'event_name',
+    'fighter_name_display', 'fighter_country',
+    'opponent_name_display', 'opponent_country',
+    'bet_on_name', 'winner_name_display',
+    'model_correct', 'model_prob', 'market_prob', 'edge',
+    'signal_strength', 'weight_class',
+  ];
+  const statsCols = [
+    'accuracy', 'total_fights', 'correct_picks', 'wrong_picks',
+    'f1', 'f1_score', 'auc', 'roc_auc', 'brier', 'brier_score',
+    'log_loss', 'events_covered', 'event_count',
+    'model_correct_count', 'model_wrong_count',
+  ];
+
+  const [cbRows, ensRows, lrRows, cbStats, ensStats, lrStats, countryIndex] = await Promise.all([
+    readLatestDashboardRows(env, FOLDER_HISTORICAL_CATBOOST, histCols),
+    readLatestDashboardRows(env, FOLDER_HISTORICAL_ENSEMBLE, histCols),
+    readLatestDashboardRows(env, FOLDER_HISTORICAL_LOGREG, histCols),
+    readLatestDashboardRows(env, FOLDER_STATS_CATBOOST, statsCols),
+    readLatestDashboardRows(env, FOLDER_STATS_ENSEMBLE, statsCols),
+    readLatestDashboardRows(env, FOLDER_STATS_LOGREG, statsCols),
+    getCountryMasterIndex(env),
+  ]);
+
+  const fallbackRows = cbRows.length > 0
+    ? cbRows
+    : await readLatestDashboardRows(env, FOLDER_HISTORICAL, histCols);
+  const fallbackStats = cbStats.length > 0
+    ? cbStats
+    : await readLatestDashboardRows(env, FOLDER_STATS, statsCols);
+
+  function buildModel(
+    rows: Record<string, any>[],
+    stats: Record<string, any>[],
+    fallbackR: Record<string, any>[],
+    fallbackS: Record<string, any>[],
+  ): FightLabModelData {
+    const src = rows.length > 0 ? rows : fallbackR;
+    const labRows = src
+      .map((r) => normalizeFightLabRow(r, countryIndex.byAlias))
+      .filter(Boolean) as FightLabRow[];
+    labRows.sort((a, b) => dateValue(b.event_date) - dateValue(a.event_date));
+    return {
+      rows: labRows,
+      stats: normalizeModelStats(stats.length > 0 ? stats : fallbackS),
+    };
+  }
+
+  cachedFightLab = {
+    catboost: buildModel(cbRows, cbStats, fallbackRows, fallbackStats),
+    ensemble: buildModel(ensRows, ensStats, fallbackRows, fallbackStats),
+    logreg:   buildModel(lrRows, lrStats, fallbackRows, fallbackStats),
+  };
+  cacheExpiresAt = now + cacheTtlMilliseconds(env);
+  return cachedFightLab;
 }

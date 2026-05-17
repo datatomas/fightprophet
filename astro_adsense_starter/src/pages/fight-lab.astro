@@ -1,32 +1,421 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import AppSectionLanding from '../components/AppSectionLanding.astro';
+import { runtimeEnvFromLocals } from '../lib/country-master';
+import { getFightLabData } from '../lib/dashboard-data';
+
+const runtimeEnv = runtimeEnvFromLocals(Astro.locals);
+const labData = await getFightLabData(runtimeEnv);
+const pageJson = JSON.stringify(labData).replace(/</g, '\\u003c');
+
+const stats = labData.catboost.stats;
+const hasData = labData.catboost.rows.length > 0;
 ---
 
 <BaseLayout
   title="Fight Lab — Historical MMA Picks & Model Metrics | Fight Prophet"
-  description="Backtest results for Fight Prophet's MMA prediction models — accuracy, F1, AUC, Brier score, log loss, and full historical pick logs across past UFC events."
+  description="Backtest results for Fight Prophet's MMA prediction models — accuracy, F1, AUC, Brier score, and full historical pick logs across past UFC events."
 >
-  <AppSectionLanding
-    pageSlug="fight-lab"
-    heading="Fight Lab — Historical Picks & Model Metrics"
-    intro="Fight Lab is the model audit room. Every past prediction is logged with the actual outcome so you can validate calibration, accuracy, and edge across thousands of historical MMA bouts."
-    bullets={[
-      { title: 'Per-pick history', body: 'Every model prediction with the closing line, model probability, and final result.' },
-      { title: 'Calibration analysis', body: 'How often "70% picks" actually win 70% of the time — across the full dataset.' },
-      { title: 'Standard ML metrics', body: 'Accuracy, F1, AUC, Brier score, and log loss broken down by model variant.' },
-      { title: 'Model comparison', body: 'Ensemble vs CatBoost vs LogReg head-to-head on the same fights.' },
-    ]}
-    whatYouWillSee={[
-      'A searchable table of historical predictions with outcomes',
-      'Aggregate accuracy and edge metrics over time',
-      'Calibration curves comparing predicted vs actual win rates',
-      'Filter controls for date range, weight class, and event',
-    ]}
-    readingNotes={[
-      { title: 'Model accountability', body: 'Past predictions stay attached to actual results so the model can be checked after the fight instead of only promoted before it.' },
-      { title: 'Calibration context', body: 'Accuracy is not the only metric; probability quality is reviewed with Brier score, log loss, and predicted-versus-actual win rates.' },
-      { title: 'Repeatable review', body: 'Filters make it possible to compare events, divisions, and model variants with the same audit frame.' },
-    ]}
-  />
+  <article class="fp-lab-page">
+
+    <!-- ── HERO ── -->
+    <header class="fp-tool-hero">
+      <a class="fp-tool-breadcrumb" href="/">← Fight Prophet</a>
+      <p class="fp-section-label">Fight Lab</p>
+      <h1>Historical Picks &amp; Model Metrics</h1>
+      <p class="fp-hero-copy">
+        Every past prediction is logged with the actual outcome so you can validate calibration, accuracy, and edge
+        across thousands of historical MMA bouts. Compare Ensemble, CatBoost, and LogReg on the same fights.
+      </p>
+    </header>
+
+    {hasData ? (
+      <>
+        <!-- ── KPI STRIP ── -->
+        <div class="fp-kpi-strip">
+          <div class="fp-kpi-item">
+            <div class="fp-kpi-icon"><img src="/branding/b91c1c-accuracy-emoji.png" alt="" width="46" height="46" /></div>
+            <div class="fp-kpi-label">Overall Accuracy</div>
+            <div class="fp-kpi-value" data-kpi-accuracy>
+              {stats.accuracy != null ? `${(stats.accuracy * 100).toFixed(1)}%` : '—'}
+            </div>
+          </div>
+          <div class="fp-kpi-item">
+            <div class="fp-kpi-icon"><img src="/branding/b91c1c-predictions-emoji-rail.png" alt="" width="46" height="46" /></div>
+            <div class="fp-kpi-label">Total Predictions</div>
+            <div class="fp-kpi-value" data-kpi-total>
+              {stats.total_fights?.toLocaleString() ?? '—'}
+            </div>
+          </div>
+          <div class="fp-kpi-item">
+            <div class="fp-kpi-icon"><img src="/branding/b91c1c-correct-emoji.png" alt="" width="46" height="46" /></div>
+            <div class="fp-kpi-label">Correct Picks</div>
+            <div class="fp-kpi-value" data-kpi-correct>
+              {stats.correct_picks?.toLocaleString() ?? '—'}
+            </div>
+          </div>
+          <div class="fp-kpi-item">
+            <div class="fp-kpi-icon"><img src="/branding/b91c1c-incorrect-emoji.png" alt="" width="46" height="46" /></div>
+            <div class="fp-kpi-label">Wrong Picks</div>
+            <div class="fp-kpi-value" data-kpi-wrong>
+              {stats.wrong_picks?.toLocaleString() ?? '—'}
+            </div>
+          </div>
+          <div class="fp-kpi-item">
+            <div class="fp-kpi-icon"><img src="/branding/b91c1c-events-emoji-rail.png" alt="" width="46" height="46" /></div>
+            <div class="fp-kpi-label">Events Covered</div>
+            <div class="fp-kpi-value" data-kpi-events>
+              {stats.events_covered?.toLocaleString() ?? '—'}
+            </div>
+          </div>
+        </div>
+
+        <!-- ── MODEL CONTROLS ── -->
+        <section class="fp-tool-controls" aria-label="Fight lab controls">
+          <div class="fp-model-picker" role="group" aria-label="Select model">
+            <button type="button" class="fp-model-btn is-active" data-model="catboost">CatBoost</button>
+            <button type="button" class="fp-model-btn" data-model="ensemble">Ensemble</button>
+            <button type="button" class="fp-model-btn" data-model="logreg">LogReg</button>
+          </div>
+          <label>
+            <span>Signal</span>
+            <select data-lab-signal>
+              <option value="All">All signals</option>
+              <option value="STRONG">Strong</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="WEAK">Weak</option>
+            </select>
+          </label>
+          <label>
+            <span>Result</span>
+            <select data-lab-result>
+              <option value="All">All results</option>
+              <option value="correct">Correct</option>
+              <option value="wrong">Wrong</option>
+            </select>
+          </label>
+          <label>
+            <span>Search</span>
+            <input type="search" data-lab-search placeholder="Fighter, event, weight class" autocomplete="off" />
+          </label>
+        </section>
+
+        <!-- ── MODEL STATS BAND ── -->
+        <div class="fp-stats-band">
+          <div class="fp-stats-cell"><span>Accuracy</span><strong data-stat-accuracy>—</strong></div>
+          <div class="fp-stats-cell"><span>F1</span><strong data-stat-f1>—</strong></div>
+          <div class="fp-stats-cell"><span>AUC</span><strong data-stat-auc>—</strong></div>
+          <div class="fp-stats-cell"><span>Brier</span><strong data-stat-brier>—</strong></div>
+          <div class="fp-stats-cell"><span>Log Loss</span><strong data-stat-logloss>—</strong></div>
+          <div class="fp-stats-cell"><span>Total Picks</span><strong data-stat-total>—</strong></div>
+        </div>
+
+        <!-- ── PICKS TABLE ── -->
+        <section class="fp-picks-panel">
+          <div class="fp-panel-head">
+            <h2>Historical Picks</h2>
+            <span data-lab-match-count></span>
+          </div>
+          <div class="fp-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date / Event</th>
+                  <th>Fighter</th>
+                  <th>Opponent</th>
+                  <th>Bet On</th>
+                  <th>Winner</th>
+                  <th>Result</th>
+                  <th>Model %</th>
+                  <th>Edge</th>
+                  <th>Signal</th>
+                </tr>
+              </thead>
+              <tbody data-lab-table></tbody>
+            </table>
+          </div>
+          <p class="fp-table-note" data-lab-note></p>
+        </section>
+      </>
+    ) : (
+      <section class="fp-empty-state">
+        <strong>Fight Lab data is temporarily unavailable.</strong>
+        <span>The historical picks feed reads from the exported dashboard parquet. Check back once the latest export has landed.</span>
+      </section>
+    )}
+  </article>
+
+  <script type="application/json" id="fp-lab-data" set:html={pageJson}></script>
 </BaseLayout>
+
+<script is:inline>
+  (() => {
+    const node = document.getElementById('fp-lab-data');
+    if (!node) return;
+    const labData = JSON.parse(node.textContent || '{}');
+    if (!labData.catboost) return;
+
+    const modelBtns  = document.querySelectorAll('[data-model]');
+    const signalSel  = document.querySelector('[data-lab-signal]');
+    const resultSel  = document.querySelector('[data-lab-result]');
+    const searchIn   = document.querySelector('[data-lab-search]');
+    const tbody      = document.querySelector('[data-lab-table]');
+    const matchCount = document.querySelector('[data-lab-match-count]');
+    const labNote    = document.querySelector('[data-lab-note]');
+
+    const kpiAccuracy = document.querySelector('[data-kpi-accuracy]');
+    const kpiTotal    = document.querySelector('[data-kpi-total]');
+    const kpiCorrect  = document.querySelector('[data-kpi-correct]');
+    const kpiWrong    = document.querySelector('[data-kpi-wrong]');
+    const kpiEvents   = document.querySelector('[data-kpi-events]');
+
+    const statAccuracy = document.querySelector('[data-stat-accuracy]');
+    const statF1       = document.querySelector('[data-stat-f1]');
+    const statAuc      = document.querySelector('[data-stat-auc]');
+    const statBrier    = document.querySelector('[data-stat-brier]');
+    const statLogloss  = document.querySelector('[data-stat-logloss]');
+    const statTotal    = document.querySelector('[data-stat-total]');
+
+    const MAX_ROWS = 500;
+    let currentModel = 'catboost';
+
+    const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    const pct = (v) => {
+      if (v == null || Number.isNaN(Number(v))) return '—';
+      const n = Number(v);
+      return `${Math.round((n <= 1 ? n * 100 : n) * 10) / 10}%`;
+    };
+
+    const fmtEdge = (v) => {
+      if (v == null || Number.isNaN(Number(v))) return '—';
+      const n = Number(v);
+      const s = Math.round((n <= 1 && n >= -1 ? n * 100 : n) * 10) / 10;
+      return `${s > 0 ? '+' : ''}${s}%`;
+    };
+
+    const fmtPct1 = (v) => v != null ? `${(Number(v) * 100).toFixed(1)}%` : '—';
+    const fmtStat = (v) => {
+      if (v == null || Number.isNaN(Number(v))) return '—';
+      const n = Number(v);
+      return n.toFixed(3);
+    };
+
+    const sigCls = (s) => ({ STRONG: 'sig-strong', MEDIUM: 'sig-medium', WEAK: 'sig-weak' }[String(s).toUpperCase()] || '');
+
+    function updateKpisAndStats(model) {
+      const s = model.stats;
+      if (kpiAccuracy) kpiAccuracy.textContent = fmtPct1(s.accuracy);
+      if (kpiTotal)    kpiTotal.textContent    = s.total_fights?.toLocaleString() ?? '—';
+      if (kpiCorrect)  kpiCorrect.textContent  = s.correct_picks?.toLocaleString() ?? '—';
+      if (kpiWrong)    kpiWrong.textContent    = s.wrong_picks?.toLocaleString() ?? '—';
+      if (kpiEvents)   kpiEvents.textContent   = s.events_covered?.toLocaleString() ?? '—';
+      if (statAccuracy) statAccuracy.textContent = fmtPct1(s.accuracy);
+      if (statF1)       statF1.textContent       = fmtStat(s.f1);
+      if (statAuc)      statAuc.textContent      = fmtStat(s.auc);
+      if (statBrier)    statBrier.textContent    = fmtStat(s.brier);
+      if (statLogloss)  statLogloss.textContent  = fmtStat(s.log_loss);
+      if (statTotal)    statTotal.textContent    = s.total_fights?.toLocaleString() ?? '—';
+    }
+
+    function filtered() {
+      const model = labData[currentModel];
+      if (!model) return [];
+      const sig   = String(signalSel?.value || 'All');
+      const res   = String(resultSel?.value || 'All');
+      const query = String(searchIn?.value || '').trim().toLowerCase();
+      return model.rows.filter((r) => {
+        if (sig !== 'All' && r.signal_strength !== sig) return false;
+        if (res === 'correct' && r.model_correct !== true) return false;
+        if (res === 'wrong'   && r.model_correct !== false) return false;
+        if (query) {
+          const hay = `${r.fighter_name_display} ${r.opponent_name_display} ${r.event_name} ${r.weight_class}`.toLowerCase();
+          if (!hay.includes(query)) return false;
+        }
+        return true;
+      });
+    }
+
+    function render() {
+      const rows = filtered();
+      const shown = rows.slice(0, MAX_ROWS);
+      if (matchCount) matchCount.textContent = `${rows.length.toLocaleString()} picks`;
+      if (labNote) labNote.textContent = rows.length > MAX_ROWS
+        ? `Showing first ${MAX_ROWS.toLocaleString()} of ${rows.length.toLocaleString()} — use filters to narrow.`
+        : '';
+
+      if (!shown.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="fp-empty-row">No picks match the current filters.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = shown.map((r) => {
+        const resultBadge = r.model_correct == null
+          ? '<span class="fp-badge fp-badge-neutral">—</span>'
+          : r.model_correct
+            ? '<span class="fp-badge fp-badge-correct"><img src="/branding/b91c1c-correct-emoji.png" alt="" width="13" height="13" /> Correct</span>'
+            : '<span class="fp-badge fp-badge-wrong"><img src="/branding/b91c1c-incorrect-emoji.png" alt="" width="13" height="13" /> Wrong</span>';
+
+        const sigBadge = r.signal_strength
+          ? `<span class="fp-sig ${esc(sigCls(r.signal_strength))}">${esc(r.signal_strength)}</span>`
+          : '—';
+
+        const fLink = (name) => name
+          ? `<a class="fp-fighter-link" href="/fighter-card/?fighter=${encodeURIComponent(name)}">${esc(name)}</a>`
+          : '—';
+        const flagName = (flag, name) => `${flag ? esc(flag) + ' ' : ''}${fLink(name)}`;
+
+        const edgeCls = Number(r.edge) > 0 ? 'pos' : Number(r.edge) < 0 ? 'neg' : '';
+
+        return `<tr>
+          <td>${esc(r.event_date)}<span>${esc(r.event_name)}</span></td>
+          <td>${flagName(r.fighter_flag, r.fighter_name_display)}</td>
+          <td>${flagName(r.opponent_flag, r.opponent_name_display)}</td>
+          <td>${fLink(r.bet_on_name)}</td>
+          <td>${fLink(r.winner_name_display)}</td>
+          <td>${resultBadge}</td>
+          <td><code>${esc(pct(r.model_prob))}</code></td>
+          <td><code class="${edgeCls}">${esc(fmtEdge(r.edge))}</code></td>
+          <td>${sigBadge}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    modelBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        currentModel = btn.getAttribute('data-model') || 'catboost';
+        modelBtns.forEach((b) => b.classList.toggle('is-active', b === btn));
+        updateKpisAndStats(labData[currentModel]);
+        render();
+      });
+    });
+
+    signalSel?.addEventListener('change', render);
+    resultSel?.addEventListener('change', render);
+    searchIn?.addEventListener('input', render);
+
+    updateKpisAndStats(labData.catboost);
+    render();
+  })();
+</script>
+
+<style>
+  .fp-lab-page { display: grid; gap: 1rem; }
+
+  .fp-tool-hero {
+    background: linear-gradient(150deg, rgba(22,22,26,0.92), rgba(36,36,42,0.68));
+    border: 1px solid rgba(113,113,122,0.42);
+    border-radius: 0.8rem;
+    padding: 1.35rem;
+  }
+  .fp-tool-breadcrumb { color: #fca5a5; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-decoration: none; text-transform: uppercase; }
+  .fp-section-label { margin: 0.45rem 0 0; color: #a1a1aa; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .fp-tool-hero h1 { margin: 0.25rem 0 0.45rem; color: #fef2f2; font-size: clamp(1.7rem, 4vw, 2.45rem); line-height: 1.08; }
+  .fp-hero-copy { max-width: 72ch; margin: 0; color: #d4d4d8; line-height: 1.6; }
+
+  .fp-kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0,1fr));
+    background: linear-gradient(145deg, rgba(28,28,32,0.92), rgba(39,39,42,0.76));
+    border: 1px solid rgba(248,113,113,0.16);
+    border-top: 2px solid rgba(185,28,28,0.52);
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 18px rgba(0,0,0,0.2);
+  }
+  .fp-kpi-item {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 110px; padding: 0.8rem 0.65rem; text-align: center;
+    border-right: 1px solid rgba(248,113,113,0.12);
+    background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0));
+  }
+  .fp-kpi-item:last-child { border-right: 0; }
+  .fp-kpi-icon { margin-bottom: 0.22rem; }
+  .fp-kpi-icon img { object-fit: contain; display: block; }
+  .fp-kpi-label { color: #d4d4d8; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.12rem; font-weight: 700; }
+  .fp-kpi-value { color: #fff; font-size: 1.12rem; font-weight: 800; line-height: 1; }
+
+  .fp-tool-controls {
+    display: grid;
+    grid-template-columns: auto minmax(140px,0.28fr) minmax(140px,0.28fr) minmax(200px,1fr);
+    gap: 0.75rem; align-items: end;
+    background: linear-gradient(150deg, rgba(22,22,26,0.92), rgba(36,36,42,0.68));
+    border: 1px solid rgba(113,113,122,0.42);
+    border-radius: 0.8rem; padding: 0.9rem;
+  }
+  .fp-tool-controls label { display: grid; gap: 0.35rem; color: #a1a1aa; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+  .fp-tool-controls select,
+  .fp-tool-controls input { width: 100%; min-height: 2.55rem; border: 1px solid rgba(113,113,122,0.52); border-radius: 0.55rem; color: #f4f4f5; background: rgba(9,9,11,0.78); padding: 0.55rem 0.65rem; }
+
+  .fp-model-picker { display: flex; border-radius: 0.55rem; overflow: hidden; border: 1px solid rgba(113,113,122,0.52); align-self: end; }
+  .fp-model-btn { flex: 1; padding: 0.6rem 0.85rem; background: rgba(9,9,11,0.78); border: none; border-right: 1px solid rgba(113,113,122,0.52); color: #a1a1aa; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.04em; cursor: pointer; transition: background 100ms, color 100ms; white-space: nowrap; }
+  .fp-model-btn:last-child { border-right: none; }
+  .fp-model-btn:hover { background: rgba(127,29,29,0.26); color: #fca5a5; }
+  .fp-model-btn.is-active { background: rgba(185,28,28,0.38); color: #fef2f2; }
+
+  .fp-stats-band {
+    display: grid; grid-template-columns: repeat(6, minmax(0,1fr));
+    background: linear-gradient(150deg, rgba(22,22,26,0.92), rgba(36,36,42,0.68));
+    border: 1px solid rgba(113,113,122,0.42);
+    border-radius: 0.8rem; overflow: hidden;
+  }
+  .fp-stats-cell { display: flex; flex-direction: column; align-items: center; padding: 0.65rem 0.5rem; text-align: center; border-right: 1px solid rgba(63,63,70,0.65); }
+  .fp-stats-cell:last-child { border-right: 0; }
+  .fp-stats-cell span { color: #a1a1aa; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; margin-bottom: 0.2rem; }
+  .fp-stats-cell strong { color: #fef2f2; font-size: 0.96rem; font-weight: 800; }
+
+  .fp-picks-panel {
+    background: linear-gradient(150deg, rgba(22,22,26,0.92), rgba(36,36,42,0.68));
+    border: 1px solid rgba(113,113,122,0.42);
+    border-radius: 0.8rem; padding: 0.95rem; min-width: 0;
+  }
+  .fp-panel-head { display: flex; justify-content: space-between; gap: 0.75rem; align-items: baseline; margin-bottom: 0.75rem; }
+  .fp-panel-head h2 { margin: 0; color: #fef2f2; font-size: 1.05rem; }
+  .fp-panel-head span { color: #a1a1aa; font-size: 0.84rem; }
+
+  .fp-table-wrap { overflow: auto; }
+  table { width: 100%; border-collapse: collapse; color: #d4d4d8; font-size: 0.85rem; }
+  th, td { border-bottom: 1px solid rgba(63,63,70,0.78); padding: 0.52rem 0.45rem; text-align: left; vertical-align: middle; }
+  th { color: #fca5a5; font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+  td span { display: block; color: #a1a1aa; font-size: 0.75rem; margin-top: 0.1rem; }
+  td code { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.83rem; }
+  td code.pos { color: #86efac; }
+  td code.neg { color: #fca5a5; }
+  .fp-fighter-link { color: #e4e4e7; text-decoration: none; }
+  .fp-fighter-link:hover { color: #fef2f2; text-decoration: underline; }
+  .fp-empty-row { color: #a1a1aa; text-align: center; padding: 1.5rem; }
+  .fp-table-note { color: #71717a; font-size: 0.75rem; margin: 0.5rem 0 0; }
+
+  .fp-badge { display: inline-flex; align-items: center; gap: 0.22rem; padding: 0.18rem 0.5rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+  .fp-badge img { vertical-align: middle; }
+  .fp-badge-correct { color: #bbf7d0; background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.28); }
+  .fp-badge-wrong   { color: #fecaca; background: rgba(239,68,68,0.14);  border: 1px solid rgba(239,68,68,0.28); }
+  .fp-badge-neutral { color: #a1a1aa; background: rgba(63,63,70,0.32);   border: 1px solid rgba(63,63,70,0.52); }
+
+  .fp-sig { display: inline-flex; align-items: center; padding: 0.16rem 0.42rem; border-radius: 999px; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; border: 1px solid; white-space: nowrap; }
+  .sig-strong { color: #bbf7d0; border-color: rgba(34,197,94,0.32);  background: rgba(34,197,94,0.12); }
+  .sig-medium { color: #fde68a; border-color: rgba(234,179,8,0.32);   background: rgba(234,179,8,0.12); }
+  .sig-weak   { color: #d4d4d8; border-color: rgba(161,161,170,0.32); background: rgba(161,161,170,0.1); }
+
+  .fp-empty-state { display: grid; gap: 0.55rem; padding: 1.35rem; background: linear-gradient(150deg, rgba(22,22,26,0.92), rgba(36,36,42,0.68)); border: 1px solid rgba(113,113,122,0.42); border-radius: 0.8rem; color: #d4d4d8; }
+  .fp-empty-state strong { color: #fef2f2; font-size: 1rem; }
+
+  @media (max-width: 1100px) {
+    .fp-kpi-strip { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .fp-kpi-item:nth-child(3) { border-right: 0; }
+    .fp-kpi-item:nth-child(1),
+    .fp-kpi-item:nth-child(2),
+    .fp-kpi-item:nth-child(3) { border-bottom: 1px solid rgba(248,113,113,0.12); }
+    .fp-stats-band { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .fp-stats-cell:nth-child(3) { border-right: 0; }
+    .fp-stats-cell:nth-child(1),
+    .fp-stats-cell:nth-child(2),
+    .fp-stats-cell:nth-child(3) { border-bottom: 1px solid rgba(63,63,70,0.65); }
+    .fp-tool-controls { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 700px) {
+    .fp-kpi-strip { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .fp-tool-controls { grid-template-columns: 1fr; }
+    .fp-stats-band { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  }
+</style>

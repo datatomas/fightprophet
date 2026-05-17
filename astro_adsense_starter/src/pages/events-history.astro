@@ -26,10 +26,26 @@ const pastEvents = totalEvents - upcomingEvents;
         Browse tracked cards with fight-level results, model signal, market context, and event summaries from the same dashboard exports that power the analytics app.
       </p>
       <div class="fp-kpi-strip" aria-label="Events archive summary">
-        <span><strong>{totalEvents.toLocaleString()}</strong> events</span>
-        <span><strong>{totalFights.toLocaleString()}</strong> fight rows</span>
-        <span><strong>{upcomingEvents.toLocaleString()}</strong> upcoming</span>
-        <span><strong>{pastEvents.toLocaleString()}</strong> past</span>
+        <div class="fp-kpi-item">
+          <div class="fp-kpi-icon"><img src="/branding/b91c1c-events-emoji.png" alt="" width="42" height="42" /></div>
+          <div class="fp-kpi-label">Events</div>
+          <div class="fp-kpi-value">{totalEvents.toLocaleString()}</div>
+        </div>
+        <div class="fp-kpi-item">
+          <div class="fp-kpi-icon"><img src="/branding/b91c1c-fights-emoji.png" alt="" width="42" height="42" /></div>
+          <div class="fp-kpi-label">Fight Rows</div>
+          <div class="fp-kpi-value">{totalFights.toLocaleString()}</div>
+        </div>
+        <div class="fp-kpi-item">
+          <div class="fp-kpi-icon"><img src="/branding/b91c1c-predictions-emoji.png" alt="" width="42" height="42" /></div>
+          <div class="fp-kpi-label">Upcoming</div>
+          <div class="fp-kpi-value">{upcomingEvents.toLocaleString()}</div>
+        </div>
+        <div class="fp-kpi-item">
+          <div class="fp-kpi-icon"><img src="/branding/b91c1c-accuracy-emoji.png" alt="" width="42" height="42" /></div>
+          <div class="fp-kpi-label">Past</div>
+          <div class="fp-kpi-value">{pastEvents.toLocaleString()}</div>
+        </div>
       </div>
     </header>
 
@@ -279,24 +295,33 @@ const pastEvents = totalEvents - upcomingEvents;
     line-height: 1.6;
   }
   .fp-kpi-strip {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.55rem;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 0;
     margin-top: 1rem;
+    background: linear-gradient(145deg, rgba(28,28,32,0.92), rgba(39,39,42,0.76));
+    border: 1px solid rgba(248,113,113,0.16);
+    border-top: 2px solid rgba(185,28,28,0.52);
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 18px rgba(0,0,0,0.2);
   }
-  .fp-kpi-strip span {
-    display: inline-flex;
-    gap: 0.35rem;
+  .fp-kpi-item {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    border: 1px solid rgba(239, 68, 68, 0.28);
-    border-radius: 999px;
-    padding: 0.42rem 0.65rem;
-    color: #d4d4d8;
-    background: rgba(24, 24, 27, 0.72);
+    justify-content: center;
+    min-height: 100px;
+    padding: 0.75rem 0.65rem;
+    text-align: center;
+    border-right: 1px solid rgba(248,113,113,0.12);
+    background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0));
   }
-  .fp-kpi-strip strong {
-    color: #fef2f2;
-  }
+  .fp-kpi-item:last-child { border-right: 0; }
+  .fp-kpi-icon { margin-bottom: 0.22rem; line-height: 1; }
+  .fp-kpi-icon img { object-fit: contain; display: block; }
+  .fp-kpi-label { color: #d4d4d8; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.12rem; font-weight: 700; }
+  .fp-kpi-value { color: #fff; font-size: 1.08rem; font-weight: 800; line-height: 1; }
   .fp-tool-controls {
     display: grid;
     grid-template-columns: minmax(220px, 1fr) minmax(150px, 0.28fr) minmax(180px, 0.38fr);
@@ -460,8 +485,11 @@ const pastEvents = totalEvents - upcomingEvents;
   @media (max-width: 900px) {
     .fp-tool-controls,
     .fp-events-layout,
-    .fp-event-kpis {
-      grid-template-columns: 1fr;
-    }
+    .fp-event-kpis { grid-template-columns: 1fr; }
+    .fp-kpi-strip { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .fp-kpi-item:nth-child(2) { border-right: 0; }
+    .fp-kpi-item:nth-child(3) { border-right: 1px solid rgba(248,113,113,0.12); }
+    .fp-kpi-item:nth-child(1),
+    .fp-kpi-item:nth-child(2) { border-bottom: 1px solid rgba(248,113,113,0.12); }
   }
 </style>

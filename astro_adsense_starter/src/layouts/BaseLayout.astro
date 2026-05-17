@@ -433,6 +433,11 @@ const structuredData = [
     --fp-shell-max: 1720px;
   }
 
+  :global(html) {
+    background-color: #030304;
+    color-scheme: dark;
+  }
+
   :global(html, body) {
     margin: 0;
     font-family: Inter, system-ui, sans-serif;
@@ -599,15 +604,17 @@ const structuredData = [
     height: 100dvh;
     width: var(--fp-rail-width);
     z-index: 60;
-    background:
-      radial-gradient(120% 60% at 0% 0%, rgba(127, 29, 29, 0.18), transparent 55%),
-      radial-gradient(80% 50% at 100% 100%, rgba(220, 38, 38, 0.10), transparent 60%),
-      linear-gradient(180deg, #050507 0%, #0a0608 45%, #100808 100%);
-    border-right: 1px solid rgba(220, 38, 38, 0.42);
+    /* Solid fallback first so gradient failures still render dark */
+    background-color: #030304;
+    background-image:
+      radial-gradient(ellipse 180% 55% at 0% 0%, rgba(185, 28, 28, 0.22), transparent 55%),
+      radial-gradient(ellipse 140% 45% at 110% 100%, rgba(127, 29, 29, 0.18), transparent 60%),
+      linear-gradient(170deg, #06040a 0%, #08040a 35%, #0d0609 70%, #0a0505 100%);
+    border-right: 2px solid rgba(185, 28, 28, 0.5);
     box-shadow:
-      6px 0 32px rgba(0, 0, 0, 0.6),
-      inset -1px 0 0 rgba(220, 38, 38, 0.34),
-      inset 0 1px 0 rgba(255, 255, 255, 0.02);
+      8px 0 40px rgba(0, 0, 0, 0.75),
+      inset -2px 0 0 rgba(220, 38, 38, 0.28),
+      inset 0 0 60px rgba(127, 29, 29, 0.06);
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
@@ -701,14 +708,20 @@ const structuredData = [
     width: 100%;
   }
   .fp-app-rail-nav-icon {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     object-fit: contain;
     justify-self: center;
-    opacity: 0.92;
-    /* keep the icons their true red — no brightness washout */
-    filter: saturate(1.25) contrast(1.05) drop-shadow(0 0 6px rgba(220, 38, 38, 0.45));
-    transition: filter 120ms ease, transform 120ms ease, opacity 120ms ease;
+    flex-shrink: 0;
+    opacity: 0.88;
+    border-radius: 0.45rem;
+    padding: 0.2rem;
+    background: rgba(127, 29, 29, 0.28);
+    border: 1px solid rgba(185, 28, 28, 0.32);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35);
+    /* No brightness: keep true icon colours */
+    filter: saturate(1.1) drop-shadow(0 0 4px rgba(220, 38, 38, 0.4));
+    transition: filter 120ms ease, transform 120ms ease, opacity 120ms ease, background 120ms ease;
   }
 
   .fp-app-rail-nav-link {
@@ -734,8 +747,10 @@ const structuredData = [
   }
   .fp-app-rail-nav-link:hover .fp-app-rail-nav-icon {
     opacity: 1;
-    transform: scale(1.06);
-    filter: saturate(1.45) contrast(1.12) drop-shadow(0 0 10px rgba(248, 113, 113, 0.62));
+    transform: scale(1.08);
+    background: rgba(185, 28, 28, 0.45);
+    border-color: rgba(248, 113, 113, 0.52);
+    filter: saturate(1.35) drop-shadow(0 0 8px rgba(248, 113, 113, 0.65));
   }
   .fp-app-rail-nav-link.is-active {
     background: linear-gradient(160deg, rgba(185, 28, 28, 0.42), rgba(69, 10, 10, 0.62));
@@ -748,7 +763,9 @@ const structuredData = [
   .fp-app-rail-nav-link.is-primary-nav .fp-app-rail-nav-icon {
     opacity: 1;
     transform: scale(1.06);
-    filter: saturate(1.55) contrast(1.15) drop-shadow(0 0 12px rgba(248, 113, 113, 0.7));
+    background: rgba(220, 38, 38, 0.48);
+    border-color: rgba(248, 113, 113, 0.62);
+    filter: saturate(1.4) drop-shadow(0 0 10px rgba(248, 113, 113, 0.72));
   }
   .fp-app-rail-nav-link.is-primary-nav {
     background: linear-gradient(160deg, rgba(185, 28, 28, 0.55), rgba(90, 20, 20, 0.62));
