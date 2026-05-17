@@ -1,17 +1,84 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import ContentPage from '../components/ContentPage.astro';
+
+const contactEmail = import.meta.env.PUBLIC_CONTACT_EMAIL || 'tomsuarezx@gmail.com';
 ---
 
-<BaseLayout title="Privacy Policy | Fight Prophet" description="Privacy and advertising disclosure.">
-  <h1>Privacy Policy</h1>
-  <p>
-    This site may use third-party advertising services, including Google AdSense, to display ads.
-    Third-party vendors may use cookies to serve ads based on prior visits to this website or
-    other websites.
-  </p>
-  <p>
-    Users can manage ad personalization settings through Google Ad Settings. If your region requires
-    consent (for example under GDPR/EEA/UK rules), implement and enforce a compliant consent flow
-    before enabling ad delivery.
-  </p>
+<BaseLayout
+  title="Privacy Policy | Fight Prophet"
+  description="Fight Prophet privacy policy covering analytics, advertising, cookies, third-party services, user choices, and contact information."
+>
+  <ContentPage
+    eyebrow="Privacy"
+    title="Privacy Policy"
+    intro="This policy explains what Fight Prophet may collect, why it is collected, how third-party services are used, and how readers can manage privacy choices."
+    updated="May 17, 2026"
+  >
+    <section>
+      <h2>Information We Collect</h2>
+      <p>
+        Fight Prophet may collect basic technical information such as page views, browser
+        type, device type, referrer, approximate location derived from network information,
+        and interaction data. If you subscribe to the newsletter or contact the publisher,
+        we may receive the information you submit, such as your email address and message.
+      </p>
+    </section>
+
+    <div class="fp-content-grid">
+      <section>
+        <h2>Analytics</h2>
+        <p>
+          The site may use Google Analytics or similar tools to understand which pages are
+          useful, diagnose technical issues, and improve the public site. Analytics data is
+          reviewed in aggregate and is not intended to identify individual visitors.
+        </p>
+      </section>
+
+      <section>
+        <h2>Advertising</h2>
+        <p>
+          The site may use Google AdSense or other advertising services. Third-party vendors,
+          including Google, may use cookies, web beacons, IP addresses, or similar identifiers
+          to serve and measure ads based on visits to this and other websites.
+        </p>
+      </section>
+    </div>
+
+    <section>
+      <h2>Cookies And User Choices</h2>
+      <p>
+        Cookies may support analytics, advertising, language preference, security, and basic
+        site functionality. You can manage cookies in your browser settings. You can also
+        review Google's explanation of ad data use at
+        <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer">How Google uses information from sites or apps that use its services</a>.
+      </p>
+    </section>
+
+    <section>
+      <h2>Newsletter And Third-Party Services</h2>
+      <p>
+        Newsletter forms may be handled by Buttondown or another email provider. External
+        services linked from this site, including LinkedIn, GitHub, Buttondown, Google, or
+        the Fight Prophet app subdomain, have their own privacy practices.
+      </p>
+    </section>
+
+    <section>
+      <h2>Children</h2>
+      <p>
+        Fight Prophet is not directed to children under 13. The site is about MMA analytics
+        and probability education, and it should not be used by minors for gambling or
+        financial decision-making.
+      </p>
+    </section>
+
+    <section>
+      <h2>Contact</h2>
+      <p>
+        Privacy questions, correction requests, and data concerns can be sent to
+        <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
+      </p>
+    </section>
+  </ContentPage>
 </BaseLayout>

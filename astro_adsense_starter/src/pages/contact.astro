@@ -1,0 +1,58 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ContentPage from '../components/ContentPage.astro';
+
+const contactEmail = import.meta.env.PUBLIC_CONTACT_EMAIL || 'tomsuarezx@gmail.com';
+---
+
+<BaseLayout
+  title="Contact Fight Prophet | Corrections, Questions, and Publisher Contact"
+  description="Contact Fight Prophet for corrections, data questions, publisher inquiries, and feedback about the MMA analytics site."
+>
+  <ContentPage
+    eyebrow="Contact"
+    title="Contact Fight Prophet"
+    intro="Use this page for corrections, methodology questions, partnership inquiries, or reports about broken pages and data issues."
+    updated="May 17, 2026"
+  >
+    <section>
+      <h2>Primary Contact</h2>
+      <p>
+        Email: <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+      </p>
+      <p>
+        For corrections, include the page URL, the fighter or event name, the value that looks
+        wrong, and a source or explanation when available. That helps keep the public data
+        trail cleaner.
+      </p>
+    </section>
+
+    <div class="fp-content-grid">
+      <section>
+        <h2>Business Profiles</h2>
+        <ul>
+          <li><a href="https://www.linkedin.com/company/fight-prophet" target="_blank" rel="noopener noreferrer">Fight Prophet on LinkedIn</a></li>
+          <li><a href="https://github.com/datatomas/fightprophet" target="_blank" rel="noopener noreferrer">Fight Prophet on GitHub</a></li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Founder Profile</h2>
+        <p>
+          You can also review the founder profile on
+          <a href="https://www.linkedin.com/in/datatomas/" target="_blank" rel="noopener noreferrer">LinkedIn</a>.
+        </p>
+      </section>
+    </div>
+
+    <section>
+      <h2>Response Priorities</h2>
+      <ul>
+        <li>Incorrect fighter identity, country, status, or fight record data.</li>
+        <li>Broken navigation, unavailable pages, or crawlability problems.</li>
+        <li>Questions about model limitations, ranking criteria, or data refresh cadence.</li>
+        <li>Advertising, privacy, and policy compliance concerns.</li>
+      </ul>
+    </section>
+  </ContentPage>
+</BaseLayout>

@@ -1,0 +1,65 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ContentPage from '../components/ContentPage.astro';
+---
+
+<BaseLayout
+  title="Editorial Policy | Fight Prophet"
+  description="Fight Prophet editorial policy for original analysis, sourcing, corrections, model claims, and content quality."
+>
+  <ContentPage
+    eyebrow="Editorial Policy"
+    title="Editorial Policy"
+    intro="Fight Prophet publishes original model explanations, rankings context, and MMA analytics notes. This policy explains how content is produced and corrected."
+    updated="May 17, 2026"
+  >
+    <section>
+      <h2>Original Analysis First</h2>
+      <p>
+        The public site is designed around original interpretation of Fight Prophet data.
+        It does not rely on copied articles, scraped news pages, or automated rewrites of
+        other publishers. External sources may be linked when they help verify a fact, but
+        Fight Prophet pages should add analysis, methodology, or context of their own.
+      </p>
+    </section>
+
+    <div class="fp-content-grid">
+      <section>
+        <h2>Sourcing</h2>
+        <p>
+          Data pages may combine structured fight records, public event information, manual
+          overrides, and model outputs. When a page discusses a claim that depends on an
+          external publisher or official record, the page should link out rather than
+          reproduce the source.
+        </p>
+      </section>
+
+      <section>
+        <h2>Corrections</h2>
+        <p>
+          Corrections are prioritized when they affect fighter identity, fight result, title
+          status, country, activity status, model explanation, privacy, or policy compliance.
+          Readers can send corrections through the contact page.
+        </p>
+      </section>
+    </div>
+
+    <section>
+      <h2>Model Claims</h2>
+      <p>
+        Model outputs must be described as estimates. Fight Prophet avoids language that
+        guarantees outcomes, promises profit, or implies sportsbook endorsement. When a
+        model is uncertain, the content should say so plainly.
+      </p>
+    </section>
+
+    <section class="fp-content-note">
+      <h2>Advertising Standard</h2>
+      <p>
+        Ads and support widgets should not overwhelm publisher content, block navigation, or
+        make it unclear what belongs to Fight Prophet. The public site keeps policy, privacy,
+        contact, and methodology pages reachable from the main navigation and footer.
+      </p>
+    </section>
+  </ContentPage>
+</BaseLayout>

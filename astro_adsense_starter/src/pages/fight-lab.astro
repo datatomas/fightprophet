@@ -23,5 +23,10 @@ import AppSectionLanding from '../components/AppSectionLanding.astro';
       'Calibration curves comparing predicted vs actual win rates',
       'Filter controls for date range, weight class, and event',
     ]}
+    readingNotes={[
+      { title: 'Model accountability', body: 'Past predictions stay attached to actual results so the model can be checked after the fight instead of only promoted before it.' },
+      { title: 'Calibration context', body: 'Accuracy is not the only metric; probability quality is reviewed with Brier score, log loss, and predicted-versus-actual win rates.' },
+      { title: 'Repeatable review', body: 'Filters make it possible to compare events, divisions, and model variants with the same audit frame.' },
+    ]}
   />
 </BaseLayout>

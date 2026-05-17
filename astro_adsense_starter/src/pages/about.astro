@@ -1,0 +1,65 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ContentPage from '../components/ContentPage.astro';
+---
+
+<BaseLayout
+  title="About Fight Prophet | MMA Analytics and Model Transparency"
+  description="About Fight Prophet, the public MMA analytics project behind the rankings, predictions, model notes, and open-source fight-data tooling."
+>
+  <ContentPage
+    eyebrow="About"
+    title="About Fight Prophet"
+    intro="Fight Prophet is a public MMA analytics project built to make fight data easier to inspect. The site combines rankings, fighter cards, model diagnostics, and plain-English methodology so readers can understand what the model sees and where it can be wrong."
+    updated="May 17, 2026"
+  >
+    <section>
+      <h2>What Fight Prophet Publishes</h2>
+      <p>
+        The public site focuses on original analysis around UFC and MMA data: all-time and
+        division rankings, fighter-card context, prediction methodology, historical model
+        audits, and responsible-use notes. The goal is not to copy fight news. The goal is to
+        explain model outputs and make the data behind them easier to question.
+      </p>
+    </section>
+
+    <div class="fp-content-grid">
+      <section>
+        <h2>Publisher Identity</h2>
+        <p>
+          Fight Prophet is maintained by Uppercut Analytics as an independent analytics and
+          software project. It is not affiliated with, endorsed by, or sponsored by UFC,
+          ESPN, sportsbooks, fighters, or promotions mentioned in the data.
+        </p>
+      </section>
+
+      <section>
+        <h2>Open Source Roots</h2>
+        <p>
+          The project is developed in public where possible, including the public website and
+          supporting MMA analytics tools. Open-source visibility lets readers inspect the
+          methods instead of treating model claims as a black box.
+        </p>
+      </section>
+    </div>
+
+    <section>
+      <h2>What Makes The Site Useful</h2>
+      <ul>
+        <li>Rankings are computed from fight-level signals instead of editorial ballots.</li>
+        <li>Prediction pages explain probability, confidence, and model disagreement.</li>
+        <li>Fight Lab keeps historical predictions next to outcomes for auditability.</li>
+        <li>Policy pages describe limitations, corrections, privacy, and responsible use.</li>
+      </ul>
+    </section>
+
+    <section class="fp-content-note">
+      <h2>Start Here</h2>
+      <ul class="fp-content-actions">
+        <li><a href="/methodology/">Read the methodology</a></li>
+        <li><a href="/rankings/">Understand rankings</a></li>
+        <li><a href="/contact/">Contact the publisher</a></li>
+      </ul>
+    </section>
+  </ContentPage>
+</BaseLayout>

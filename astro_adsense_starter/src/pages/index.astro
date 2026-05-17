@@ -3,15 +3,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import AdSlot from '../components/AdSlot.astro';
 import FighterCard from '../components/FighterCard.astro';
 import NewsletterSignup from '../components/NewsletterSignup.astro';
-import { buildAppPageUrl } from '../lib/app-url';
 import { runtimeEnvFromLocals, getCountryMasterIndex } from '../lib/country-master';
 import { getAllRankedFighterCards, getHomepageGoatCards, getHomepageRankingsDebug, groupRankedFightersByDivision } from '../lib/champions';
 
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
-const withPage = (slug: string) => buildAppPageUrl(appUrl, slug);
-const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'https://fightprophet.com').replace(/\/$/, '');
 const rankingsAnchorUrl = '/#fp-rankings';
-const predictionsAppUrl = withPage('predictions');
+const predictionsPageUrl = '/predictions/';
 
 const runtimeEnv = runtimeEnvFromLocals(Astro.locals);
 Astro.locals.countryMaster = await getCountryMasterIndex(runtimeEnv);
@@ -22,35 +19,6 @@ const rankedDivisions = groupRankedFightersByDivision(allRankedFighters);
 const totalRankedFighters = allRankedFighters.length;
 const goatPreviewLimit = 10;
 const topGoats = homepageGoats.slice(0, goatPreviewLimit);
-
-interface NewsItem {
-  id: string;
-  title: string;
-  description: string;
-  datePublished: string;
-  url: string;
-  source: string;
-}
-
-const MMA_FEEDS = [
-  { name: 'MMA Fighting', url: 'https://www.mmafighting.com/rss/index.xml' },
-  { name: 'ESPN MMA', url: 'https://www.espn.com/espn/rss/mma/news' },
-];
-
-function stripHtml(input: string): string {
-  return input
-    .replace(/<!\[CDATA\[|\]\]>/g, '')
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function toIsoDate(input: string): string {
-  const parsed = new Date(input);
-  if (Number.isNaN(parsed.getTime())) return new Date().toISOString().slice(0, 10);
-  return parsed.toISOString().slice(0, 10);
-}
 
 function slugify(input: string): string {
   return input
@@ -106,93 +74,20 @@ const rankingDecks: RankingDeckExt[] = [
 const initialDeckSlug = rankingDecks[0]?.slug || '';
 const hasRankingDecks = rankingDecks.length > 0;
 
-function parseRssItems(xml: string, source: string, limit = 12): NewsItem[] {
-  const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, limit);
-
-  return itemMatches
-    .map((match, idx) => {
-      const itemXml = match[1] || '';
-      const titleRaw = itemXml.match(/<title>([\s\S]*?)<\/title>/i)?.[1] || '';
-      const descRaw = itemXml.match(/<description>([\s\S]*?)<\/description>/i)?.[1] || '';
-      const linkRaw = itemXml.match(/<link>([\s\S]*?)<\/link>/i)?.[1] || '';
-      const dateRaw = itemXml.match(/<pubDate>([\s\S]*?)<\/pubDate>/i)?.[1] || '';
-
-      const title = stripHtml(titleRaw) || 'MMA News Update';
-      const description = stripHtml(descRaw) || 'Latest MMA world update.';
-      const url = stripHtml(linkRaw) || siteUrl;
-      const datePublished = toIsoDate(stripHtml(dateRaw));
-
-      return {
-        id: `${slugify(title)}-${idx}`,
-        title,
-        description,
-        datePublished,
-        url,
-        source,
-      };
-    })
-    .filter((item) => !!item.title && !!item.url);
-}
-
-async function getMmaNewsItems(): Promise<NewsItem[]> {
-  const allItems: NewsItem[] = [];
-  const perFeed = 5;
-
-  for (const feed of MMA_FEEDS) {
-    try {
-      const response = await fetch(feed.url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36',
-        },
-      });
-      if (!response.ok) continue;
-      const xml = await response.text();
-      allItems.push(...parseRssItems(xml, feed.name, perFeed));
-    } catch {
-      continue;
-    }
-  }
-
-  const deduped = allItems
-    .filter((item, index, arr) => arr.findIndex((other) => other.url === item.url) === index)
-    .sort((a, b) => b.datePublished.localeCompare(a.datePublished))
-    .slice(0, 8);
-
-  if (deduped.length > 0) {
-    return deduped;
-  }
-
-  return [
-    {
-      id: 'mma-fallback-1',
-      title: 'MMA headlines are updating — source temporarily unavailable',
-      description: 'Latest MMA world feed is temporarily unavailable. Please check back shortly for refreshed fight news.',
-      datePublished: new Date().toISOString().slice(0, 10),
-      url: 'https://www.mmafighting.com',
-      source: 'MMA News',
-    },
-  ];
-}
-
-const newsItems = await getMmaNewsItems();
-const initialNews = newsItems[0];
-
-const newsStructuredData = newsItems.map((item) => ({
-  '@context': 'https://schema.org',
-  '@type': 'NewsArticle',
-  headline: item.title,
-  description: item.description,
-  datePublished: item.datePublished,
-  dateModified: item.datePublished,
-  author: { '@type': 'Organization', name: 'Fight Prophet' },
-  publisher: {
-    '@type': 'Organization',
-    name: 'Fight Prophet',
-    logo: { '@type': 'ImageObject', url: `${siteUrl}/branding/fightprophet_logo_white.png` },
+const analysisNotes = [
+  {
+    title: 'Ranking signal, not nostalgia',
+    copy: `${totalRankedFighters.toLocaleString()} ranked fighter records feed the public board. The score weights result quality, opponent strength, title stakes, finishes, streaks, inactivity, and loss penalties so readers can inspect the same logic across divisions.`,
   },
-  mainEntityOfPage: `${siteUrl}/#news-${item.id}`,
-  url: `${siteUrl}/#news-${item.id}`,
-}));
+  {
+    title: 'Prediction signal, not betting advice',
+    copy: 'Upcoming-fight probabilities are treated as model estimates. A useful pick needs both probability and context: missing opponent history, short-notice changes, stale lines, and low model agreement all reduce confidence.',
+  },
+  {
+    title: 'Audit trail for every model claim',
+    copy: 'Fight Lab keeps historical predictions next to actual outcomes, closing-market context, and calibration metrics. That makes the model falsifiable instead of just promotional.',
+  },
+];
 ---
 
 <BaseLayout title="Fight Prophet | MMA Predictions, Rankings & Analytics" description="MMA AI and ML-powered fight predictions, fighter rankings, and model insights. Built for fans who want clear data without the noise.">
@@ -207,7 +102,7 @@ const newsStructuredData = newsItems.map((item) => ({
       <h1 class="fp-hero-title" id="i18n-hero-title">Who is the greatest fighter of all time?</h1>
       <p class="fp-hero-sub" id="i18n-hero-sub">Fight Prophet runs an AI &amp; ML-powered fight-by-fight ranking engine: every UFC result earns or burns points, then the board splits into all-time, active, and weight-class GOAT lists. Predictions and rankings, built from data.</p>
       <div class="fp-hero-ctas">
-        <a class="fp-cta-primary" href={predictionsAppUrl}>
+        <a class="fp-cta-primary" href={predictionsPageUrl}>
           <span id="i18n-cta-open-app">See predictions</span>
           <span class="fp-cta-arrow" aria-hidden="true">→</span>
         </a>
@@ -354,27 +249,27 @@ const newsStructuredData = newsItems.map((item) => ({
         <h2 class="fp-sections-title" id="i18n-explore-title">Everything Fight Prophet has</h2>
       </div>
       <div class="fp-cta-grid">
-        <a class="fp-section-card" href={predictionsAppUrl}>
+        <a class="fp-section-card" href="/predictions/">
           <strong id="i18n-cta-1-title">Predictions</strong>
           <span id="i18n-cta-1-desc">Compare model vs market probability</span>
         </a>
-        <a class="fp-section-card" href={withPage('fight-lab')}>
+        <a class="fp-section-card" href="/fight-lab/">
           <strong id="i18n-cta-2-title">Fight Lab</strong>
           <span id="i18n-cta-2-desc">Historical picks + model metrics</span>
         </a>
-        <a class="fp-section-card" href={withPage('rankings')}>
+        <a class="fp-section-card" href="/rankings/">
           <strong id="i18n-cta-3-title">Fighter Rankings</strong>
           <span id="i18n-cta-3-desc">Every division in one place</span>
         </a>
-        <a class="fp-section-card" href={withPage('belt-holders')}>
+        <a class="fp-section-card" href="/belt-holders/">
           <strong id="i18n-cta-4-title">Belt Holders</strong>
           <span id="i18n-cta-4-desc">Champions and title history</span>
         </a>
-        <a class="fp-section-card" href={withPage('fighter-card')}>
+        <a class="fp-section-card" href="/fighter-card/">
           <strong id="i18n-cta-5-title">Fighter Cards</strong>
           <span id="i18n-cta-5-desc">Open a data card for any fighter</span>
         </a>
-        <a class="fp-section-card" href={withPage('events-history')}>
+        <a class="fp-section-card" href="/events-history/">
           <strong id="i18n-cta-6-title">Events History</strong>
           <span id="i18n-cta-6-desc">Past UFC cards and results</span>
         </a>
@@ -383,36 +278,30 @@ const newsStructuredData = newsItems.map((item) => ({
 
     <NewsletterSignup />
 
-    <!-- LATEST NEWS -->
-    {newsItems.length > 0 && (
-      <section class="fp-news-section">
-        <p class="fp-section-label" id="i18n-news-label">Latest news</p>
-        <div class="fp-news-shell">
-          <nav class="fp-news-menu" id="fp-news-menu" aria-label="News menu">
-            {newsItems.map((item, idx) => (
-              <button
-                type="button"
-                class={`fp-news-menu-item${idx === 0 ? ' is-active' : ''}`}
-                data-news-id={item.id}
-                id={`news-${item.id}`}
-              >
-                <span class="fp-news-menu-date">{item.datePublished}</span>
-                <span class="fp-news-menu-title">{item.title}</span>
-                <span class="fp-news-menu-source">{item.source}</span>
-              </button>
-            ))}
-          </nav>
-          <article class="fp-news-detail" id="fp-news-detail">
-            <p class="fp-news-date" id="fp-news-detail-date">{initialNews.datePublished}</p>
-            <h3 id="fp-news-detail-title">{initialNews.title}</h3>
-            <p id="fp-news-detail-desc">{initialNews.description}</p>
-            <a id="fp-news-detail-link" class="fp-news-detail-link" href={initialNews.url || appUrl} target="_blank" rel="noopener noreferrer">
-              Read full article →
-            </a>
+    <!-- ORIGINAL ANALYSIS NOTES -->
+    <section class="fp-insight-section" aria-labelledby="fp-insight-title">
+      <div class="fp-insight-head">
+        <p class="fp-section-label" id="i18n-news-label">Model notes</p>
+        <h2 id="fp-insight-title">How to read Fight Prophet without overreading it</h2>
+        <p>
+          These notes are original guidance for using the rankings and model outputs. They are
+          written to make the data understandable, not to recycle fight news from other publishers.
+        </p>
+      </div>
+      <div class="fp-insight-grid">
+        {analysisNotes.map((note) => (
+          <article class="fp-insight-card">
+            <h3>{note.title}</h3>
+            <p>{note.copy}</p>
           </article>
-        </div>
-      </section>
-    )}
+        ))}
+      </div>
+      <div class="fp-insight-links">
+        <a href="/methodology/">Read the methodology</a>
+        <a href="/editorial-policy/">Editorial policy</a>
+        <a href="/responsible-use/">Responsible use</a>
+      </div>
+    </section>
 
     <!-- FINAL CTA BANNER -->
     <section class="fp-final-cta">
@@ -420,7 +309,7 @@ const newsStructuredData = newsItems.map((item) => ({
         <p class="fp-final-cta-eyebrow" id="i18n-final-eyebrow">Up next</p>
         <h2 class="fp-final-cta-title" id="i18n-final-title">Compare model picks vs. market for the upcoming fights.</h2>
       </div>
-      <a class="fp-cta-primary" href={predictionsAppUrl}>
+      <a class="fp-cta-primary" href={predictionsPageUrl}>
         <span id="i18n-final-cta">Predictions</span>
         <span class="fp-cta-arrow" aria-hidden="true">→</span>
       </a>
@@ -428,40 +317,6 @@ const newsStructuredData = newsItems.map((item) => ({
 
     <AdSlot slot="1234567890" />
   </div>
-
-  <script type="application/ld+json" set:html={JSON.stringify(newsStructuredData)}></script>
-
-  <script define:vars={{ newsItems }}>
-    const newsList = Array.isArray(newsItems) ? newsItems : [];
-    const byId = Object.fromEntries(newsList.map((item) => [item.id, item]));
-    const menu = document.getElementById('fp-news-menu');
-    const dateEl = document.getElementById('fp-news-detail-date');
-    const titleEl = document.getElementById('fp-news-detail-title');
-    const descEl = document.getElementById('fp-news-detail-desc');
-    const linkEl = document.getElementById('fp-news-detail-link');
-
-    function renderNews(newsId) {
-      const item = byId[newsId];
-      if (!item || !dateEl || !titleEl || !descEl || !linkEl) return;
-      dateEl.textContent = item.datePublished || '';
-      titleEl.textContent = item.title || '';
-      descEl.textContent = item.description || '';
-      linkEl.href = item.url || '#';
-      linkEl.style.display = item.url ? 'inline-flex' : 'none';
-
-      menu?.querySelectorAll('.fp-news-menu-item').forEach((btn) => {
-        btn.classList.toggle('is-active', btn.getAttribute('data-news-id') === newsId);
-      });
-    }
-
-    menu?.addEventListener('click', (event) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      const button = target.closest('.fp-news-menu-item');
-      if (!button) return;
-      renderNews(button.getAttribute('data-news-id') || '');
-    });
-  </script>
 
   <script>
     const wall = document.querySelector('.fp-rank-wall');
@@ -793,7 +648,7 @@ const newsStructuredData = newsItems.map((item) => ({
         cta4Title: 'Belt Holders', cta4Desc: 'Champions and title history',
         cta5Title: 'Fighter Cards', cta5Desc: 'Open a data card for any fighter',
         cta6Title: 'Events History', cta6Desc: 'Past UFC cards and results',
-        newsLabel: 'Latest news',
+        newsLabel: 'Model notes',
         newsletterLabel: 'Fight Prophet Weekly',
         newsletterCopy: 'Weekly MMA predictions, ranking movement, fighter-card updates, and model notes from Uppercut Analytics.',
         newsletterInputLabel: 'Email address',
@@ -831,7 +686,7 @@ const newsStructuredData = newsItems.map((item) => ({
         cta4Title: 'Campeones', cta4Desc: 'Cinturones e historial de títulos',
         cta5Title: 'Tarjetas de Peleadores', cta5Desc: 'Abre una tarjeta para cualquier peleador',
         cta6Title: 'Historial de Eventos', cta6Desc: 'Carteleras UFC pasadas',
-        newsLabel: 'Últimas noticias',
+        newsLabel: 'Notas del modelo',
         newsletterLabel: 'Fight Prophet Weekly',
         newsletterCopy: 'Predicciones de MMA, movimientos en rankings, fichas de peleadores y notas del modelo cada semana por Uppercut Analytics.',
         newsletterInputLabel: 'Correo electrónico',
@@ -869,7 +724,7 @@ const newsStructuredData = newsItems.map((item) => ({
         cta4Title: 'Campeões', cta4Desc: 'Cinturões e histórico',
         cta5Title: 'Cards de Lutadores', cta5Desc: 'Abra um card para qualquer lutador',
         cta6Title: 'Histórico de Eventos', cta6Desc: 'Cards passados da UFC',
-        newsLabel: 'Últimas notícias',
+        newsLabel: 'Notas do modelo',
         newsletterLabel: 'Fight Prophet Weekly',
         newsletterCopy: 'Previsões de MMA, movimentos nos rankings, cards de lutadores e notas do modelo toda semana pela Uppercut Analytics.',
         newsletterInputLabel: 'Email',
@@ -1704,102 +1559,61 @@ const newsStructuredData = newsItems.map((item) => ({
       }
     }
 
-    /* NEWS */
-    .fp-news-section {
+    /* ORIGINAL MODEL NOTES */
+    .fp-insight-section {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.75rem;
     }
-    .fp-news-shell {
+    .fp-insight-head {
       display: grid;
-      grid-template-columns: minmax(220px, 300px) 1fr;
-      gap: 0.7rem;
-      align-items: stretch;
-      min-height: 360px;
+      gap: 0.25rem;
+      max-width: 78ch;
     }
-    .fp-news-menu {
-      display: grid;
-      grid-auto-rows: minmax(78px, 1fr);
-      gap: 0.42rem;
-      max-height: 360px;
-      overflow-y: auto;
-      padding-right: 0.18rem;
-    }
-    .fp-news-menu-item {
-      display: flex;
-      flex-direction: column;
-      gap: 0.18rem;
-      text-align: left;
-      padding: 0.55rem 0.62rem;
-      cursor: pointer;
-      border: 1px solid rgba(220, 38, 38, 0.2);
-      border-radius: 0.7rem;
-      background: linear-gradient(160deg, rgba(35, 20, 20, 0.45), rgba(22, 22, 26, 0.85));
-      color: #f4f4f5;
-      transition: border-color 140ms ease;
-    }
-    .fp-news-menu-item:hover {
-      border-color: rgba(248, 113, 113, 0.45);
-    }
-    .fp-news-menu-item.is-active {
-      border-color: rgba(248, 113, 113, 0.6);
-      background: linear-gradient(160deg, rgba(75, 20, 20, 0.55), rgba(22, 22, 26, 0.9));
-      box-shadow: 0 0 14px rgba(239, 68, 68, 0.2);
-    }
-    .fp-news-menu-date {
-      font-size: 0.66rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #fca5a5;
-      font-weight: 700;
-    }
-    .fp-news-menu-title {
-      font-size: 0.82rem;
-      line-height: 1.35;
-      color: #fef2f2;
-      font-weight: 700;
-    }
-    .fp-news-menu-source {
-      font-size: 0.62rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #a1a1aa;
-      font-weight: 700;
-    }
-    .fp-news-detail {
-      display: flex;
-      flex-direction: column;
-      padding: 0.95rem 1.05rem;
-      background: linear-gradient(160deg, rgba(35, 20, 20, 0.45), rgba(22, 22, 26, 0.88));
-      border: 1px solid rgba(220, 38, 38, 0.24);
-      border-radius: 0.85rem;
-    }
-    .fp-news-date {
-      margin: 0 0 0.3rem;
-      font-size: 0.7rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #fca5a5;
-      font-weight: 700;
-    }
-    .fp-news-detail h3 {
-      margin: 0 0 0.4rem;
-      font-size: 1.04rem;
+    .fp-insight-head h2 {
+      margin: 0;
+      font-size: clamp(1.05rem, 2.2vw, 1.32rem);
       line-height: 1.3;
       color: #fef2f2;
       font-weight: 800;
+      letter-spacing: 0;
     }
-    .fp-news-detail p {
+    .fp-insight-head p,
+    .fp-insight-card p {
       margin: 0;
       color: #d4d4d8;
       line-height: 1.55;
       font-size: 0.9rem;
     }
-    .fp-news-detail-link {
-      margin-top: auto;
-      align-self: flex-start;
+    .fp-insight-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.6rem;
+    }
+    .fp-insight-card {
+      display: grid;
+      gap: 0.36rem;
+      padding: 0.9rem 0.95rem;
+      background: linear-gradient(160deg, rgba(35, 20, 20, 0.45), rgba(22, 22, 26, 0.88));
+      border: 1px solid rgba(220, 38, 38, 0.24);
+      border-radius: 0.85rem;
+    }
+    .fp-insight-card h3 {
+      margin: 0;
+      font-size: 0.98rem;
+      color: #fef2f2;
+      line-height: 1.25;
+    }
+    .fp-insight-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .fp-insight-links a {
       display: inline-flex;
-      padding: 0.42rem 0.78rem;
+      align-items: center;
+      min-height: 2.15rem;
+      padding: 0.36rem 0.78rem;
       font-size: 0.82rem;
       font-weight: 700;
       color: #fef2f2;
@@ -1808,9 +1622,11 @@ const newsStructuredData = newsItems.map((item) => ({
       border-radius: 999px;
       background: linear-gradient(160deg, rgba(127, 29, 29, 0.7), rgba(24, 24, 27, 0.6));
     }
+    .fp-insight-links a:hover {
+      border-color: rgba(248, 113, 113, 0.7);
+    }
     @media (max-width: 760px) {
-      .fp-news-shell { grid-template-columns: 1fr; }
-      .fp-news-menu { max-height: 240px; }
+      .fp-insight-grid { grid-template-columns: 1fr; }
     }
 
     /* FINAL CTA BANNER */

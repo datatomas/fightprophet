@@ -25,6 +25,9 @@ Copy `.env.example` to `.env` and set:
 
 - `PUBLIC_ADSENSE_CLIENT=ca-pub-your-real-id`
 - `PUBLIC_ADSENSE_ENABLED=true` only after privacy/consent setup is ready
+- `PUBLIC_GOOGLE_SITE_VERIFICATION=your-search-console-token` if Google asks for a meta-tag verification token
+- `PUBLIC_CONTACT_EMAIL=hello@fightprophet.com` for the public contact/privacy pages
+- `PUBLIC_KOFI_WIDGET_ENABLED=false` during AdSense review, so support widgets do not compete with publisher content
 - `PUBLIC_SITE_URL=https://yourdomain.com`
 - `PUBLIC_APP_URL=https://app.fightprophet.com`
 - `PUBLIC_BUTTONDOWN_SUBSCRIBE_URL=https://buttondown.com/api/emails/embed-subscribe/fightprophet`
@@ -106,7 +109,11 @@ No Azure subscription endpoint is required for newsletter capture. Buttondown st
 ## 7) Compliance checklist
 
 - Publish `privacy` page and link it in footer/nav
+- Publish `about`, `contact`, `methodology`, `editorial-policy`, and `responsible-use` pages and link them in the footer
 - Serve `ads.txt` from your site root (`/ads.txt`)
+- Keep main navigation on `fightprophet.com`; link to the app as the deeper CTA, not as the only page content
+- Remove copied/RSS article bodies and avoid claiming third-party news as Fight Prophet content
+- Replace placeholder ad slots before enabling visible ad units; the starter suppresses slot `1234567890`
 - Implement consent management where required (EEA/UK/other regulated regions)
 - Avoid incentivized clicks and policy-violating ad placement
 

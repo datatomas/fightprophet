@@ -15,7 +15,8 @@ const {
 
 const enabled = import.meta.env.PUBLIC_ADSENSE_ENABLED === 'true';
 const client = import.meta.env.PUBLIC_ADSENSE_CLIENT ?? '';
-const shouldRender = enabled && client.startsWith('ca-pub-');
+const hasRealSlot = !!slot && slot !== '1234567890';
+const shouldRender = enabled && client.startsWith('ca-pub-') && hasRealSlot;
 ---
 
 {shouldRender && (

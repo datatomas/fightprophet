@@ -1,22 +1,25 @@
 ---
-import { buildAppPageUrl } from '../lib/app-url';
+import AdSenseScript from '../components/AdSenseScript.astro';
 
 interface Props {
   title?: string;
   description?: string;
+  robots?: string;
 }
 
 const {
   title = 'Fight Prophet',
   description = 'AI-powered sports analytics and prediction insights',
+  robots = 'index, follow',
 } = Astro.props as Props;
 
-const siteUrl = import.meta.env.PUBLIC_SITE_URL || 'https://fightprophet.com';
+const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'https://fightprophet.com').replace(/\/$/, '');
 const appUrl = import.meta.env.PUBLIC_APP_URL || 'https://app.fightprophet.com';
 const canonicalUrl = new URL(Astro.url.pathname, siteUrl).toString();
 const ogImageUrl = new URL('/branding/fightprophet_logo_white.png', siteUrl).toString();
+const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION || '';
+const kofiWidgetEnabled = import.meta.env.PUBLIC_KOFI_WIDGET_ENABLED === 'true';
 
-const withPage = (slug: string) => buildAppPageUrl(appUrl, slug);
 const predictionsEmojiUrl = '/branding/b91c1c-predictions-emoji-rail.png';
 const fighterCardsEmojiUrl = '/branding/b91c1c-fighterscard-emoji-rail.png';
 const beltEmojiUrl = '/branding/b91c1c-belt-emoji-rail.png';
@@ -32,6 +35,31 @@ const isActive = (href: string) => {
   if (href === '/') return currentPath === '/' || currentPath === '/rankings' || currentPath === '/rankings/';
   return currentPath.startsWith(href);
 };
+
+const organizationId = `${siteUrl}/#organization`;
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': organizationId,
+    name: 'Fight Prophet',
+    url: siteUrl,
+    logo: ogImageUrl,
+    sameAs: [
+      'https://www.linkedin.com/company/fight-prophet',
+      'https://github.com/datatomas/fightprophet',
+    ],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${siteUrl}/#website`,
+    name: 'Fight Prophet',
+    url: siteUrl,
+    publisher: { '@id': organizationId },
+    inLanguage: 'en',
+  },
+];
 ---
 
 <!doctype html>
@@ -40,7 +68,8 @@ const isActive = (href: string) => {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content={robots} />
+    {googleSiteVerification && <meta name="google-site-verification" content={googleSiteVerification} />}
     <link rel="canonical" href={canonicalUrl} />
     <link rel="preconnect" href={appUrl} crossorigin />
     <link rel="dns-prefetch" href={appUrl} />
@@ -60,6 +89,7 @@ const isActive = (href: string) => {
     <link id="dynamic-favicon" rel="icon" type="image/png" sizes="32x32" href="/branding/ear_favicon_transparent.png" />
     <meta name="theme-color" content="#09090b" />
     <title>{title}</title>
+    <script type="application/ld+json" set:html={JSON.stringify(structuredData)}></script>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-R7PND3T858"></script>
     <script is:inline>
@@ -68,21 +98,7 @@ const isActive = (href: string) => {
       gtag('js', new Date());
       gtag('config', 'G-R7PND3T858');
     </script>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5085788292969536" crossorigin="anonymous"></script>
-    <script is:inline define:vars={{ appUrl }}>
-      (() => {
-        if (typeof window === 'undefined') return;
-        const warm = () => {
-          try {
-            fetch(appUrl + '/_stcore/health', {
-              mode: 'no-cors', credentials: 'omit', cache: 'no-store', keepalive: true,
-            }).catch(() => {});
-          } catch (e) { /* no-op */ }
-        };
-        if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 2500 });
-        else setTimeout(warm, 1500);
-      })();
-    </script>
+    <AdSenseScript />
     <script is:inline>
       (() => {
         const updateFavicon = () => {
@@ -105,8 +121,8 @@ const isActive = (href: string) => {
     <div class="fp-app-transition" id="fp-app-transition" aria-hidden="true" hidden>
       <div class="fp-app-transition-card">
         <div class="fp-app-transition-spinner" aria-hidden="true"></div>
-        <strong>Opening Fight Prophet App</strong>
-        <span>Loading predictions, rankings, and fighter data…</span>
+        <strong>Opening interactive tool</strong>
+        <span>Loading predictions, rankings, and fighter data...</span>
       </div>
     </div>
 
@@ -129,14 +145,15 @@ const isActive = (href: string) => {
         <div class="fp-app-rail-subheading">AI-powered MMA fight predictions</div>
         <div class="fp-app-rail-section-label">Navigate</div>
 
-        <!-- App nav — Home (rankings) is the entry point; the rest open the Streamlit app -->
-        <nav class="fp-app-rail-nav" aria-label="App sections">
+        <nav class="fp-app-rail-nav" aria-label="Site sections">
           <a class={`fp-app-rail-nav-link${isActive('/') ? ' is-active is-primary-nav' : ''}`} href="/"><span class="fp-app-rail-nav-copy"><img src={rankingsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Home &amp; Rankings</span></span></a>
-          <a class="fp-app-rail-nav-link" href={withPage('predictions')}><span class="fp-app-rail-nav-copy"><img src={predictionsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Predictions</span></span></a>
-          <a class="fp-app-rail-nav-link" href={withPage('fighter-card')}><span class="fp-app-rail-nav-copy"><img src={fighterCardsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Fighter Cards</span></span></a>
-          <a class="fp-app-rail-nav-link" href={withPage('belt-holders')}><span class="fp-app-rail-nav-copy"><img src={beltEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Belt Holders</span></span></a>
-          <a class="fp-app-rail-nav-link" href={withPage('events-history')}><span class="fp-app-rail-nav-copy"><img src={eventsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Events History</span></span></a>
-          <a class="fp-app-rail-nav-link" href={withPage('fight-lab')}><span class="fp-app-rail-nav-copy"><img src={labEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Fight Lab</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/predictions/') ? ' is-active' : ''}`} href="/predictions/"><span class="fp-app-rail-nav-copy"><img src={predictionsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Predictions</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/fighter-card/') ? ' is-active' : ''}`} href="/fighter-card/"><span class="fp-app-rail-nav-copy"><img src={fighterCardsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Fighter Cards</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/belt-holders/') ? ' is-active' : ''}`} href="/belt-holders/"><span class="fp-app-rail-nav-copy"><img src={beltEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Belt Holders</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/events-history/') ? ' is-active' : ''}`} href="/events-history/"><span class="fp-app-rail-nav-copy"><img src={eventsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Events History</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/fight-lab/') ? ' is-active' : ''}`} href="/fight-lab/"><span class="fp-app-rail-nav-copy"><img src={labEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Fight Lab</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/methodology/') ? ' is-active' : ''}`} href="/methodology/"><span class="fp-app-rail-nav-copy"><img src={labEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Methodology</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/about/') ? ' is-active' : ''}`} href="/about/"><span class="fp-app-rail-nav-copy"><img src={termsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>About</span></span></a>
           <a class={`fp-app-rail-nav-link${isActive('/terms/') ? ' is-active' : ''}`} href="/terms/"><span class="fp-app-rail-nav-copy"><img src={termsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Terms &amp; Conditions</span></span></a>
         </nav>
 
@@ -148,6 +165,8 @@ const isActive = (href: string) => {
             <a class="fp-app-rail-link is-muted" href="https://www.linkedin.com/company/fight-prophet" target="_blank" rel="noopener noreferrer">Business LinkedIn</a>
             <a class="fp-app-rail-link is-muted" href="https://www.linkedin.com/in/datatomas/" target="_blank" rel="noopener noreferrer">Founder LinkedIn</a>
             <a class="fp-app-rail-link is-muted" href="https://github.com/datatomas/fightprophet" target="_blank" rel="noopener noreferrer">Business GitHub</a>
+            <a class="fp-app-rail-link is-muted" href="/about/">About</a>
+            <a class="fp-app-rail-link is-muted" href="/contact/">Contact</a>
             <a class="fp-app-rail-link is-muted" href="/terms/">Terms</a>
             <a class="fp-app-rail-link is-muted" href="/privacy/">Privacy</a>
           </div>
@@ -176,13 +195,18 @@ const isActive = (href: string) => {
       <footer class="fp-site-footer">
         <nav class="fp-site-footer-nav" aria-label="Site sections">
           <a href="/">Home</a>
-          <a href={withPage('predictions')}>Predictions</a>
+          <a href="/predictions/">Predictions</a>
           <a href="/#fp-newsletter">Newsletter</a>
-          <a href={withPage('fight-lab')}>Fight Lab</a>
-          <a href="/#fp-rankings">Rankings</a>
-          <a href={withPage('belt-holders')}>Belt Holders</a>
-          <a href={withPage('fighter-card')}>Fighter Cards</a>
-          <a href={withPage('events-history')}>Events History</a>
+          <a href="/fight-lab/">Fight Lab</a>
+          <a href="/rankings/">Rankings</a>
+          <a href="/belt-holders/">Belt Holders</a>
+          <a href="/fighter-card/">Fighter Cards</a>
+          <a href="/events-history/">Events History</a>
+          <a href="/methodology/">Methodology</a>
+          <a href="/editorial-policy/">Editorial Policy</a>
+          <a href="/responsible-use/">Responsible Use</a>
+          <a href="/about/">About</a>
+          <a href="/contact/">Contact</a>
           <a href="/privacy/">Privacy</a>
           <a href="/terms/">Terms</a>
         </nav>
@@ -194,16 +218,21 @@ const isActive = (href: string) => {
       </footer>
     </div>
 
-    <!-- Ko-fi floating support widget -->
-    <script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js' is:inline></script>
-    <script is:inline>
-      kofiWidgetOverlay.draw('fightprophet', {
-        'type': 'floating-chat',
-        'floating-chat.donateButton.text': 'Support Us',
-        'floating-chat.donateButton.background-color': '#d9534f',
-        'floating-chat.donateButton.text-color': '#fff'
-      });
-    </script>
+    {kofiWidgetEnabled && (
+      <>
+        <script src="https://storage.ko-fi.com/cdn/scripts/overlay-widget.js" is:inline></script>
+        <script is:inline>
+          if (window.kofiWidgetOverlay) {
+            window.kofiWidgetOverlay.draw('fightprophet', {
+              'type': 'floating-chat',
+              'floating-chat.donateButton.text': 'Support Us',
+              'floating-chat.donateButton.background-color': '#d9534f',
+              'floating-chat.donateButton.text-color': '#fff'
+            });
+          }
+        </script>
+      </>
+    )}
   </body>
 </html>
 

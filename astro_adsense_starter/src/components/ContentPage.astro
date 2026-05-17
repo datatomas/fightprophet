@@ -1,0 +1,201 @@
+---
+interface Props {
+  eyebrow?: string;
+  title: string;
+  intro: string;
+  updated?: string;
+}
+
+const {
+  eyebrow = 'Fight Prophet',
+  title,
+  intro,
+  updated = '',
+} = Astro.props as Props;
+---
+
+<article class="fp-content-page">
+  <header class="fp-content-header">
+    <a class="fp-content-breadcrumb" href="/">Fight Prophet</a>
+    <p class="fp-content-eyebrow">{eyebrow}</p>
+    <h1>{title}</h1>
+    <p class="fp-content-intro">{intro}</p>
+    {updated && <p class="fp-content-updated">Last updated: {updated}</p>}
+  </header>
+  <div class="fp-content-body">
+    <slot />
+  </div>
+</article>
+
+<style>
+  .fp-content-page {
+    display: grid;
+    gap: 1rem;
+    width: min(100%, 1040px);
+    margin-inline: auto;
+  }
+
+  .fp-content-header {
+    display: grid;
+    gap: 0.48rem;
+    padding: 1.45rem 1.35rem;
+    background:
+      linear-gradient(90deg, rgba(127, 29, 29, 0.22), transparent 58%),
+      rgba(9, 9, 11, 0.62);
+    border: 1px solid rgba(220, 38, 38, 0.24);
+    border-radius: 0.8rem;
+  }
+
+  .fp-content-breadcrumb,
+  .fp-content-eyebrow,
+  .fp-content-updated {
+    margin: 0;
+    color: #fca5a5;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .fp-content-breadcrumb {
+    width: fit-content;
+    text-decoration: none;
+  }
+
+  .fp-content-breadcrumb:hover {
+    color: #fef2f2;
+  }
+
+  .fp-content-header h1 {
+    margin: 0;
+    color: #fef2f2;
+    font-size: clamp(1.65rem, 4vw, 2.45rem);
+    line-height: 1.1;
+    letter-spacing: 0;
+  }
+
+  .fp-content-intro {
+    margin: 0;
+    max-width: 74ch;
+    color: #e4e4e7;
+    font-size: clamp(0.95rem, 1.6vw, 1.05rem);
+    line-height: 1.65;
+  }
+
+  .fp-content-updated {
+    color: #a1a1aa;
+    letter-spacing: 0.04em;
+  }
+
+  .fp-content-body {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .fp-content-body :global(section) {
+    display: grid;
+    gap: 0.56rem;
+    padding: 1rem 1.1rem;
+    background: linear-gradient(155deg, rgba(22, 22, 26, 0.84), rgba(35, 20, 20, 0.48));
+    border: 1px solid rgba(113, 113, 122, 0.34);
+    border-radius: 0.7rem;
+  }
+
+  .fp-content-body :global(h2),
+  .fp-content-body :global(h3) {
+    margin: 0;
+    color: #fef2f2;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+
+  .fp-content-body :global(h2) {
+    font-size: clamp(1.12rem, 2.2vw, 1.42rem);
+  }
+
+  .fp-content-body :global(h3) {
+    font-size: 1rem;
+  }
+
+  .fp-content-body :global(p),
+  .fp-content-body :global(li) {
+    color: #d4d4d8;
+    line-height: 1.65;
+  }
+
+  .fp-content-body :global(p),
+  .fp-content-body :global(ul),
+  .fp-content-body :global(ol) {
+    margin: 0;
+  }
+
+  .fp-content-body :global(ul),
+  .fp-content-body :global(ol) {
+    padding-left: 1.15rem;
+  }
+
+  .fp-content-body :global(li + li) {
+    margin-top: 0.4rem;
+  }
+
+  .fp-content-body :global(a) {
+    color: #fca5a5;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .fp-content-body :global(a:hover) {
+    color: #fef2f2;
+    text-decoration: underline;
+  }
+
+  .fp-content-body :global(.fp-content-grid) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .fp-content-body :global(.fp-content-grid section) {
+    height: 100%;
+  }
+
+  .fp-content-body :global(.fp-content-note) {
+    border-color: rgba(248, 113, 113, 0.36);
+    background:
+      linear-gradient(90deg, rgba(127, 29, 29, 0.24), transparent 62%),
+      rgba(9, 9, 11, 0.62);
+  }
+
+  .fp-content-body :global(.fp-content-actions) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    padding-left: 0;
+    list-style: none;
+  }
+
+  .fp-content-body :global(.fp-content-actions li) {
+    margin: 0;
+  }
+
+  .fp-content-body :global(.fp-content-actions a) {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
+    padding: 0.38rem 0.78rem;
+    border: 1px solid rgba(248, 113, 113, 0.42);
+    border-radius: 999px;
+    background: linear-gradient(160deg, rgba(127, 29, 29, 0.62), rgba(24, 24, 27, 0.62));
+    color: #fef2f2;
+  }
+
+  @media (max-width: 760px) {
+    .fp-content-header {
+      padding: 1.2rem 1rem;
+    }
+
+    .fp-content-body :global(.fp-content-grid) {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

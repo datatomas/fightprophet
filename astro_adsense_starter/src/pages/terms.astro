@@ -1,40 +1,72 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import AppSectionLanding from '../components/AppSectionLanding.astro';
+import ContentPage from '../components/ContentPage.astro';
 ---
 
 <BaseLayout
   title="Terms of Use | Fight Prophet"
-  description="Terms of use for Fight Prophet — an MMA analytics and prediction platform provided for information and education only, never as financial or betting advice."
+  description="Terms of use for Fight Prophet, an MMA analytics and prediction platform for information and education only."
 >
-  <AppSectionLanding
-    pageSlug="terms"
-    heading="Terms of Use"
-    intro="Fight Prophet is an open-source MMA analytics and prediction platform. Predictions, rankings, and model outputs are provided strictly for informational and educational purposes — they are not financial, gambling, or investment advice."
-    bullets={[
-      { title: 'Information only', body: 'Outputs help you understand probability and historical patterns; they do not guarantee any outcome.' },
-      { title: 'No betting advice', body: 'Decisions about wagers, bankroll, or risk are entirely your own responsibility.' },
-      { title: 'Data sourcing', body: 'Predictions are based on public fight data which may contain errors or omissions.' },
-      { title: 'Open source', body: 'Source code and methodology are open to community review and contribution.' },
-    ]}
-    whatYouWillSee={[
-      'Full terms of use as displayed in the application',
-      'Disclosure on data sources and modeling approach',
-      'Disclaimers on predictions and risk',
-      'Contact and contribution guidance',
-    ]}
-    ctaLabel="Open full terms in app"
-    noAd
-  />
+  <ContentPage
+    eyebrow="Terms"
+    title="Terms of Use"
+    intro="By using Fight Prophet, you agree that rankings, predictions, model outputs, and commentary are provided for information and education only."
+    updated="May 17, 2026"
+  >
+    <section>
+      <h2>Information Only</h2>
+      <p>
+        Fight Prophet publishes MMA analytics, rankings, model estimates, and educational
+        explanations. Nothing on the site is financial advice, betting advice, investment
+        advice, legal advice, or a guarantee of any fight outcome.
+      </p>
+    </section>
 
-  <div style="margin-top:1.5rem;border-radius:0.9rem;overflow:hidden;border:1px solid rgba(220,38,38,0.2);">
-    <iframe
-      id="kofiframe"
-      src="https://ko-fi.com/fightprophet/?hidefeed=true&widget=true&embed=true&preview=true"
-      style="border:none;width:100%;padding:0;background:transparent;display:block;"
-      height="712"
-      title="Support Fight Prophet on Ko-fi"
-      loading="lazy"
-    ></iframe>
-  </div>
+    <div class="fp-content-grid">
+      <section>
+        <h2>User Responsibility</h2>
+        <p>
+          You are responsible for your own decisions, compliance with local laws, age
+          restrictions, tax obligations, and risk choices. Do not use Fight Prophet to place
+          illegal wagers or to take risks you cannot afford.
+        </p>
+      </section>
+
+      <section>
+        <h2>Data Accuracy</h2>
+        <p>
+          Fight data can contain errors, omissions, delayed updates, inconsistent naming, or
+          unusual event circumstances. Fight Prophet may update, correct, remove, or revise
+          content without notice.
+        </p>
+      </section>
+    </div>
+
+    <section>
+      <h2>Third-Party Links</h2>
+      <p>
+        The site may link to external services, public profiles, data sources, app pages, and
+        publisher profiles. Fight Prophet is not responsible for third-party content,
+        availability, pricing, privacy practices, or policies.
+      </p>
+    </section>
+
+    <section>
+      <h2>Intellectual Property</h2>
+      <p>
+        Fight Prophet branding, original copy, visual design, ranking presentation, and model
+        explanations belong to their respective owners. UFC, fighter names, event names, and
+        third-party marks belong to their owners and are used for identification and analysis.
+      </p>
+    </section>
+
+    <section class="fp-content-note">
+      <h2>Responsible Use</h2>
+      <p>
+        Use the site as a research and learning tool. If betting or risk-taking becomes
+        stressful, compulsory, or harmful, stop using prediction tools and seek appropriate
+        local support.
+      </p>
+    </section>
+  </ContentPage>
 </BaseLayout>

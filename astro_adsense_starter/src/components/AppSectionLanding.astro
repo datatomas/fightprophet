@@ -13,6 +13,7 @@ interface Props {
   intro: string;
   bullets: Bullet[];
   whatYouWillSee: string[];
+  readingNotes?: Bullet[];
   ctaLabel?: string;
   noAd?: boolean;
 }
@@ -23,7 +24,21 @@ const {
   intro,
   bullets,
   whatYouWillSee,
-  ctaLabel = 'Open in Fight Prophet App',
+  readingNotes = [
+    {
+      title: 'Best use',
+      body: 'Use this section to compare the model signal with fighter, event, and market context before drawing a conclusion.',
+    },
+    {
+      title: 'What to double-check',
+      body: 'Small samples, late opponent changes, long layoffs, and missing data should lower confidence even when a number looks clean.',
+    },
+    {
+      title: 'Where to go next',
+      body: 'Cross-check the read with rankings, fighter cards, and Fight Lab before treating any signal as strong.',
+    },
+  ],
+  ctaLabel = 'Open interactive section',
   noAd = false,
 } = Astro.props as Props;
 
@@ -53,12 +68,23 @@ const targetUrl = buildAppPageUrl(appUrl, pageSlug);
     </section>
 
     <section class="fp-landing-section">
-      <h2>What you will see when you open it</h2>
+      <h2>Main tools in this section</h2>
       <ul class="fp-landing-list">
         {whatYouWillSee.map((line) => <li>{line}</li>)}
       </ul>
     </section>
   </div>
+
+  <section class="fp-landing-section">
+    <h2>Reading notes</h2>
+    <ul class="fp-landing-bullets">
+      {readingNotes.map((b) => (
+        <li>
+          <strong>{b.title}.</strong> {b.body}
+        </li>
+      ))}
+    </ul>
+  </section>
 
   {!noAd && <AdSlot slot="1234567890" />}
 
