@@ -1,32 +1,329 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import AppSectionLanding from '../components/AppSectionLanding.astro';
+import { runtimeEnvFromLocals } from '../lib/country-master';
+import { getBeltHoldersData } from '../lib/champions';
+
+const runtimeEnv = runtimeEnvFromLocals(Astro.locals);
+const beltData = await getBeltHoldersData(runtimeEnv);
+const { champions, titleHistory, manualVacates } = beltData;
+const pageJson = JSON.stringify({ titleHistory }).replace(/</g, '\\u003c');
+
+const totalDivisions = champions.length;
+const activeChampions = champions.filter((champ) => !champ.is_vacant).length;
+const totalTitleFights = titleHistory.length;
+const hasData = totalDivisions > 0;
+
+function flagEmoji(iso2?: string): string {
+  const code = String(iso2 || '').trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(code)) return '';
+  return [...code].map((char) => String.fromCodePoint(127397 + char.charCodeAt(0))).join('');
+}
+
+function fighterHref(name?: string): string {
+  return `/fighter-card/?fighter=${encodeURIComponent(String(name || ''))}`;
+}
 ---
 
 <BaseLayout
   title="Current UFC Belt Holders & Title History | Fight Prophet"
   description="Current UFC champions across every division plus full title history — title fights, defenses, vacancies, and lineage. Tracked and updated as belts change hands."
 >
-  <AppSectionLanding
-    pageSlug="belt-holders"
-    heading="UFC Belt Holders & Title History"
-    intro="Who's the champ in every division — right now. Open the section for the full title lineage, defenses, and vacancies for each weight class, including manual overrides for unusual cases."
-    bullets={[
-      { title: 'Current champions', body: 'A live view of who holds each major title.' },
-      { title: 'Title fight history', body: 'Every title bout per division, with outcome and method.' },
-      { title: 'Vacancies tracked', body: 'Manual overrides record vacates and interim situations cleanly.' },
-      { title: 'Lineage at a glance', body: 'Follow the belt across reigns and divisions over time.' },
-    ]}
-    whatYouWillSee={[
-      'Current belt holders across all weight classes',
-      'Past title fights with date, opponent, and outcome',
-      'Vacancy history and interim title context',
-      'Links into each champion\'s fighter card',
-    ]}
-    readingNotes={[
-      { title: 'Title lineage', body: 'Champions are shown as part of a reign history, including defenses and vacancies where clean automation can miss context.' },
-      { title: 'Division structure', body: 'Belt history is organized by weight class so current champions and past title fights can be compared without mixing divisions.' },
-      { title: 'Manual review', body: 'Vacates, interim title cases, and unusual title changes are tracked with overrides when raw event data is not enough.' },
-    ]}
-  />
+  <article class="fp-belts-page">
+    <header class="fp-tool-hero">
+      <a class="fp-tool-breadcrumb" href="/">← Fight Prophet</a>
+      <p class="fp-section-label">Belt Holders</p>
+      <h1>UFC Belt Holders & Title History</h1>
+      <p class="fp-hero-copy">
+        The current champions board and title lineage now mirrors the Streamlit belt-holders view:
+        active belts first, then manual title vacates and full title-fight history.
+      </p>
+    </header>
+
+    {hasData ? (
+      <>
+        <section class="fp-kpi-grid" aria-label="Belt holder summary">
+          <div class="fp-kpi-card">
+            <img src="/branding/b91c1c-weights-emoji.png" alt="" width="46" height="46" />
+            <span>Divisions</span>
+            <strong>{totalDivisions.toLocaleString()}</strong>
+          </div>
+          <div class="fp-kpi-card">
+            <img src="/branding/b91c1c-activechampions-emoji.png" alt="" width="46" height="46" />
+            <span>Active Champions</span>
+            <strong>{activeChampions.toLocaleString()}</strong>
+          </div>
+          <div class="fp-kpi-card">
+            <img src="/branding/b91c1c-tittlefight-emoji.png" alt="" width="46" height="46" />
+            <span>Title Fights</span>
+            <strong>{totalTitleFights.toLocaleString()}</strong>
+          </div>
+        </section>
+
+        <section class="fp-panel">
+          <div class="fp-panel-head">
+            <div>
+              <p class="fp-section-label">Current Champions</p>
+              <h2>Current Champions</h2>
+            </div>
+          </div>
+          <div class="fp-champion-grid">
+            {champions.map((champ) => {
+              const flag = flagEmoji(champ.country_iso2);
+              return (
+                <a class={`fp-champion-card${champ.is_vacant ? ' is-vacant' : ''}`} href={champ.is_vacant ? '/belt-holders/' : fighterHref(champ.name)}>
+                  <span class="fp-champ-division">{champ.weight_class || 'Division'}</span>
+                  <strong>{champ.name}</strong>
+                  <span class="fp-champ-meta">
+                    {flag && <span aria-hidden="true">{flag}</span>}
+                    {champ.country || (champ.is_vacant ? 'Vacant title' : 'Country pending')}
+                  </span>
+                  <span class="fp-champ-detail">
+                    <span>Won</span>
+                    <b>{champ.title_won_date || '—'}</b>
+                  </span>
+                  <span class="fp-champ-detail">
+                    <span>Defenses</span>
+                    <b>{champ.title_defenses ?? 0}</b>
+                  </span>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+
+        <section class="fp-panel">
+          <div class="fp-panel-head">
+            <div>
+              <p class="fp-section-label">Champion Table</p>
+              <h2>Current Belt Table</h2>
+            </div>
+          </div>
+          <div class="fp-table-wrap">
+            <table class="fp-data-table">
+              <thead>
+                <tr>
+                  <th>Ftr</th>
+                  <th>Division</th>
+                  <th>Champion</th>
+                  <th>Title Won</th>
+                  <th>Title Event</th>
+                  <th>Defenses</th>
+                  <th>Last Title Fight</th>
+                  <th>Vacant</th>
+                </tr>
+              </thead>
+              <tbody>
+                {champions.map((champ) => (
+                  <tr>
+                    <td class="fp-ftr-cell">{champ.is_vacant ? '—' : (flagEmoji(champ.country_iso2) || '•')}</td>
+                    <td>{champ.weight_class || '—'}</td>
+                    <td>
+                      {champ.is_vacant ? (
+                        <span class="fp-vacant">VACANT</span>
+                      ) : (
+                        <a href={fighterHref(champ.name)}>{champ.name}</a>
+                      )}
+                    </td>
+                    <td>{champ.title_won_date || '—'}</td>
+                    <td>{champ.title_won_event || '—'}</td>
+                    <td>{champ.title_defenses ?? 0}</td>
+                    <td>{champ.last_title_fight_date || '—'}</td>
+                    <td>{champ.is_vacant ? 'Yes' : 'No'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="fp-panel">
+          <div class="fp-panel-head">
+            <div>
+              <p class="fp-section-label">Title Vacates</p>
+              <h2>Manual Title Vacates</h2>
+            </div>
+          </div>
+          {manualVacates.length > 0 ? (
+            <div class="fp-table-wrap">
+              <table class="fp-data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Division</th>
+                    <th>Champion</th>
+                    <th>Reason</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {manualVacates.map((row) => (
+                    <tr>
+                      <td>{row.vacated_on || '—'}</td>
+                      <td>{row.weight_class || '—'}</td>
+                      <td>{row.champion_name || '—'}</td>
+                      <td>{row.reason || '—'}</td>
+                      <td>{row.notes || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p class="fp-muted">No title vacates dataset found.</p>
+          )}
+        </section>
+
+        <section class="fp-panel">
+          <div class="fp-panel-head">
+            <div>
+              <p class="fp-section-label">Lineage</p>
+              <h2>Title Fight History</h2>
+            </div>
+            <label class="fp-filter-label">
+              <span>Filter by division</span>
+              <select data-history-filter>
+                <option value="__all__">All Divisions</option>
+                {[...new Set(titleHistory.map((row) => row.weight_class).filter(Boolean))].sort().map((division) => (
+                  <option value={division}>{division}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div class="fp-table-wrap">
+            <table class="fp-data-table">
+              <thead>
+                <tr>
+                  <th>Winner</th>
+                  <th>Loser</th>
+                  <th>Date</th>
+                  <th>Division</th>
+                  <th>Method</th>
+                  <th>Rd</th>
+                  <th>Time</th>
+                  <th>Title Changed</th>
+                  <th>Vacant</th>
+                  <th>Defense #</th>
+                  <th>Event</th>
+                </tr>
+              </thead>
+              <tbody data-history-body>
+                {titleHistory.slice(0, 250).map((row) => (
+                  <tr>
+                    <td>{row.winner_name || '—'}</td>
+                    <td>{row.loser_name || '—'}</td>
+                    <td>{row.event_date || '—'}</td>
+                    <td>{row.weight_class || '—'}</td>
+                    <td>{row.method || '—'}</td>
+                    <td>{row.fight_round ?? '—'}</td>
+                    <td>{row.fight_time || '—'}</td>
+                    <td>{row.title_changed_hands ? 'Yes' : 'No'}</td>
+                    <td>{row.was_vacant ? 'Yes' : 'No'}</td>
+                    <td>{row.title_defense_number ?? '—'}</td>
+                    <td>{row.event_name || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {titleHistory.length > 250 && <p class="fp-muted" data-history-count>Showing 250 of {titleHistory.length.toLocaleString()} title fights.</p>}
+        </section>
+      </>
+    ) : (
+      <section class="fp-empty-state">
+        <strong>No belt holders data available.</strong>
+        <span>Run the belt holders ETL first, then Astro will render the current champions, title vacates, and lineage tables here.</span>
+      </section>
+    )}
+  </article>
+  <script type="application/json" id="fp-title-history-data" set:html={pageJson}></script>
 </BaseLayout>
+
+<script is:inline>
+  (() => {
+    const dataNode = document.getElementById('fp-title-history-data');
+    const filter = document.querySelector('[data-history-filter]');
+    const body = document.querySelector('[data-history-body]');
+    if (!dataNode || !filter || !body) return;
+    const payload = JSON.parse(dataNode.textContent || '{}');
+    const titleHistory = Array.isArray(payload.titleHistory) ? payload.titleHistory : [];
+    const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    const cell = (v) => esc(v || '—');
+    const render = () => {
+      const division = filter.value;
+      const rows = titleHistory
+        .filter((row) => division === '__all__' || row.weight_class === division)
+        .slice(0, 250);
+      body.innerHTML = rows.map((row) => `<tr>
+        <td>${cell(row.winner_name)}</td>
+        <td>${cell(row.loser_name)}</td>
+        <td>${cell(row.event_date)}</td>
+        <td>${cell(row.weight_class)}</td>
+        <td>${cell(row.method)}</td>
+        <td>${row.fight_round ?? '—'}</td>
+        <td>${cell(row.fight_time)}</td>
+        <td>${row.title_changed_hands ? 'Yes' : 'No'}</td>
+        <td>${row.was_vacant ? 'Yes' : 'No'}</td>
+        <td>${row.title_defense_number ?? '—'}</td>
+        <td>${cell(row.event_name)}</td>
+      </tr>`).join('');
+    };
+    filter.addEventListener('change', render);
+  })();
+</script>
+
+<style>
+  .fp-belts-page { display: grid; gap: 1rem; }
+  .fp-tool-hero {
+    background: linear-gradient(150deg, rgba(22,22,26,0.92), rgba(36,36,42,0.68));
+    border: 1px solid rgba(113,113,122,0.42);
+    border-radius: 0.8rem;
+    padding: 1.35rem;
+  }
+  .fp-tool-breadcrumb { color: #fca5a5; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-decoration: none; text-transform: uppercase; }
+  .fp-section-label { margin: 0; color: #a1a1aa; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+  .fp-tool-hero .fp-section-label { margin-top: 0.45rem; }
+  .fp-tool-hero h1 { margin: 0.25rem 0 0.45rem; color: #fef2f2; font-size: clamp(1.7rem, 4vw, 2.45rem); line-height: 1.08; }
+  .fp-hero-copy { max-width: 76ch; margin: 0; color: #d4d4d8; line-height: 1.6; }
+
+  .fp-kpi-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); border: 1px solid rgba(248,113,113,0.16); border-top: 2px solid rgba(185,28,28,0.52); border-radius: 1rem; overflow: hidden; background: linear-gradient(145deg, rgba(28,28,32,0.92), rgba(39,39,42,0.76)); }
+  .fp-kpi-card { min-height: 118px; display: grid; place-items: center; align-content: center; gap: 0.25rem; padding: 0.85rem; text-align: center; border-right: 1px solid rgba(248,113,113,0.12); }
+  .fp-kpi-card:last-child { border-right: 0; }
+  .fp-kpi-card span { color: #d4d4d8; font-size: 0.66rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+  .fp-kpi-card strong { color: #fff; font-size: 1.25rem; line-height: 1; }
+
+  .fp-panel { display: grid; gap: 0.85rem; padding: 1rem; border-radius: 1rem; border: 1px solid rgba(248,113,113,0.16); background: linear-gradient(145deg, rgba(24,24,27,0.92), rgba(39,39,42,0.74)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 18px rgba(0,0,0,0.18); }
+  .fp-panel-head { display: flex; align-items: end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .fp-panel h2 { margin: 0.16rem 0 0; color: #fef2f2; font-size: 1.24rem; }
+
+  .fp-champion-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0.7rem; }
+  .fp-champion-card { display: grid; gap: 0.42rem; min-height: 168px; padding: 0.85rem; border-radius: 0.7rem; text-decoration: none; color: #fef2f2; border: 1px solid rgba(255,240,170,0.28); background: radial-gradient(130% 90% at 20% 0%, rgba(255,224,128,0.18), transparent 56%), linear-gradient(160deg, #4a311a, #1a0c0c 62%, #0f0606); }
+  .fp-champion-card.is-vacant { color: #e4e4e7; border-color: rgba(161,161,170,0.22); background: linear-gradient(160deg, rgba(39,39,42,0.92), rgba(15,15,18,0.96)); pointer-events: none; }
+  .fp-champ-division { color: #fde68a; font-size: 0.68rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+  .fp-champion-card strong { font-size: 1.05rem; line-height: 1.15; }
+  .fp-champ-meta { color: #d4d4d8; font-size: 0.82rem; }
+  .fp-champ-detail { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; color: #a1a1aa; font-size: 0.78rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.38rem; }
+  .fp-champ-detail b { color: #fff; }
+
+  .fp-table-wrap { overflow-x: auto; border: 1px solid rgba(113,113,122,0.28); border-radius: 0.7rem; }
+  .fp-data-table { width: 100%; min-width: 820px; border-collapse: collapse; color: #d4d4d8; font-size: 0.82rem; }
+  .fp-data-table th, .fp-data-table td { padding: 0.68rem 0.72rem; text-align: left; border-bottom: 1px solid rgba(113,113,122,0.22); vertical-align: top; }
+  .fp-data-table th { position: sticky; top: 0; background: #18181b; color: #fca5a5; font-size: 0.68rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+  .fp-data-table tbody tr:nth-child(odd) { background: rgba(255,255,255,0.018); }
+  .fp-data-table tbody tr:hover { background: rgba(248,113,113,0.06); }
+  .fp-data-table a { color: #fef2f2; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.24); }
+  .fp-ftr-cell { font-size: 1.18rem; line-height: 1; }
+  .fp-vacant { color: #fca5a5; font-weight: 900; letter-spacing: 0.06em; }
+  .fp-muted { margin: 0; color: #a1a1aa; font-size: 0.86rem; }
+  .fp-filter-label { display: grid; gap: 0.35rem; color: #a1a1aa; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+  .fp-filter-label select { min-width: 220px; min-height: 2.45rem; border: 1px solid rgba(113,113,122,0.52); border-radius: 0.55rem; color: #f4f4f5; background: rgba(9,9,11,0.78); padding: 0.55rem 0.65rem; }
+  .fp-empty-state { display: grid; gap: 0.55rem; padding: 1.35rem; background: linear-gradient(150deg,rgba(22,22,26,0.92),rgba(36,36,42,0.68)); border: 1px solid rgba(113,113,122,0.42); border-radius: 0.8rem; color: #d4d4d8; }
+  .fp-empty-state strong { color: #fef2f2; font-size: 1rem; }
+
+  @media (max-width: 720px) {
+    .fp-kpi-grid { grid-template-columns: 1fr; }
+    .fp-kpi-card { border-right: 0; border-bottom: 1px solid rgba(248,113,113,0.12); }
+    .fp-kpi-card:last-child { border-bottom: 0; }
+    .fp-panel { padding: 0.8rem; }
+    .fp-filter-label, .fp-filter-label select { width: 100%; }
+  }
+</style>

@@ -10,7 +10,11 @@ export interface ChampionRecord {
   country_iso2?: string;
   weight_class?: string;
   is_champion?: boolean;
+  is_vacant?: boolean;
+  title_won_date?: string;
+  title_won_event?: string;
   title_defenses?: number;
+  last_title_fight_date?: string;
   wins?: number;
   losses?: number;
   draws?: number;
@@ -46,6 +50,42 @@ export interface HomepageRankingsDebug {
   note: string;
 }
 
+export interface TitleFightHistoryRecord {
+  event_date: string;
+  event_name: string;
+  weight_class: string;
+  winner_name: string;
+  loser_name: string;
+  method: string;
+  fight_round: number | null;
+  fight_time: string;
+  title_changed_hands: boolean;
+  was_vacant: boolean;
+  title_defense_number: number | null;
+}
+
+export interface ManualTitleVacateRecord {
+  vacated_on: string;
+  weight_class: string;
+  champion_name: string;
+  reason: string;
+  notes: string;
+}
+
+export interface BeltHoldersData {
+  champions: ChampionRecord[];
+  titleHistory: TitleFightHistoryRecord[];
+  manualVacates: ManualTitleVacateRecord[];
+  debug: {
+    fetchedBelts: boolean;
+    fetchedHistory: boolean;
+    fetchedManualVacates: boolean;
+    championCount: number;
+    titleFightCount: number;
+    manualVacateCount: number;
+  };
+}
+
 const DEFAULT_CONTAINER = 'fightprophet-dashboard';
 const DEFAULT_PREFIX = 'mma/diamond';
 const DEFAULT_CACHE_TTL_SECONDS = 43200;
@@ -54,12 +94,16 @@ const HOMEPAGE_RANKINGS_WALL_FILENAME = 'rankings_wall.json';
 const FOLDER_BELT_HOLDERS = 'dashboard_belt_holders';
 const FOLDER_FIGHTER_PROFILES = 'dashboard_fighter_profiles';
 const FOLDER_RANKINGS = 'dashboard_rankings';
+const FOLDER_TITLE_FIGHT_HISTORY = 'dashboard_title_fight_history';
+const FOLDER_MANUAL_TITLE_VACATES = 'dashboard_manual_title_vacates';
 
 let cachedChampions: ChampionRecord[] | null = null;
+let cachedBeltHoldersData: BeltHoldersData | null = null;
 let cachedRankedFighters: RankedFighterRecord[] | null = null;
 let cachedAllRankedFighters: RankedFighterRecord[] | null = null;
 let cachedHomepageGoats: RankedFighterRecord[] | null = null;
 let cacheExpiresAt = 0;
+let beltHoldersCacheExpiresAt = 0;
 let cacheAllRankedExpiresAt = 0;
 let lastHomepageRankingsDebug: HomepageRankingsDebug | null = null;
 
@@ -781,6 +825,205 @@ export async function getChampionRecords(env?: RuntimeEnv): Promise<ChampionReco
   cachedChampions = champions;
   cacheExpiresAt = now + championsCacheTtlMilliseconds(env);
   return champions;
+}
+
+export async function getBeltHoldersData(env?: RuntimeEnv): Promise<BeltHoldersData> {
+  const now = Date.now();
+  if (cachedBeltHoldersData && now < beltHoldersCacheExpiresAt) {
+    return cachedBeltHoldersData;
+  }
+
+  const empty: BeltHoldersData = {
+    champions: [],
+    titleHistory: [],
+    manualVacates: [],
+    debug: {
+      fetchedBelts: false,
+      fetchedHistory: false,
+      fetchedManualVacates: false,
+      championCount: 0,
+      titleFightCount: 0,
+      manualVacateCount: 0,
+    },
+  };
+
+  const base = resolveBase(env);
+  const prefix = resolvePrefix(env);
+  if (!isAzure(base)) {
+    cachedBeltHoldersData = empty;
+    beltHoldersCacheExpiresAt = now + Math.min(championsCacheTtlMilliseconds(env), 10 * 60 * 1000);
+    return cachedBeltHoldersData;
+  }
+
+  const beltFolder = applyPrefix(FOLDER_BELT_HOLDERS, prefix);
+  const historyFolder = applyPrefix(FOLDER_TITLE_FIGHT_HISTORY, prefix);
+  const manualFolder = applyPrefix(FOLDER_MANUAL_TITLE_VACATES, prefix);
+  const profilesFolder = applyPrefix(FOLDER_FIGHTER_PROFILES, prefix);
+
+  const [beltPath, historyPath, manualPath, profilesPath] = await Promise.all([
+    resolveLatestAzurePath(env, beltFolder),
+    resolveLatestAzurePath(env, historyFolder),
+    resolveLatestAzurePath(env, manualFolder),
+    resolveLatestAzurePath(env, profilesFolder),
+  ]);
+
+  if (!beltPath) {
+    cachedBeltHoldersData = empty;
+    beltHoldersCacheExpiresAt = now + Math.min(championsCacheTtlMilliseconds(env), 10 * 60 * 1000);
+    return cachedBeltHoldersData;
+  }
+
+  const beltColumns = [
+    'champion_fighter_id',
+    'champion_fighter_name',
+    'weight_class',
+    'title_won_date',
+    'title_won_event',
+    'title_defenses',
+    'last_title_fight_date',
+    'is_vacant',
+  ];
+  const profileColumns = [
+    'fighter_id',
+    'fighter_name_display',
+    'fighter_name',
+    'country',
+    'wins',
+    'losses',
+    'draws',
+    'win_streak',
+    'loss_streak',
+    'longest_win_streak',
+    'longest_loss_streak',
+    'finish_rate_win_shrunk',
+    'finish_rate',
+    'sub_rate_win_shrunk',
+    'ko_rate_win_shrunk',
+    'fighter_status',
+  ];
+  const historyColumns = [
+    'event_date',
+    'event_name',
+    'weight_class',
+    'winner_name',
+    'loser_name',
+    'method',
+    'fight_round',
+    'fight_time',
+    'title_changed_hands',
+    'was_vacant',
+    'title_defense_number',
+  ];
+  const manualColumns = [
+    'vacated_on',
+    'weight_class',
+    'champion_name',
+    'reason',
+    'notes',
+  ];
+
+  const [
+    beltRows,
+    profileRows,
+    historyRows,
+    manualRows,
+    countryIndex,
+  ] = await Promise.all([
+    readParquetRowsAzure(env, beltPath, beltColumns),
+    profilesPath ? readParquetRowsAzure(env, profilesPath, profileColumns) : Promise.resolve([]),
+    historyPath ? readParquetRowsAzure(env, historyPath, historyColumns) : Promise.resolve([]),
+    manualPath ? readParquetRowsAzure(env, manualPath, manualColumns) : Promise.resolve([]),
+    getCountryMasterIndex(env),
+  ]);
+
+  const profilesById = new Map<string, Record<string, any>>();
+  const profilesByName = new Map<string, Record<string, any>>();
+  for (const row of profileRows) {
+    const id = coerceStr(row.fighter_id);
+    const displayName = coerceStr(row.fighter_name_display);
+    const name = coerceStr(row.fighter_name);
+    if (id) profilesById.set(id, row);
+    if (displayName) profilesByName.set(displayName, row);
+    if (name) profilesByName.set(name, row);
+  }
+
+  const champions = beltRows.map((row): ChampionRecord => {
+    const champId = coerceStr(row.champion_fighter_id);
+    const champName = coerceStr(row.champion_fighter_name);
+    const isVacant = toBool(row.is_vacant) || !champName;
+    const profile = !isVacant
+      ? ((champId && profilesById.get(champId)) || profilesByName.get(champName) || {})
+      : {};
+    const countryRaw = profile.country;
+
+    return {
+      fighter_id: champId || coerceStr(profile.fighter_id),
+      name: isVacant
+        ? 'VACANT'
+        : (coerceStr(profile.fighter_name_display) || coerceStr(profile.fighter_name) || champName),
+      country: canonicalCountryName(countryIndex.byAlias, countryRaw),
+      country_iso2: countryIso2(countryIndex.byAlias, countryRaw),
+      weight_class: coerceStr(row.weight_class),
+      is_champion: !isVacant,
+      is_vacant: isVacant,
+      title_won_date: coerceDate(row.title_won_date),
+      title_won_event: coerceStr(row.title_won_event),
+      title_defenses: coerceInt(row.title_defenses) ?? 0,
+      last_title_fight_date: coerceDate(row.last_title_fight_date),
+      wins: coerceInt(profile.wins) ?? 0,
+      losses: coerceInt(profile.losses) ?? 0,
+      draws: coerceInt(profile.draws) ?? 0,
+      win_streak: coerceInt(profile.win_streak) ?? 0,
+      loss_streak: coerceInt(profile.loss_streak) ?? 0,
+      longest_win_streak: coerceInt(profile.longest_win_streak) ?? 0,
+      longest_loss_streak: coerceInt(profile.longest_loss_streak) ?? 0,
+      finish_rate: coercePct(profile.finish_rate_win_shrunk) ?? coercePct(profile.finish_rate),
+      sub_rate: coercePct(profile.sub_rate_win_shrunk),
+      ko_rate: coercePct(profile.ko_rate_win_shrunk),
+      fighter_status: normalizeFighterStatus(profile.fighter_status),
+    };
+  }).sort((a, b) => divisionSortIndex(a.weight_class || '') - divisionSortIndex(b.weight_class || ''));
+
+  const titleHistory = historyRows.map((row): TitleFightHistoryRecord => ({
+    event_date: coerceDate(row.event_date),
+    event_name: coerceStr(row.event_name),
+    weight_class: coerceStr(row.weight_class),
+    winner_name: coerceStr(row.winner_name),
+    loser_name: coerceStr(row.loser_name),
+    method: coerceStr(row.method),
+    fight_round: coerceInt(row.fight_round),
+    fight_time: coerceStr(row.fight_time),
+    title_changed_hands: toBool(row.title_changed_hands),
+    was_vacant: toBool(row.was_vacant),
+    title_defense_number: coerceInt(row.title_defense_number),
+  })).sort((a, b) => (b.event_date || '').localeCompare(a.event_date || ''));
+
+  const manualVacates = manualRows.map((row): ManualTitleVacateRecord => ({
+    vacated_on: coerceDate(row.vacated_on),
+    weight_class: coerceStr(row.weight_class),
+    champion_name: coerceStr(row.champion_name),
+    reason: coerceStr(row.reason),
+    notes: coerceStr(row.notes),
+  })).sort((a, b) => (b.vacated_on || '').localeCompare(a.vacated_on || ''));
+
+  cachedBeltHoldersData = {
+    champions,
+    titleHistory,
+    manualVacates,
+    debug: {
+      fetchedBelts: true,
+      fetchedHistory: !!historyPath,
+      fetchedManualVacates: !!manualPath,
+      championCount: champions.length,
+      titleFightCount: titleHistory.length,
+      manualVacateCount: manualVacates.length,
+    },
+  };
+  const hasData = champions.length > 0 || titleHistory.length > 0 || manualVacates.length > 0;
+  beltHoldersCacheExpiresAt = now + (hasData
+    ? championsCacheTtlMilliseconds(env)
+    : Math.min(championsCacheTtlMilliseconds(env), 10 * 60 * 1000));
+  return cachedBeltHoldersData;
 }
 
 async function loadHomepageRankingsWallPayload(env?: RuntimeEnv): Promise<Record<string, any> | null> {
