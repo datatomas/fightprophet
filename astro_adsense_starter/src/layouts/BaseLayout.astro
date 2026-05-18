@@ -661,15 +661,16 @@ const structuredData = [
     object-fit: contain;
     justify-self: center;
     flex-shrink: 0;
+    opacity: 0.92;
+    /* Gentle stroke-thicken — just enough to lift thin-outline glyphs without over-saturating
+       the already-solid ones. Single muted shadow keeps icons balanced and readable. */
+    filter: drop-shadow(0 0 0.4px rgba(127, 29, 29, 0.7));
+    transition: transform 120ms ease, opacity 120ms ease, filter 120ms ease;
+  }
+  .fp-app-rail-nav-link:hover .fp-app-rail-nav-icon,
+  .fp-app-rail-nav-link.is-active .fp-app-rail-nav-icon,
+  .fp-app-rail-nav-link.is-primary-nav .fp-app-rail-nav-icon {
     opacity: 1;
-    /* Stroke-thicken filter — bulks up thin-outline icons (Predictions, Fighter Cards, Belt, Events, Lab, Goat)
-       so they read with the same visual weight as the solid-filled glyphs (About, T&C). */
-    filter:
-      drop-shadow(0.6px 0 0 #b91c1c)
-      drop-shadow(-0.6px 0 0 #b91c1c)
-      drop-shadow(0 0.6px 0 #b91c1c)
-      drop-shadow(0 -0.6px 0 #b91c1c);
-    transition: transform 120ms ease, opacity 120ms ease;
   }
 
   .fp-app-rail-nav-link {
