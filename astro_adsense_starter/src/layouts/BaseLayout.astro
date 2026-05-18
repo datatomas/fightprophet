@@ -26,7 +26,7 @@ const beltEmojiUrl = '/branding/b91c1c-belt-emoji-rail.png';
 const eventsEmojiUrl = '/branding/b91c1c-events-emoji-rail.png';
 const rankingsEmojiUrl = '/branding/b91c1c-goat-emoji-rail.png';
 const labEmojiUrl = '/branding/b91c1c-lab-emoji-rail.png';
-const termsEmojiUrl = '/branding/b91c1c-terms-emoji.png';
+const termsEmojiUrl = '/branding/b91c1c-terms-emoji-rail.png';
 const aboutEmojiUrl = '/branding/b91c1c-about-emoji.png';
 const betsEmojiUrl = '/branding/b91c1c-bets-emoji.png';
 const madeInColombiaEmojiUrl = '/branding/b91c1c-madeincolombia-emoji.png';
@@ -153,7 +153,7 @@ const structuredData = [
           <a class={`fp-app-rail-nav-link${isActive('/belt-holders/') ? ' is-active' : ''}`} href="/belt-holders/"><span class="fp-app-rail-nav-copy"><img src={beltEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Belt Holders</span></span></a>
           <a class={`fp-app-rail-nav-link${isActive('/events-history/') ? ' is-active' : ''}`} href="/events-history/"><span class="fp-app-rail-nav-copy"><img src={eventsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Events History</span></span></a>
           <a class={`fp-app-rail-nav-link${isActive('/fight-lab/') ? ' is-active' : ''}`} href="/fight-lab/"><span class="fp-app-rail-nav-copy"><img src={labEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Fight Lab</span></span></a>
-          <a class={`fp-app-rail-nav-link${isActive('/about/') ? ' is-active' : ''}`} href="/about/"><span class="fp-app-rail-nav-copy"><img src={aboutEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>About</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/about/') ? ' is-active' : ''}`} href="/about/"><span class="fp-app-rail-nav-copy"><img src={aboutEmojiUrl} alt="" class="fp-app-rail-nav-icon is-about-icon" loading="lazy" aria-hidden="true" /><span>About</span></span></a>
           <a class={`fp-app-rail-nav-link${isActive('/terms/') ? ' is-active' : ''}`} href="/terms/"><span class="fp-app-rail-nav-copy"><img src={termsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Terms &amp; Conditions</span></span></a>
         </nav>
 
@@ -652,14 +652,14 @@ const structuredData = [
   }
   .fp-app-rail-nav-copy {
     display: grid;
-    grid-template-columns: 34px minmax(0, 1fr);
+    grid-template-columns: 37px minmax(0, 1fr);
     align-items: center;
     column-gap: 0.82rem;
     width: 100%;
   }
   .fp-app-rail-nav-icon {
-    width: 32px;
-    height: 32px;
+    width: 35px;
+    height: 35px;
     object-fit: contain;
     justify-self: center;
     flex-shrink: 0;
@@ -671,6 +671,10 @@ const structuredData = [
       saturate(1.2)
       drop-shadow(0 0 1.2px rgba(248, 113, 113, 0.28));
     transition: transform 120ms ease, opacity 120ms ease, filter 120ms ease;
+  }
+  .fp-app-rail-nav-icon.is-about-icon {
+    width: 32px;
+    height: 32px;
   }
   .fp-app-rail-nav-link:hover .fp-app-rail-nav-icon,
   .fp-app-rail-nav-link.is-active .fp-app-rail-nav-icon,
