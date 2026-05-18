@@ -549,7 +549,7 @@ const historyRows = fighterData.debug.historyCount;
   }
   .fp-fighters-layout {
     display: grid;
-    grid-template-columns: minmax(260px, 0.38fr) minmax(0, 1fr);
+    grid-template-columns: 1fr;
     gap: 0.9rem;
     align-items: start;
   }
@@ -557,6 +557,33 @@ const historyRows = fighterData.debug.historyCount;
   .fp-fighter-detail {
     min-width: 0;
     padding: 0.95rem;
+  }
+  .fp-fighter-picker {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+  }
+  .fp-fighter-picker .fp-panel-head {
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 0;
+    gap: 0.1rem;
+  }
+  .fp-fighter-picker .fp-panel-head h2 {
+    font-size: 0.88rem;
+    color: #a1a1aa;
+    white-space: nowrap;
+  }
+  .fp-fighter-picker .fp-panel-head span {
+    font-size: 0.68rem;
+    margin: 0;
+  }
+  .fp-fighter-picker .fp-fighter-select-label {
+    flex: 1;
+    min-width: 220px;
   }
   .fp-panel-head,
   .fp-fighter-header {
@@ -742,6 +769,42 @@ const historyRows = fighterData.debug.historyCount;
     padding: 0.78rem;
     overflow: hidden;
     border-top: 2px solid rgba(248, 113, 113, 0.22);
+  }
+  /* Striking & Grappling — KPI card grid */
+  [data-skills-list] {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 0.42rem !important;
+  }
+  [data-skills-list] div {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.22rem !important;
+    padding: 0.55rem 0.3rem !important;
+    min-height: 68px !important;
+    border: 1px solid rgba(63, 63, 70, 0.52) !important;
+    border-radius: 0.5rem !important;
+    background: rgba(24, 24, 27, 0.55) !important;
+    text-align: center !important;
+    grid-template-columns: unset !important;
+  }
+  [data-skills-list] dt {
+    color: #71717a !important;
+    font-size: 0.56rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+    font-weight: 800 !important;
+    line-height: 1.2 !important;
+  }
+  [data-skills-list] dd {
+    margin: 0 !important;
+    color: #fef2f2 !important;
+    font-size: 1.05rem !important;
+    font-weight: 900 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
   }
   .fp-profile-grid h3 {
     margin: 0 0 0.62rem;
@@ -945,13 +1008,13 @@ const historyRows = fighterData.debug.historyCount;
 
   .fp-list-empty { color: #a1a1aa; font-size: 0.88rem; }
   @media (max-width: 1020px) {
-    .fp-fighters-layout { grid-template-columns: 1fr; }
     .fp-profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .fp-meta-icons { grid-template-columns: repeat(3, minmax(0,1fr)); }
     .fp-kpi-strip { grid-template-columns: repeat(2, minmax(0,1fr)); }
     .fp-kpi-strip-item:nth-child(2) { border-right: 0; }
     .fp-kpi-strip-item:nth-child(3) { border-right: 1px solid rgba(248,113,113,0.12); }
     .fp-career-snapshot dl { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    [data-skills-list] { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
   }
   @media (max-width: 760px) {
     .fp-tool-controls,
@@ -991,6 +1054,9 @@ const historyRows = fighterData.debug.historyCount;
     .fp-career-snapshot dl { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.28rem; }
     dl div { min-height: 1.72rem; padding: 0.28rem 0.36rem; }
     dt, dd { font-size: 0.7rem; }
+    [data-skills-list] { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+    [data-skills-list] div { min-height: 58px !important; padding: 0.42rem 0.22rem !important; }
+    [data-skills-list] dd { font-size: 0.9rem !important; }
   }
   @media (max-width: 420px) {
     .fp-tool-hero,

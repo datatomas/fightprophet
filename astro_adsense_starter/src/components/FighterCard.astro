@@ -192,9 +192,9 @@ const typeLine = [divisionLabel || 'MMA Fighter', canonicalCountryValue]
 
   <div class="fp-card-desc">
     <div class="fp-card-stat-row">
-      <span class="fp-card-stat"><em class="fp-card-stat-icon-label" title="Finish rate" aria-label="FIN"><img src="/branding/finish_rate_icon_b91c1c_transparent.png" alt="" loading="lazy" decoding="async" /></em><b>{fmtPct(finishRate)}</b></span>
+      <span class="fp-card-stat"><em>FIN</em><b>{fmtPct(finishRate)}</b></span>
       <span class="fp-card-stat"><em>SUB</em><b>{fmtPct(subRate)}</b></span>
-      <span class="fp-card-stat"><em class="fp-card-stat-icon-label" title="Win streak" aria-label="W★"><img src="/branding/b91c1c-winstreak-emoji.png" alt="" loading="lazy" decoding="async" /></em><b>{fmtInt(winStreak)}</b></span>
+      <span class="fp-card-stat"><em>W★</em><b>{fmtInt(winStreak)}</b></span>
       <span class="fp-card-stat"><em>L✗</em><b>{fmtInt(lossStreak)}</b></span>
     </div>
     <div class="fp-card-atkdef">
@@ -512,12 +512,6 @@ const typeLine = [divisionLabel || 'MMA Fighter', canonicalCountryValue]
     letter-spacing: 0.07em;
     color: rgba(252, 165, 165, 0.92);
   }
-  .fp-card-stat-icon-label img {
-    width: 1.1rem;
-    height: 1.1rem;
-    object-fit: contain;
-    filter: drop-shadow(0 0 5px rgba(185, 28, 28, 0.5));
-  }
   .fp-card-stat b {
     font-weight: 900;
     color: #fef2f2;
@@ -688,10 +682,6 @@ const typeLine = [divisionLabel || 'MMA Fighter', canonicalCountryValue]
     }
     .fp-card-stat b {
       font-size: 0.88rem;
-    }
-    .fp-card-stat-icon-label img {
-      width: 0.9rem;
-      height: 0.9rem;
     }
     .fp-card-atkdef {
       gap: 0.16rem;
