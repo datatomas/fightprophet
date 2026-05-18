@@ -650,19 +650,25 @@ const structuredData = [
   }
   .fp-app-rail-nav-copy {
     display: grid;
-    grid-template-columns: 30px minmax(0, 1fr);
+    grid-template-columns: 32px minmax(0, 1fr);
     align-items: center;
     column-gap: 0.82rem;
     width: 100%;
   }
   .fp-app-rail-nav-icon {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     object-fit: contain;
     justify-self: center;
     flex-shrink: 0;
     opacity: 1;
-    filter: none;
+    /* Stroke-thicken filter — bulks up thin-outline icons (Predictions, Fighter Cards, Belt, Events, Lab, Goat)
+       so they read with the same visual weight as the solid-filled glyphs (About, T&C). */
+    filter:
+      drop-shadow(0.6px 0 0 #b91c1c)
+      drop-shadow(-0.6px 0 0 #b91c1c)
+      drop-shadow(0 0.6px 0 #b91c1c)
+      drop-shadow(0 -0.6px 0 #b91c1c);
     transition: transform 120ms ease, opacity 120ms ease;
   }
 
