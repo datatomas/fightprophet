@@ -27,6 +27,7 @@ Copy `.env.example` to `.env` and set:
 - `PUBLIC_GOOGLE_SITE_VERIFICATION=your-search-console-token` if Google asks for a meta-tag verification token
 - `PUBLIC_CONTACT_EMAIL=hello@fightprophet.com` for the public contact/privacy pages
 - `PUBLIC_KOFI_WIDGET_ENABLED=false` during AdSense review, so support widgets do not compete with publisher content
+- `PUBLIC_KOFI_SUPPORT_URL=https://ko-fi.com/fightprophet` for the left-rail support link
 - `PUBLIC_SITE_URL=https://yourdomain.com`
 - `PUBLIC_BUTTONDOWN_SUBSCRIBE_URL=https://buttondown.com/api/emails/embed-subscribe/fightprophet`
 
@@ -107,7 +108,7 @@ No Azure subscription endpoint is required for newsletter capture. Buttondown st
 ## 7) Compliance checklist
 
 - Publish `privacy` page and link it in footer/nav
-- Publish `about`, `contact`, `methodology`, `editorial-policy`, and `responsible-use` pages and link them in the footer
+- Publish `about`, `contact`, `editorial-policy`, and `responsible-use` pages and link them in the footer
 - Serve `ads.txt` from your site root (`/ads.txt`)
 - Keep main navigation and tool entry points on `fightprophet.com`
 - Remove copied/RSS article bodies and avoid claiming third-party news as Fight Prophet content

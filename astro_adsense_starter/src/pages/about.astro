@@ -10,14 +10,14 @@ import ContentPage from '../components/ContentPage.astro';
   <ContentPage
     eyebrow="About"
     title="About Fight Prophet"
-    intro="Fight Prophet is a public MMA analytics project built to make fight data easier to inspect. The site combines rankings, fighter cards, model diagnostics, and plain-English methodology so readers can understand what the model sees and where it can be wrong."
+    intro="Fight Prophet is a public MMA analytics project built to make fight data easier to inspect. The site combines rankings, fighter cards, model diagnostics, and plain-English model notes so readers can understand what the model sees and where it can be wrong."
     updated="May 17, 2026"
   >
     <section>
       <h2>What Fight Prophet Publishes</h2>
       <p>
         The public site focuses on original analysis around UFC and MMA data: all-time and
-        division rankings, fighter-card context, prediction methodology, historical model
+        division rankings, fighter-card context, prediction logic, historical model
         audits, and responsible-use notes. The goal is not to copy fight news. The goal is to
         explain model outputs and make the data behind them easier to question.
       </p>
@@ -44,6 +44,46 @@ import ContentPage from '../components/ContentPage.astro';
     </div>
 
     <section>
+      <h2>How The System Works</h2>
+      <p>
+        Fight Prophet starts with structured fight records, fighter profiles, outcomes,
+        method information, weight classes, title context, and manually reviewed overrides
+        for cases such as country normalization, activity status, vacancies, and unusual
+        title situations. Public data can be incomplete, so every output is treated as an
+        estimate that may need correction.
+      </p>
+    </section>
+
+    <div class="fp-content-grid">
+      <section>
+        <h2>Ranking Logic</h2>
+        <p>
+          Rankings reward wins, opponent quality, finishes, title stakes, defenses, streaks,
+          and durability across time. Losses, inactivity, and weaker context reduce the
+          score. The same engine can be read globally or filtered to one division.
+        </p>
+      </section>
+
+      <section>
+        <h2>Prediction Logic</h2>
+        <p>
+          Predictions compare model probability with market-implied probability and flag
+          confidence only when the signal clears quality checks. Sparse data, short-notice
+          changes, inactivity, and model disagreement reduce confidence.
+        </p>
+      </section>
+    </div>
+
+    <section class="fp-content-note">
+      <h2>Quality Controls</h2>
+      <p>
+        Fight Lab keeps historical picks next to outcomes, Brier score, log loss,
+        calibration, and model disagreement. That audit trail matters because a model can
+        look persuasive on one card and still be poorly calibrated across many cards.
+      </p>
+    </section>
+
+    <section>
       <h2>What Makes The Site Useful</h2>
       <ul>
         <li>Rankings are computed from fight-level signals instead of editorial ballots.</li>
@@ -56,7 +96,7 @@ import ContentPage from '../components/ContentPage.astro';
     <section class="fp-content-note">
       <h2>Start Here</h2>
       <ul class="fp-content-actions">
-        <li><a href="/methodology/">Read the methodology</a></li>
+        <li><a href="/#fp-rankings">Open the home guide</a></li>
         <li><a href="/rankings/">Understand rankings</a></li>
         <li><a href="/contact/">Contact the publisher</a></li>
       </ul>

@@ -2,6 +2,7 @@ import { parquetReadObjects } from 'hyparquet';
 import { compressors } from 'hyparquet-compressors';
 import type { RuntimeEnv } from './country-master';
 import { getCountryMasterIndex } from './country-master';
+import { getAllRankedFighterCards, type RankedFighterRecord } from './champions';
 
 const DEFAULT_CONTAINER = 'fightprophet-dashboard';
 const DEFAULT_PREFIX = 'mma/diamond';
@@ -473,6 +474,134 @@ function eventKey(name: string): string {
   return name.trim().toLowerCase();
 }
 
+function fighterProfileKey(value: unknown): string {
+  return cleanStr(value)
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function fighterProfileIndex(profiles: FighterProfile[]): Map<string, FighterProfile> {
+  const index = new Map<string, FighterProfile>();
+  for (const profile of profiles) {
+    const keys = [
+      cleanStr(profile.fighter_id) ? `id:${cleanStr(profile.fighter_id).toLowerCase()}` : '',
+      fighterProfileKey(profile.name),
+    ].filter(Boolean);
+    for (const key of keys) {
+      if (!index.has(key)) index.set(key, profile);
+    }
+  }
+  return index;
+}
+
+function fillUpcomingSideFromProfile(
+  fight: UpcomingFightRow,
+  profile: FighterProfile | undefined,
+  side: 'fighter' | 'opponent',
+): void {
+  if (!profile) return;
+  const prefix = side === 'fighter' ? 'fighter' : 'opponent';
+  const countryKey = `${prefix}_country` as 'fighter_country' | 'opponent_country';
+  const isChampionKey = `${prefix}_is_champion` as 'fighter_is_champion' | 'opponent_is_champion';
+  const statusKey = `${prefix}_status` as 'fighter_status' | 'opponent_status';
+  const winsKey = `${prefix}_wins` as 'fighter_wins' | 'opponent_wins';
+  const lossesKey = `${prefix}_losses` as 'fighter_losses' | 'opponent_losses';
+  const finishKey = `${prefix}_finish_rate` as 'fighter_finish_rate' | 'opponent_finish_rate';
+  const subKey = `${prefix}_sub_rate` as 'fighter_sub_rate' | 'opponent_sub_rate';
+  const winStreakKey = `${prefix}_win_streak` as 'fighter_win_streak' | 'opponent_win_streak';
+  const lossStreakKey = `${prefix}_loss_streak` as 'fighter_loss_streak' | 'opponent_loss_streak';
+
+  fight[countryKey] ||= profile.country;
+  fight[isChampionKey] ||= profile.is_current_champion;
+  fight[statusKey] ||= profile.fighter_status;
+  fight[winsKey] ??= profile.wins;
+  fight[lossesKey] ??= profile.losses;
+  fight[finishKey] ??= profile.finish_rate_win_shrunk ?? profile.finish_rate;
+  fight[subKey] ??= profile.sub_rate_win_shrunk;
+  fight[winStreakKey] ??= profile.win_streak;
+  fight[lossStreakKey] ??= profile.loss_streak;
+}
+
+function fillUpcomingFightsFromProfiles(
+  fights: UpcomingFightRow[],
+  profiles: FighterProfile[],
+  countryIndex: Awaited<ReturnType<typeof getCountryMasterIndex>>,
+): UpcomingFightRow[] {
+  if (!profiles.length || !fights.length) return fights;
+  const profilesByKey = fighterProfileIndex(profiles);
+  return fights.map((fight) => {
+    const fighterProfile = profilesByKey.get(fighterProfileKey(fight.fighter_name_display));
+    const opponentProfile = profilesByKey.get(fighterProfileKey(fight.opponent_name_display));
+    fillUpcomingSideFromProfile(fight, fighterProfile, 'fighter');
+    fillUpcomingSideFromProfile(fight, opponentProfile, 'opponent');
+    fight.fighter_flag ||= flagEmojiFor(countryIndex.byAlias, fight.fighter_country);
+    fight.opponent_flag ||= flagEmojiFor(countryIndex.byAlias, fight.opponent_country);
+    return fight;
+  });
+}
+
+function rankedFighterIndex(records: RankedFighterRecord[]): Map<string, RankedFighterRecord> {
+  const index = new Map<string, RankedFighterRecord>();
+  for (const record of records) {
+    const keys = [
+      cleanStr(record.fighter_id) ? `id:${cleanStr(record.fighter_id).toLowerCase()}` : '',
+      fighterProfileKey(record.name),
+    ].filter(Boolean);
+    for (const key of keys) {
+      if (!index.has(key)) index.set(key, record);
+    }
+  }
+  return index;
+}
+
+function fillUpcomingSideFromRanking(
+  fight: UpcomingFightRow,
+  record: RankedFighterRecord | undefined,
+  side: 'fighter' | 'opponent',
+  countryIndex: Awaited<ReturnType<typeof getCountryMasterIndex>>,
+): void {
+  if (!record) return;
+  const prefix = side === 'fighter' ? 'fighter' : 'opponent';
+  const countryKey = `${prefix}_country` as 'fighter_country' | 'opponent_country';
+  const flagKey = `${prefix}_flag` as 'fighter_flag' | 'opponent_flag';
+  const isChampionKey = `${prefix}_is_champion` as 'fighter_is_champion' | 'opponent_is_champion';
+  const statusKey = `${prefix}_status` as 'fighter_status' | 'opponent_status';
+  const winsKey = `${prefix}_wins` as 'fighter_wins' | 'opponent_wins';
+  const lossesKey = `${prefix}_losses` as 'fighter_losses' | 'opponent_losses';
+  const finishKey = `${prefix}_finish_rate` as 'fighter_finish_rate' | 'opponent_finish_rate';
+  const subKey = `${prefix}_sub_rate` as 'fighter_sub_rate' | 'opponent_sub_rate';
+  const winStreakKey = `${prefix}_win_streak` as 'fighter_win_streak' | 'opponent_win_streak';
+  const lossStreakKey = `${prefix}_loss_streak` as 'fighter_loss_streak' | 'opponent_loss_streak';
+
+  fight[countryKey] ||= countryName(countryIndex.byAlias, record.country || record.country_iso2);
+  fight[flagKey] ||= flagEmojiFor(countryIndex.byAlias, record.country_iso2 || record.country);
+  fight[isChampionKey] ||= !!record.is_champion;
+  fight[statusKey] ||= record.fighter_status || '';
+  fight[winsKey] ??= record.wins ?? null;
+  fight[lossesKey] ??= record.losses ?? null;
+  fight[finishKey] ??= record.finish_rate ?? null;
+  fight[subKey] ??= record.sub_rate ?? null;
+  fight[winStreakKey] ??= record.win_streak ?? null;
+  fight[lossStreakKey] ??= record.loss_streak ?? null;
+}
+
+function fillUpcomingFightsFromRankings(
+  fights: UpcomingFightRow[],
+  records: RankedFighterRecord[],
+  countryIndex: Awaited<ReturnType<typeof getCountryMasterIndex>>,
+): UpcomingFightRow[] {
+  if (!records.length || !fights.length) return fights;
+  const recordsByKey = rankedFighterIndex(records);
+  return fights.map((fight) => {
+    fillUpcomingSideFromRanking(fight, recordsByKey.get(fighterProfileKey(fight.fighter_name_display)), 'fighter', countryIndex);
+    fillUpcomingSideFromRanking(fight, recordsByKey.get(fighterProfileKey(fight.opponent_name_display)), 'opponent', countryIndex);
+    return fight;
+  });
+}
+
 function normalizeFightRow(row: Record<string, any>, phaseHint?: 'Upcoming' | 'Past'): EventFightRow | null {
   const eventName = cleanStr(row.event_name);
   if (!eventName) return null;
@@ -825,9 +954,11 @@ export async function getUpcomingPredictionsData(env?: RuntimeEnv): Promise<Upco
     'bet_on_name',
   ];
 
-  const [primaryRows, countryIndex] = await Promise.all([
+  const [primaryRows, countryIndex, fighterData, rankedCards] = await Promise.all([
     readLatestDashboardRows(env, FOLDER_UPCOMING, columns),
     getCountryMasterIndex(env),
+    getFighterCardsData(env),
+    getAllRankedFighterCards(env),
   ]);
   const rows =
     primaryRows.length > 0
@@ -879,6 +1010,8 @@ export async function getUpcomingPredictionsData(env?: RuntimeEnv): Promise<Upco
       };
     })
     .filter(Boolean) as UpcomingFightRow[];
+  fillUpcomingFightsFromProfiles(fights, fighterData.profiles, countryIndex);
+  fillUpcomingFightsFromRankings(fights, rankedCards, countryIndex);
 
   cachedPredictions = {
     fights,
@@ -913,11 +1046,13 @@ export async function getAllModelsPredictionsData(env?: RuntimeEnv): Promise<All
     'bet_on_name',
   ];
 
-  const [catboostRows, ensembleRows, logregRows, countryIndex] = await Promise.all([
+  const [catboostRows, ensembleRows, logregRows, countryIndex, fighterData, rankedCards] = await Promise.all([
     readLatestDashboardRows(env, FOLDER_UPCOMING_CATBOOST, columns),
     readLatestDashboardRows(env, FOLDER_UPCOMING_ENSEMBLE, columns),
     readLatestDashboardRows(env, FOLDER_UPCOMING_LOGREG, columns),
     getCountryMasterIndex(env),
+    getFighterCardsData(env),
+    getAllRankedFighterCards(env),
   ]);
 
   function normalizeRows(rows: Record<string, any>[], fallbackRows: Record<string, any>[]): UpcomingFightRow[] {
@@ -970,10 +1105,19 @@ export async function getAllModelsPredictionsData(env?: RuntimeEnv): Promise<All
   }
 
   const primaryRows = await readLatestDashboardRows(env, FOLDER_UPCOMING, columns);
+  const catboost = normalizeRows(catboostRows, primaryRows);
+  const ensemble = normalizeRows(ensembleRows, catboostRows);
+  const logreg = normalizeRows(logregRows, catboostRows);
+  fillUpcomingFightsFromProfiles(catboost, fighterData.profiles, countryIndex);
+  fillUpcomingFightsFromProfiles(ensemble, fighterData.profiles, countryIndex);
+  fillUpcomingFightsFromProfiles(logreg, fighterData.profiles, countryIndex);
+  fillUpcomingFightsFromRankings(catboost, rankedCards, countryIndex);
+  fillUpcomingFightsFromRankings(ensemble, rankedCards, countryIndex);
+  fillUpcomingFightsFromRankings(logreg, rankedCards, countryIndex);
   cachedAllModels = {
-    catboost: normalizeRows(catboostRows, primaryRows),
-    ensemble: normalizeRows(ensembleRows, catboostRows),
-    logreg: normalizeRows(logregRows, catboostRows),
+    catboost,
+    ensemble,
+    logreg,
   };
   cacheExpiresAt = now + cacheTtlMilliseconds(env);
   return cachedAllModels;

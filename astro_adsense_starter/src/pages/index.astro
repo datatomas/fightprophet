@@ -86,6 +86,10 @@ const analysisNotes = [
     title: 'Audit trail for every model claim',
     copy: 'Fight Lab keeps historical predictions next to actual outcomes, closing-market context, and calibration metrics. That makes the model falsifiable instead of just promotional.',
   },
+  {
+    title: 'Data needs human cleanup',
+    copy: 'Country normalization, activity status, title vacancies, and unusual fight records can require manual review. Those overrides keep the public cards readable when source data is incomplete.',
+  },
 ];
 ---
 
@@ -295,7 +299,7 @@ const analysisNotes = [
         ))}
       </div>
       <div class="fp-insight-links">
-        <a href="/methodology/">Read the methodology</a>
+        <a href="/about/">How Fight Prophet works</a>
         <a href="/editorial-policy/">Editorial policy</a>
         <a href="/responsible-use/">Responsible use</a>
       </div>
@@ -1557,7 +1561,7 @@ const analysisNotes = [
     }
     .fp-insight-grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 0.6rem;
     }
     .fp-insight-card {
@@ -1594,6 +1598,9 @@ const analysisNotes = [
     }
     .fp-insight-links a:hover {
       border-color: rgba(248, 113, 113, 0.7);
+    }
+    @media (max-width: 1100px) {
+      .fp-insight-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 760px) {
       .fp-insight-grid { grid-template-columns: 1fr; }

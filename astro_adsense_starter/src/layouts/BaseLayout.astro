@@ -18,6 +18,7 @@ const canonicalUrl = new URL(Astro.url.pathname, siteUrl).toString();
 const ogImageUrl = new URL('/branding/fightprophet_logo_white.png', siteUrl).toString();
 const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION || '';
 const kofiWidgetEnabled = import.meta.env.PUBLIC_KOFI_WIDGET_ENABLED === 'true';
+const kofiSupportUrl = import.meta.env.PUBLIC_KOFI_SUPPORT_URL || 'https://ko-fi.com/fightprophet';
 
 const predictionsEmojiUrl = '/branding/b91c1c-predictions-emoji-rail.png';
 const fighterCardsEmojiUrl = '/branding/b91c1c-fighterscard-emoji-rail.png';
@@ -26,6 +27,8 @@ const eventsEmojiUrl = '/branding/b91c1c-events-emoji-rail.png';
 const rankingsEmojiUrl = '/branding/b91c1c-goat-emoji-rail.png';
 const labEmojiUrl = '/branding/b91c1c-lab-emoji-rail.png';
 const termsEmojiUrl = '/branding/b91c1c-terms-emoji-rail.png';
+const aboutEmojiUrl = '/branding/b91c1c-about-emoji.png';
+const betsEmojiUrl = '/branding/b91c1c-bets-emoji.png';
 const madeInColombiaEmojiUrl = '/branding/b91c1c-madeincolombia-emoji.png';
 const earProEmojiUrl = '/branding/b91c1c-earpro-emoji.png';
 
@@ -132,6 +135,15 @@ const structuredData = [
 
         <div class="fp-app-rail-heading">Bet wisely with Fight Prophet</div>
         <div class="fp-app-rail-subheading">AI-powered MMA fight predictions</div>
+        <a class="fp-app-rail-support" href={kofiSupportUrl} target="_blank" rel="noopener noreferrer">
+          <span class="fp-app-rail-support-icon">
+            <img src={betsEmojiUrl} alt="" width="30" height="30" loading="lazy" aria-hidden="true" />
+          </span>
+          <span class="fp-app-rail-support-copy">
+            <span class="fp-app-rail-support-title">Support Fight Prophet</span>
+            <span class="fp-app-rail-support-text">Buy me a coffee</span>
+          </span>
+        </a>
         <div class="fp-app-rail-section-label">Navigate</div>
 
         <nav class="fp-app-rail-nav" aria-label="Site sections">
@@ -141,8 +153,7 @@ const structuredData = [
           <a class={`fp-app-rail-nav-link${isActive('/belt-holders/') ? ' is-active' : ''}`} href="/belt-holders/"><span class="fp-app-rail-nav-copy"><img src={beltEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Belt Holders</span></span></a>
           <a class={`fp-app-rail-nav-link${isActive('/events-history/') ? ' is-active' : ''}`} href="/events-history/"><span class="fp-app-rail-nav-copy"><img src={eventsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Events History</span></span></a>
           <a class={`fp-app-rail-nav-link${isActive('/fight-lab/') ? ' is-active' : ''}`} href="/fight-lab/"><span class="fp-app-rail-nav-copy"><img src={labEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Fight Lab</span></span></a>
-          <a class={`fp-app-rail-nav-link${isActive('/methodology/') ? ' is-active' : ''}`} href="/methodology/"><span class="fp-app-rail-nav-copy"><img src={labEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Methodology</span></span></a>
-          <a class={`fp-app-rail-nav-link${isActive('/about/') ? ' is-active' : ''}`} href="/about/"><span class="fp-app-rail-nav-copy"><img src={termsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>About</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/about/') ? ' is-active' : ''}`} href="/about/"><span class="fp-app-rail-nav-copy"><img src={aboutEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>About</span></span></a>
           <a class={`fp-app-rail-nav-link${isActive('/terms/') ? ' is-active' : ''}`} href="/terms/"><span class="fp-app-rail-nav-copy"><img src={termsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Terms &amp; Conditions</span></span></a>
         </nav>
 
@@ -191,7 +202,6 @@ const structuredData = [
           <a href="/belt-holders/">Belt Holders</a>
           <a href="/fighter-card/">Fighter Cards</a>
           <a href="/events-history/">Events History</a>
-          <a href="/methodology/">Methodology</a>
           <a href="/editorial-policy/">Editorial Policy</a>
           <a href="/responsible-use/">Responsible Use</a>
           <a href="/about/">About</a>
@@ -560,6 +570,72 @@ const structuredData = [
     font-size: 0.84rem;
     line-height: 1.45;
   }
+
+  .fp-app-rail-support {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    align-items: center;
+    gap: 0.72rem;
+    margin: -0.25rem 0 0.15rem;
+    padding: 0.66rem 0.72rem;
+    border-radius: 0.82rem;
+    color: #fff7ed;
+    text-decoration: none;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(250, 204, 21, 0.22), transparent 46%),
+      linear-gradient(155deg, rgba(185, 28, 28, 0.72), rgba(69, 10, 10, 0.78));
+    border: 1px solid rgba(251, 191, 36, 0.32);
+    box-shadow: 0 0 18px rgba(220, 38, 38, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    animation: fp-support-drift 3.8s ease-in-out infinite;
+  }
+  .fp-app-rail-support:hover,
+  .fp-app-rail-support:focus-visible {
+    color: #ffffff;
+    transform: translateX(2px);
+    border-color: rgba(251, 191, 36, 0.55);
+    box-shadow: 0 8px 22px rgba(220, 38, 38, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    outline: none;
+  }
+  .fp-app-rail-support-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 0.72rem;
+    background: rgba(9, 9, 11, 0.5);
+    border: 1px solid rgba(251, 191, 36, 0.26);
+  }
+  .fp-app-rail-support-icon img {
+    display: block;
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+  }
+  .fp-app-rail-support-copy {
+    display: grid;
+    gap: 0.14rem;
+    min-width: 0;
+  }
+  .fp-app-rail-support-title {
+    font-size: 0.84rem;
+    font-weight: 850;
+    line-height: 1.1;
+    color: #fff7ed;
+  }
+  .fp-app-rail-support-text {
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.04em;
+    line-height: 1.1;
+    text-transform: uppercase;
+    color: #fde68a;
+  }
+  @keyframes fp-support-drift {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(3px); }
+  }
+
   .fp-app-rail-section-label {
     margin: 0 0 0.35rem;
     color: #a1a1aa;
@@ -574,26 +650,20 @@ const structuredData = [
   }
   .fp-app-rail-nav-copy {
     display: grid;
-    grid-template-columns: 36px minmax(0, 1fr);
+    grid-template-columns: 30px minmax(0, 1fr);
     align-items: center;
-    column-gap: 0.9rem;
+    column-gap: 0.82rem;
     width: 100%;
   }
   .fp-app-rail-nav-icon {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     object-fit: contain;
     justify-self: center;
     flex-shrink: 0;
-    opacity: 0.88;
-    border-radius: 0.45rem;
-    padding: 0.2rem;
-    background: rgba(127, 29, 29, 0.28);
-    border: 1px solid rgba(185, 28, 28, 0.32);
-    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35);
-    /* No brightness: keep true icon colours */
-    filter: saturate(1.1) drop-shadow(0 0 4px rgba(220, 38, 38, 0.4));
-    transition: filter 120ms ease, transform 120ms ease, opacity 120ms ease, background 120ms ease;
+    opacity: 0.92;
+    filter: none;
+    transition: transform 120ms ease, opacity 120ms ease;
   }
 
   .fp-app-rail-nav-link {
@@ -619,10 +689,7 @@ const structuredData = [
   }
   .fp-app-rail-nav-link:hover .fp-app-rail-nav-icon {
     opacity: 1;
-    transform: scale(1.08);
-    background: rgba(185, 28, 28, 0.45);
-    border-color: rgba(248, 113, 113, 0.52);
-    filter: saturate(1.35) drop-shadow(0 0 8px rgba(248, 113, 113, 0.65));
+    transform: scale(1.06);
   }
   .fp-app-rail-nav-link.is-active {
     background: linear-gradient(160deg, rgba(185, 28, 28, 0.42), rgba(69, 10, 10, 0.62));
@@ -634,10 +701,8 @@ const structuredData = [
   .fp-app-rail-nav-link.is-active .fp-app-rail-nav-icon,
   .fp-app-rail-nav-link.is-primary-nav .fp-app-rail-nav-icon {
     opacity: 1;
-    transform: scale(1.06);
-    background: rgba(220, 38, 38, 0.48);
-    border-color: rgba(248, 113, 113, 0.62);
-    filter: saturate(1.4) drop-shadow(0 0 10px rgba(248, 113, 113, 0.72));
+    transform: scale(1.04);
+    filter: none;
   }
   .fp-app-rail-nav-link.is-primary-nav {
     background: linear-gradient(160deg, rgba(185, 28, 28, 0.55), rgba(90, 20, 20, 0.62));

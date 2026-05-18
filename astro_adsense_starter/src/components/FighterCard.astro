@@ -192,9 +192,9 @@ const typeLine = [divisionLabel || 'MMA Fighter', canonicalCountryValue]
 
   <div class="fp-card-desc">
     <div class="fp-card-stat-row">
-      <span class="fp-card-stat"><em>FIN</em><b>{fmtPct(finishRate)}</b></span>
+      <span class="fp-card-stat"><em class="fp-card-stat-icon-label" title="Finish rate" aria-label="FIN"><img src="/branding/finish_rate_icon_b91c1c_transparent.png" alt="" loading="lazy" decoding="async" /></em><b>{fmtPct(finishRate)}</b></span>
       <span class="fp-card-stat"><em>SUB</em><b>{fmtPct(subRate)}</b></span>
-      <span class="fp-card-stat"><em>W★</em><b>{fmtInt(winStreak)}</b></span>
+      <span class="fp-card-stat"><em class="fp-card-stat-icon-label" title="Win streak" aria-label="W★"><img src="/branding/b91c1c-winstreak-emoji.png" alt="" loading="lazy" decoding="async" /></em><b>{fmtInt(winStreak)}</b></span>
       <span class="fp-card-stat"><em>L✗</em><b>{fmtInt(lossStreak)}</b></span>
     </div>
     <div class="fp-card-atkdef">
@@ -511,10 +511,19 @@ const typeLine = [divisionLabel || 'MMA Fighter', canonicalCountryValue]
     line-height: 1;
   }
   .fp-card-stat em {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     font-style: normal;
     font-weight: 800;
     letter-spacing: 0.08em;
     color: rgba(252, 165, 165, 0.92);
+  }
+  .fp-card-stat-icon-label img {
+    width: 1rem;
+    height: 1rem;
+    object-fit: contain;
+    filter: drop-shadow(0 0 5px rgba(185, 28, 28, 0.5));
   }
   .fp-card-stat b {
     font-weight: 900;
@@ -633,17 +642,70 @@ const typeLine = [divisionLabel || 'MMA Fighter', canonicalCountryValue]
   }
 
   @media (max-width: 640px) {
+    .fp-card {
+      min-height: 176px;
+      padding: 0.28rem 0.3rem 0.3rem;
+    }
+    .fp-card-top {
+      min-height: 1.32rem;
+      gap: 0.22rem;
+    }
+    .fp-card-rating {
+      padding: 0.14rem 0.32rem;
+      gap: 0.2rem;
+      max-width: calc(100% - 2.2rem);
+    }
+    .fp-card-rating-num {
+      font-size: 0.74rem;
+    }
+    .fp-card-rating-pos,
+    .fp-card-rating-sub {
+      font-size: 0.42rem;
+      letter-spacing: 0.04em;
+    }
+    .fp-card-flag {
+      font-size: 1.16rem;
+      padding: 0.08rem 0.32rem;
+    }
     .fp-card-name {
       font-size: 0.64rem;
     }
+    .fp-card-portrait {
+      min-height: 56px;
+    }
+    .fp-card-portrait-silhouette {
+      font-size: 2.05rem;
+    }
+    .fp-card-initials {
+      font-size: 1.12rem;
+    }
+    .fp-card-type-bar {
+      margin: 0.12rem 0 0.1rem;
+      padding: 0.12rem 0.18rem;
+      font-size: 0.48rem;
+      letter-spacing: 0.03em;
+    }
+    .fp-card-desc {
+      padding: 0.18rem 0.2rem 0.2rem;
+      gap: 0.14rem;
+    }
     .fp-card-stat-row {
       font-size: 0.6rem;
+      gap: 0.08rem 0.22rem;
     }
     .fp-card-stat b {
       font-size: 0.7rem;
     }
+    .fp-card-stat-icon-label img {
+      width: 0.86rem;
+      height: 0.86rem;
+    }
     .fp-card-atkdef {
-      font-size: 0.7rem;
+      gap: 0.16rem;
+      justify-content: space-between;
+      font-size: 0.58rem;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
     }
   }
 </style>
