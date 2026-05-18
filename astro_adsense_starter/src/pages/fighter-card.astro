@@ -142,11 +142,11 @@ const historyRows = fighterData.debug.historyCount;
               </div>
             </div>
 
+            <section class="fp-career-snapshot">
+              <h3>Career Snapshot</h3>
+              <dl data-career-list></dl>
+            </section>
             <div class="fp-profile-grid">
-              <section>
-                <h3>Career Snapshot</h3>
-                <dl data-career-list></dl>
-              </section>
               <section>
                 <h3>Striking &amp; Grappling</h3>
                 <dl data-skills-list></dl>
@@ -665,44 +665,78 @@ const historyRows = fighterData.debug.historyCount;
     border-color: rgba(248, 113, 113, 0.62);
     box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.18);
   }
+  /* ── Profile KPI strip (Win Rate / Finish Rate / Win Streak / Last Fight) ── */
   .fp-profile-kpis {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.55rem;
+    gap: 0;
     margin-bottom: 0.85rem;
+    background: linear-gradient(145deg, rgba(28,28,32,0.92), rgba(39,39,42,0.76));
+    border: 1px solid rgba(248,113,113,0.16);
+    border-top: 2px solid rgba(185,28,28,0.52);
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 6px 16px rgba(0,0,0,0.18);
   }
-  .fp-profile-kpis div,
+  .fp-profile-kpis div {
+    min-height: 110px;
+    padding: 0.85rem 0.65rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-right: 1px solid rgba(248,113,113,0.12);
+    background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0));
+  }
+  .fp-profile-kpis div:last-child { border-right: 0; }
+  .fp-profile-kpis span {
+    display: block;
+    color: #a1a1aa;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 0.2rem;
+  }
+  .fp-profile-kpis strong {
+    color: #fef2f2;
+    font-size: 1.45rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  /* ── Career Snapshot (full-width, 2-col dl grid) ── */
+  .fp-career-snapshot {
+    border: 1px solid rgba(63, 63, 70, 0.82);
+    border-top: 2px solid rgba(248, 113, 113, 0.22);
+    border-radius: 0.65rem;
+    background: rgba(9, 9, 11, 0.45);
+    padding: 0.78rem;
+    margin-bottom: 0.65rem;
+  }
+  .fp-career-snapshot h3 {
+    margin: 0 0 0.62rem;
+    color: #fef2f2;
+    font-size: 0.92rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .fp-career-snapshot dl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem 0.55rem;
+  }
   .fp-profile-grid section,
   .fp-history-panel {
     border: 1px solid rgba(63, 63, 70, 0.82);
     border-radius: 0.65rem;
     background: rgba(9, 9, 11, 0.45);
   }
-  .fp-profile-kpis div {
-    min-height: 94px;
-    padding: 0.62rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-  }
-  .fp-profile-kpis span {
-    display: block;
-    color: #a1a1aa;
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-  .fp-profile-kpis strong {
-    color: #fef2f2;
-    font-size: 1.08rem;
-    font-weight: 800;
-  }
   .fp-profile-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.65rem;
+    margin-bottom: 0;
   }
   .fp-profile-grid section {
     padding: 0.78rem;
@@ -911,15 +945,13 @@ const historyRows = fighterData.debug.historyCount;
 
   .fp-list-empty { color: #a1a1aa; font-size: 0.88rem; }
   @media (max-width: 1020px) {
-    .fp-fighters-layout,
-    .fp-profile-grid { grid-template-columns: 1fr; }
-    .fp-profile-grid section dl {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+    .fp-fighters-layout { grid-template-columns: 1fr; }
+    .fp-profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .fp-meta-icons { grid-template-columns: repeat(3, minmax(0,1fr)); }
     .fp-kpi-strip { grid-template-columns: repeat(2, minmax(0,1fr)); }
     .fp-kpi-strip-item:nth-child(2) { border-right: 0; }
     .fp-kpi-strip-item:nth-child(3) { border-right: 1px solid rgba(248,113,113,0.12); }
+    .fp-career-snapshot dl { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   }
   @media (max-width: 760px) {
     .fp-tool-controls,
@@ -928,19 +960,20 @@ const historyRows = fighterData.debug.historyCount;
     .fp-record-mark { width: fit-content; }
     .fp-profile-kpis {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.45rem;
+      border-radius: 0.75rem;
     }
     .fp-profile-kpis div {
-      min-height: 82px;
-      padding: 0.5rem 0.38rem;
+      min-height: 96px;
+      padding: 0.7rem 0.5rem;
     }
-    .fp-profile-kpis span {
-      font-size: 0.62rem;
-      letter-spacing: 0.04em;
+    .fp-profile-kpis div:nth-child(2) { border-right: 0; }
+    .fp-profile-kpis div:nth-child(3) { border-right: 1px solid rgba(248,113,113,0.12); }
+    .fp-profile-kpis div:nth-child(3),
+    .fp-profile-kpis div:nth-child(4) {
+      border-top: 1px solid rgba(248,113,113,0.12);
     }
-    .fp-profile-kpis strong {
-      font-size: 0.98rem;
-    }
+    .fp-profile-kpis span { font-size: 0.62rem; letter-spacing: 0.04em; }
+    .fp-profile-kpis strong { font-size: 1.25rem; }
     .fp-meta-icons {
       grid-template-columns: repeat(3, minmax(0,1fr));
       gap: 0.38rem;
@@ -949,31 +982,15 @@ const historyRows = fighterData.debug.historyCount;
       min-height: 78px;
       padding: 0.46rem 0.24rem;
     }
-    .fp-meta-icon-card img {
-      width: 28px;
-      height: 28px;
-    }
-    .fp-meta-icon-card span {
-      font-size: 0.5rem;
-      letter-spacing: 0.02em;
-    }
-    .fp-meta-icon-card strong {
-      font-size: 0.86rem;
-    }
-    .fp-profile-grid section {
-      padding: 0.65rem;
-    }
-    .fp-profile-grid section dl {
-      grid-template-columns: 1fr;
-    }
-    dl div {
-      min-height: 1.72rem;
-      padding: 0.28rem 0.36rem;
-    }
-    dt,
-    dd {
-      font-size: 0.7rem;
-    }
+    .fp-meta-icon-card img { width: 28px; height: 28px; }
+    .fp-meta-icon-card span { font-size: 0.5rem; letter-spacing: 0.02em; }
+    .fp-meta-icon-card strong { font-size: 0.86rem; }
+    .fp-profile-grid { grid-template-columns: 1fr; }
+    .fp-profile-grid section { padding: 0.65rem; }
+    .fp-career-snapshot { padding: 0.65rem; }
+    .fp-career-snapshot dl { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.28rem; }
+    dl div { min-height: 1.72rem; padding: 0.28rem 0.36rem; }
+    dt, dd { font-size: 0.7rem; }
   }
   @media (max-width: 420px) {
     .fp-tool-hero,
