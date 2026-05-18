@@ -243,9 +243,9 @@ const hasData = totalFights > 0;
         <div class="fp-card-type-bar">[ ${typeLine} ]</div>
         <div class="fp-card-desc">
           <div class="fp-card-stat-row">
-            <span class="fp-card-stat"><em class="fp-card-stat-icon-label" title="Finish rate" aria-label="FIN"><img src="/branding/finish_rate_icon_b91c1c_transparent.png" alt="" loading="lazy" decoding="async" /></em><b>${esc(fmtPct(finRate))}</b></span>
+            <span class="fp-card-stat"><em>FIN</em><b>${esc(fmtPct(finRate))}</b></span>
             <span class="fp-card-stat"><em>SUB</em><b>${esc(fmtPct(subRate))}</b></span>
-            <span class="fp-card-stat"><em class="fp-card-stat-icon-label" title="Win streak" aria-label="W★"><img src="/branding/b91c1c-winstreak-emoji.png" alt="" loading="lazy" decoding="async" /></em><b>${esc(fmtInt(wStreak))}</b></span>
+            <span class="fp-card-stat"><em>W★</em><b>${esc(fmtInt(wStreak))}</b></span>
             <span class="fp-card-stat"><em>L✗</em><b>${esc(fmtInt(lStreak))}</b></span>
           </div>
           <div class="fp-card-atkdef">
@@ -498,7 +498,6 @@ const hasData = totalFights > 0;
   .fp-card-stat-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.12rem 0.42rem;font-size:0.7rem;}
   .fp-card-stat{display:flex;align-items:center;justify-content:space-between;gap:0.24rem;line-height:1;}
   .fp-card-stat em{display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-weight:800;letter-spacing:0.08em;color:rgba(252,165,165,0.92);}
-  .fp-card-stat-icon-label img{width:1rem;height:1rem;object-fit:contain;filter:drop-shadow(0 0 5px rgba(185,28,28,0.5));}
   .fp-card-stat b{font-weight:900;color:#fef2f2;font-size:0.82rem;}
   .fp-card.is-champ .fp-card-stat em{color:rgba(255,240,180,0.92);}
   .fp-card.is-champ .fp-card-stat b{color:#fff5d6;}
