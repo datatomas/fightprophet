@@ -965,11 +965,16 @@ export async function getUpcomingPredictionsData(env?: RuntimeEnv): Promise<Upco
       ? primaryRows
       : await readLatestDashboardRows(env, FOLDER_UPCOMING_CATBOOST, columns);
 
+  const seenLegacy = new Set<string>();
   const fights: UpcomingFightRow[] = rows
     .map((row): UpcomingFightRow | null => {
       const eventName = cleanStr(row.event_name);
       const fighterName = cleanStr(row.fighter_name_display);
       if (!eventName || !fighterName) return null;
+      const opponentName = cleanStr(row.opponent_name_display);
+      const dedupeKey = `${eventName}::${fighterName}::${opponentName}`;
+      if (seenLegacy.has(dedupeKey)) return null;
+      seenLegacy.add(dedupeKey);
       const fighterCountry = countryName(countryIndex.byAlias, row.fighter_country);
       const opponentCountry = countryName(countryIndex.byAlias, row.opponent_country);
       return {
@@ -977,7 +982,7 @@ export async function getUpcomingPredictionsData(env?: RuntimeEnv): Promise<Upco
         event_date: coerceDate(row.event_date),
         location: cleanStr(row.location),
         fighter_name_display: fighterName,
-        opponent_name_display: cleanStr(row.opponent_name_display),
+        opponent_name_display: opponentName,
         weight_class: cleanStr(row.weight_class),
         fighter_country: fighterCountry,
         opponent_country: opponentCountry,
@@ -1057,11 +1062,18 @@ export async function getAllModelsPredictionsData(env?: RuntimeEnv): Promise<All
 
   function normalizeRows(rows: Record<string, any>[], fallbackRows: Record<string, any>[]): UpcomingFightRow[] {
     const source = rows.length > 0 ? rows : fallbackRows;
+    // The upstream parquet currently emits each matchup many times (~90× duplicates with identical
+    // payloads). Dedupe by (event, fighter, opponent) so the inline JSON doesn't ship 5K+ rows.
+    const seen = new Set<string>();
     return source
       .map((row): UpcomingFightRow | null => {
         const eventName = cleanStr(row.event_name);
         const fighterName = cleanStr(row.fighter_name_display);
         if (!eventName || !fighterName) return null;
+        const opponentName = cleanStr(row.opponent_name_display);
+        const dedupeKey = `${eventName}::${fighterName}::${opponentName}`;
+        if (seen.has(dedupeKey)) return null;
+        seen.add(dedupeKey);
         const fighterCountry = countryName(countryIndex.byAlias, row.fighter_country);
         const opponentCountry = countryName(countryIndex.byAlias, row.opponent_country);
         return {

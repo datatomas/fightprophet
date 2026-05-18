@@ -5,10 +5,14 @@ import { getAllModelsPredictionsData } from '../lib/dashboard-data';
 
 const runtimeEnv = runtimeEnvFromLocals(Astro.locals);
 const allModels = await getAllModelsPredictionsData(runtimeEnv);
-const pageJson = JSON.stringify(allModels).replace(/</g, '\\u003c');
 
-// Default to catboost for KPIs.
-const fights = allModels.catboost;
+// Default model. The page ships ONLY the default model inline to keep the HTML lean;
+// the other two are fetched on-demand from /api/predictions/[model].json when the user clicks their tab.
+const DEFAULT_MODEL = 'ensemble' as const;
+const initialFights = allModels[DEFAULT_MODEL];
+const pageJson = JSON.stringify({ [DEFAULT_MODEL]: initialFights }).replace(/</g, '\\u003c');
+
+const fights = initialFights;
 const totalFights = fights.length;
 const eventCount = new Set(fights.map((f) => f.event_name)).size;
 const strongSignals = fights.filter((f) => f.signal_strength === 'STRONG').length;
@@ -29,7 +33,7 @@ const hasData = totalFights > 0;
       <h1>MMA Predictions</h1>
       <p class="fp-hero-copy">
         Fight Prophet uses machine learning trained on previous UFC fights to estimate how matchups may play out.
-        Start with <strong>CatBoost</strong> for the clearest default view, then compare with the other models if you want a second opinion.
+        Start with <strong>Ensemble</strong> for the clearest default view, then compare with the other models if you want a second opinion.
       </p>
     </header>
 
@@ -73,7 +77,7 @@ const hasData = totalFights > 0;
           <div class="fp-model-guide-title">Welcome to Fight Prophet predictions</div>
           <div class="fp-model-guide-copy">
             Fight Prophet uses machine learning trained on previous UFC fights to estimate how matchups may play out.
-            Start with CatBoost for the clearest default view, then compare it with the other models if you want a second opinion.
+            Start with Ensemble for the clearest default view, then compare it with the other models if you want a second opinion.
           </div>
           <div class="fp-model-guide-grid">
             <div class="fp-model-guide-item">
@@ -89,15 +93,15 @@ const hasData = totalFights > 0;
               <div class="fp-model-guide-item-copy">Interpretable baseline that stabilises directional probability checks.</div>
             </div>
           </div>
-          <div class="fp-model-guide-reco">⭐ Best starting point: CatBoost</div>
+          <div class="fp-model-guide-reco">⭐ Best starting point: Ensemble</div>
         </div>
 
         <!-- ── CONTROLS ── -->
         <section class="fp-tool-controls" aria-label="Prediction filters">
           <!-- model picker -->
           <div class="fp-model-picker" role="group" aria-label="Select model">
-            <button type="button" class="fp-model-btn is-active" data-model="catboost">CatBoost</button>
-            <button type="button" class="fp-model-btn" data-model="ensemble">Ensemble</button>
+            <button type="button" class="fp-model-btn" data-model="catboost">CatBoost</button>
+            <button type="button" class="fp-model-btn is-active" data-model="ensemble">Ensemble</button>
             <button type="button" class="fp-model-btn" data-model="logreg">LogReg</button>
           </div>
           <label>
@@ -135,8 +139,11 @@ const hasData = totalFights > 0;
   (() => {
     const dataNode = document.getElementById('fp-all-models-data');
     if (!dataNode) return;
+    const DEFAULT_MODEL = 'ensemble';
+    // allModels starts with only the default model inline. Others are fetched on demand
+    // from /api/predictions/<model>.json the first time the user opens that tab.
     const allModels = JSON.parse(dataNode.textContent || '{}');
-    if (!allModels.catboost) return;
+    if (!Array.isArray(allModels[DEFAULT_MODEL])) return;
 
     const feed = document.querySelector('[data-predictions-feed]');
     const eventSel = document.querySelector('[data-pred-event]');
@@ -147,7 +154,26 @@ const hasData = totalFights > 0;
     const kpiStrong = document.querySelector('[data-kpi-strong]');
     const kpiRecs = document.querySelector('[data-kpi-recs]');
 
-    let currentModel = 'catboost';
+    let currentModel = DEFAULT_MODEL;
+    const inflight = new Map();
+
+    async function ensureModelLoaded(name) {
+      if (Array.isArray(allModels[name])) return allModels[name];
+      if (inflight.has(name)) return inflight.get(name);
+      const p = fetch(`/api/predictions/${encodeURIComponent(name)}.json`)
+        .then((r) => (r.ok ? r.json() : []))
+        .then((rows) => {
+          allModels[name] = Array.isArray(rows) ? rows : [];
+          return allModels[name];
+        })
+        .catch(() => {
+          allModels[name] = [];
+          return allModels[name];
+        })
+        .finally(() => inflight.delete(name));
+      inflight.set(name, p);
+      return p;
+    }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
     const esc = (v) =>
@@ -418,10 +444,18 @@ const hasData = totalFights > 0;
 
     // ── Model picker ──────────────────────────────────────────────────────────
     modelBtns.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        currentModel = btn.getAttribute('data-model') || 'catboost';
+      btn.addEventListener('click', async () => {
+        const next = btn.getAttribute('data-model') || DEFAULT_MODEL;
+        currentModel = next;
         modelBtns.forEach((b) => b.classList.toggle('is-active', b === btn));
-        const allFights = Array.isArray(allModels[currentModel]) ? allModels[currentModel] : [];
+
+        // Show a loading state if we have to fetch the model JSON the first time.
+        if (!Array.isArray(allModels[next])) {
+          if (feed) feed.innerHTML = '<p class="fp-list-empty">Loading model predictions…</p>';
+        }
+        const allFights = await ensureModelLoaded(next);
+        // User may have clicked a different tab while we were fetching — bail if so.
+        if (currentModel !== next) return;
         refreshEventDropdown(allFights);
         updateKpis(allFights);
         render();
@@ -431,8 +465,8 @@ const hasData = totalFights > 0;
     eventSel?.addEventListener('change', render);
     signalSel?.addEventListener('change', render);
 
-    // Initial render
-    const initialFights = Array.isArray(allModels.catboost) ? allModels.catboost : [];
+    // Initial render — default model is already inlined.
+    const initialFights = Array.isArray(allModels[DEFAULT_MODEL]) ? allModels[DEFAULT_MODEL] : [];
     refreshEventDropdown(initialFights);
     render();
   })();
