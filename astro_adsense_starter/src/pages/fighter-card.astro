@@ -25,28 +25,24 @@ const historyRows = fighterData.debug.historyCount;
       <p>
         Search tracked UFC fighters and inspect career snapshots, method mix, activity status, belt context, striking and grappling metrics, and recent fight history.
       </p>
-      <div class="fp-kpi-strip" aria-label="Fighter archive summary">
-        <div class="fp-kpi-strip-item">
-          <div class="fp-kpi-strip-icon"><img src="/branding/b91c1c-fighterscard-emoji.png" alt="" width="42" height="42" /></div>
-          <div class="fp-kpi-strip-label">Fighters</div>
-          <div class="fp-kpi-strip-value" data-kpi-total>{totalProfiles.toLocaleString()}</div>
-        </div>
-        <div class="fp-kpi-strip-item">
-          <div class="fp-kpi-strip-icon"><img src="/branding/b91c1c-correct-emoji.png" alt="" width="42" height="42" /></div>
-          <div class="fp-kpi-strip-label">Active</div>
-          <div class="fp-kpi-strip-value" data-kpi-active>{activeProfiles.toLocaleString()}</div>
-        </div>
-        <div class="fp-kpi-strip-item">
-          <div class="fp-kpi-strip-icon"><img src="/branding/b91c1c-champion-emoji.png" alt="" width="42" height="42" /></div>
-          <div class="fp-kpi-strip-label">Champions</div>
-          <div class="fp-kpi-strip-value" data-kpi-champs>{championProfiles.toLocaleString()}</div>
-        </div>
-        <div class="fp-kpi-strip-item">
-          <div class="fp-kpi-strip-icon"><img src="/branding/b91c1c-fights-emoji.png" alt="" width="42" height="42" /></div>
-          <div class="fp-kpi-strip-label">Fight Rows</div>
-          <div class="fp-kpi-strip-value" data-kpi-rows>{historyRows.toLocaleString()}</div>
-        </div>
-      </div>
+      <ul class="fp-kpi-chips fp-kpi-chips--hero" aria-label="Fighter archive summary">
+        <li class="fp-kpi-chip fp-kpi-chip--hero">
+          <img src="/branding/b91c1c-fighterscard-emoji.png" alt="" width="36" height="36" />
+          <span>Fighters</span><strong data-kpi-total>{totalProfiles.toLocaleString()}</strong>
+        </li>
+        <li class="fp-kpi-chip fp-kpi-chip--hero">
+          <img src="/branding/b91c1c-correct-emoji.png" alt="" width="36" height="36" />
+          <span>Active</span><strong data-kpi-active>{activeProfiles.toLocaleString()}</strong>
+        </li>
+        <li class="fp-kpi-chip fp-kpi-chip--hero">
+          <img src="/branding/b91c1c-champion-emoji.png" alt="" width="36" height="36" />
+          <span>Champions</span><strong data-kpi-champs>{championProfiles.toLocaleString()}</strong>
+        </li>
+        <li class="fp-kpi-chip fp-kpi-chip--hero">
+          <img src="/branding/b91c1c-fights-emoji.png" alt="" width="36" height="36" />
+          <span>Fight Rows</span><strong data-kpi-rows>{historyRows.toLocaleString()}</strong>
+        </li>
+      </ul>
     </header>
 
     {totalProfiles > 0 ? (
@@ -830,48 +826,29 @@ const historyRows = fighterData.debug.historyCount;
     color: #d4d4d8;
     line-height: 1.6;
   }
-  /* ── Icon KPI strip ── */
-  .fp-kpi-strip {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0;
-    margin-top: 1rem;
-    background: linear-gradient(145deg, rgba(28,28,32,0.92), rgba(39,39,42,0.76));
-    border: 1px solid rgba(248,113,113,0.16);
-    border-top: 2px solid rgba(185,28,28,0.52);
-    border-radius: 1rem;
-    overflow: hidden;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 18px rgba(0,0,0,0.2);
+  /* ── Page-hero KPI chip row (Fighters / Active / Champions / Fight Rows).
+       Uses the unified pill style, just sized up so the chips lead the page. ── */
+  .fp-kpi-chips--hero {
+    margin-top: 1.05rem;
+    gap: 0.6rem;
   }
-  .fp-kpi-strip-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100px;
-    padding: 0.75rem 0.65rem;
-    text-align: center;
-    border-right: 1px solid rgba(248,113,113,0.12);
-    background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0));
+  .fp-kpi-chip--hero {
+    flex: 1 1 180px;
+    justify-content: flex-start;
+    padding: 0.62rem 1.05rem 0.62rem 0.7rem;
+    gap: 0.7rem;
   }
-  .fp-kpi-strip-item:last-child { border-right: 0; }
-  .fp-kpi-strip-icon { margin-bottom: 0.22rem; line-height: 1; }
-  .fp-kpi-strip-icon img {
-    object-fit: contain;
-    display: block;
-    opacity: 0.94;
-    filter: drop-shadow(0 0 0.4px rgba(127, 29, 29, 0.6));
-  }
-  .fp-kpi-strip-label { color: #d4d4d8; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.12rem; font-weight: 700; }
-  .fp-kpi-strip-value { color: #fff; font-size: 1.08rem; font-weight: 800; line-height: 1; }
+  .fp-kpi-chip--hero img { width: 36px; height: 36px; }
+  .fp-kpi-chip--hero span { font-size: 0.68rem; letter-spacing: 0.08em; }
+  .fp-kpi-chip--hero strong { font-size: 1.25rem; margin-left: auto; }
 
-  /* ── Hero grid: visual fighter card on the left, identity + KPIs on the right ── */
+  /* ── Hero grid: visual fighter card on the left (lead element), identity + KPIs on the right ── */
   .fp-fighter-hero {
     display: grid;
-    grid-template-columns: 232px minmax(0, 1fr);
-    gap: 1rem;
-    align-items: start;
-    margin-bottom: 0.85rem;
+    grid-template-columns: 276px minmax(0, 1fr);
+    gap: 1.4rem;
+    align-items: stretch;
+    margin-bottom: 0.95rem;
   }
   .fp-fighter-hero-card {
     --fp-card-scale: 1;
@@ -880,11 +857,14 @@ const historyRows = fighterData.debug.historyCount;
     min-width: 0;
     aspect-ratio: 59 / 86;
     display: block;
+    /* Subtle glow so the card reads as the lead element on the panel */
+    filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.45));
   }
   /* Force the JS-rendered card to fill the slot regardless of its inherent max-width */
   .fp-fighter-hero-card .fp-card { max-width: none; }
   /* Info column fills the visual card's height so chips space out instead of
-     bunching at the top with empty space underneath. */
+     bunching at the top with empty space underneath. The small left padding
+     gives the card visual breathing room and lets the identity feel anchored. */
   .fp-fighter-hero-info {
     display: flex;
     flex-direction: column;
@@ -892,6 +872,7 @@ const historyRows = fighterData.debug.historyCount;
     min-width: 0;
     align-self: stretch;
     min-height: 100%;
+    padding-left: 0.4rem;
   }
   .fp-fighter-hero-info .fp-fighter-header { margin-bottom: 0; }
   /* Push the stat sections down so the column breathes — header at top, stats fill the rest */
@@ -1411,11 +1392,9 @@ const historyRows = fighterData.debug.historyCount;
 
   .fp-list-empty { color: #a1a1aa; font-size: 0.88rem; }
   @media (max-width: 1020px) {
-    .fp-fighter-hero { grid-template-columns: 200px minmax(0, 1fr); gap: 0.85rem; }
+    .fp-fighter-hero { grid-template-columns: 240px minmax(0, 1fr); gap: 1rem; }
     .fp-profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .fp-kpi-strip { grid-template-columns: repeat(2, minmax(0,1fr)); }
-    .fp-kpi-strip-item:nth-child(2) { border-right: 0; }
-    .fp-kpi-strip-item:nth-child(3) { border-right: 1px solid rgba(248,113,113,0.12); }
+    .fp-kpi-chip--hero { flex-basis: calc(50% - 0.3rem); }
     .fp-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
   @media (max-width: 760px) {
@@ -1452,20 +1431,12 @@ const historyRows = fighterData.debug.historyCount;
     .fp-fighter-detail {
       padding: 0.72rem;
     }
-    .fp-kpi-strip-item {
-      min-height: 78px;
-      padding: 0.55rem 0.35rem;
+    .fp-kpi-chip--hero {
+      flex-basis: 100%;
+      padding: 0.5rem 0.85rem 0.5rem 0.55rem;
     }
-    .fp-kpi-strip-icon img {
-      width: 32px;
-      height: 32px;
-    }
-    .fp-kpi-strip-label {
-      font-size: 0.52rem;
-    }
-    .fp-kpi-strip-value {
-      font-size: 0.92rem;
-    }
+    .fp-kpi-chip--hero img { width: 28px; height: 28px; }
+    .fp-kpi-chip--hero strong { font-size: 1.08rem; }
     .fp-fighter-header h2 {
       font-size: 1.35rem;
     }
