@@ -81,64 +81,73 @@ const historyRows = fighterData.debug.historyCount;
           </section>
 
           <section class="fp-fighter-detail" aria-live="polite">
-            <header class="fp-fighter-header">
-              <div>
-                <span class="fp-fighter-status" data-profile-status></span>
-                <h2 data-profile-name>Fighter</h2>
-                <p data-profile-meta></p>
-              </div>
-              <div class="fp-record-mark" data-profile-record>—</div>
-            </header>
+            <!-- ── Hero: visual fighter card (left) + identity / KPIs (right) ── -->
+            <div class="fp-fighter-hero">
+              <div class="fp-fighter-hero-card" data-visual-card></div>
 
-            <div class="fp-profile-kpis">
-              <div>
-                <img class="fp-profile-kpi-icon" src="/branding/b91c1c-correct-emoji.png" alt="" width="46" height="46" />
-                <span>Win Rate</span><strong data-kpi-win-rate>—</strong>
-              </div>
-              <div>
-                <img class="fp-profile-kpi-icon" src="/branding/finish_rate_icon_b91c1c_transparent.png" alt="" width="46" height="46" />
-                <span>Finish Rate</span><strong data-kpi-finish-rate>—</strong>
-              </div>
-              <div>
-                <img class="fp-profile-kpi-icon" src="/branding/b91c1c-winstreak-emoji.png" alt="" width="46" height="46" />
-                <span>Win Streak</span><strong data-kpi-win-streak>—</strong>
-              </div>
-              <div>
-                <img class="fp-profile-kpi-icon" src="/branding/b91c1c-events-emoji.png" alt="" width="46" height="46" />
-                <span>Last Fight</span><strong data-kpi-last-fight>—</strong>
-              </div>
-            </div>
+              <div class="fp-fighter-hero-info">
+                <header class="fp-fighter-header">
+                  <div>
+                    <span class="fp-fighter-status" data-profile-status></span>
+                    <h2 data-profile-name>Fighter</h2>
+                    <p data-profile-meta></p>
+                  </div>
+                  <div class="fp-record-mark" data-profile-record>—</div>
+                </header>
 
-            <div class="fp-meta-strip">
-              <div class="fp-meta-cell">
-                <img src="/branding/b91c1c-strikingdefence-emoji.png" alt="" width="40" height="40" />
-                <span>Str Def</span>
-                <strong data-meta-str-def>—</strong>
-              </div>
-              <div class="fp-meta-cell">
-                <img src="/branding/b91c1c-takedowndefence-emoji.png" alt="" width="40" height="40" />
-                <span>TD Def</span>
-                <strong data-meta-td-def>—</strong>
-              </div>
-              <div class="fp-meta-cell">
-                <img src="/branding/b91c1c-strikingaccuracy-emoji.png" alt="" width="40" height="40" />
-                <span>SApM</span>
-                <strong data-meta-sapm>—</strong>
-              </div>
-              <div class="fp-meta-cell">
-                <img src="/branding/b91c1c-bonus-emoji.png" alt="" width="40" height="40" />
-                <span>Bonuses</span>
-                <strong data-meta-bonuses>—</strong>
-              </div>
-              <div class="fp-meta-cell">
-                <img src="/branding/b91c1c-winstreak-emoji.png" alt="" width="40" height="40" />
-                <span>Best Win Streak</span>
-                <strong data-meta-win-streak>—</strong>
-              </div>
-              <div class="fp-meta-cell">
-                <img src="/branding/b91c1c-incorrect-emoji.png" alt="" width="40" height="40" />
-                <span>Worst Loss Streak</span>
-                <strong data-meta-loss-streak>—</strong>
+                <div class="fp-hero-stats">
+                  <section class="fp-chip-section" aria-labelledby="fp-stats-overview">
+                    <h3 class="fp-chip-section-label" id="fp-stats-overview">Overview</h3>
+                    <ul class="fp-kpi-chips">
+                      <li class="fp-kpi-chip">
+                        <img src="/branding/b91c1c-correct-emoji.png" alt="" width="30" height="30" />
+                        <span>Win Rate</span><strong data-kpi-win-rate>—</strong>
+                      </li>
+                      <li class="fp-kpi-chip">
+                        <img src="/branding/finish_rate_icon_b91c1c_transparent.png" alt="" width="30" height="30" />
+                        <span>Finish Rate</span><strong data-kpi-finish-rate>—</strong>
+                      </li>
+                      <li class="fp-kpi-chip">
+                        <img src="/branding/b91c1c-winstreak-emoji.png" alt="" width="30" height="30" />
+                        <span>Win Streak</span><strong data-kpi-win-streak>—</strong>
+                      </li>
+                      <li class="fp-kpi-chip">
+                        <img src="/branding/b91c1c-events-emoji.png" alt="" width="30" height="30" />
+                        <span>Last Fight</span><strong data-kpi-last-fight>—</strong>
+                      </li>
+                    </ul>
+                  </section>
+
+                  <section class="fp-chip-section" aria-labelledby="fp-stats-defense">
+                    <h3 class="fp-chip-section-label" id="fp-stats-defense">Defense &amp; Streaks</h3>
+                    <ul class="fp-kpi-chips">
+                      <li class="fp-kpi-chip">
+                        <img src="/branding/b91c1c-strikingdefence-emoji.png" alt="" width="30" height="30" />
+                        <span>Str Def</span><strong data-meta-str-def>—</strong>
+                      </li>
+                      <li class="fp-kpi-chip">
+                        <img src="/branding/b91c1c-takedowndefence-emoji.png" alt="" width="30" height="30" />
+                        <span>TD Def</span><strong data-meta-td-def>—</strong>
+                      </li>
+                      <li class="fp-kpi-chip">
+                        <img src="/branding/b91c1c-strikingaccuracy-emoji.png" alt="" width="30" height="30" />
+                        <span>SApM</span><strong data-meta-sapm>—</strong>
+                      </li>
+                      <li class="fp-kpi-chip">
+                        <img src="/branding/b91c1c-bonus-emoji.png" alt="" width="30" height="30" />
+                        <span>Bonuses</span><strong data-meta-bonuses>—</strong>
+                      </li>
+                      <li class="fp-kpi-chip">
+                        <img src="/branding/b91c1c-winstreak-emoji.png" alt="" width="30" height="30" />
+                        <span>Best W Streak</span><strong data-meta-win-streak>—</strong>
+                      </li>
+                      <li class="fp-kpi-chip">
+                        <img src="/branding/b91c1c-incorrect-emoji.png" alt="" width="30" height="30" />
+                        <span>Worst L Streak</span><strong data-meta-loss-streak>—</strong>
+                      </li>
+                    </ul>
+                  </section>
+                </div>
               </div>
             </div>
 
@@ -236,6 +245,7 @@ const historyRows = fighterData.debug.historyCount;
     const metaBonuses = document.querySelector('[data-meta-bonuses]');
     const metaWinStreak = document.querySelector('[data-meta-win-streak]');
     const metaLossStreak = document.querySelector('[data-meta-loss-streak]');
+    const visualCardSlot = document.querySelector('[data-visual-card]');
 
     const params = new URLSearchParams(window.location.search);
     const requested = String(params.get('fighter') || '').trim().toLowerCase();
@@ -281,6 +291,73 @@ const historyRows = fighterData.debug.historyCount;
     const record = (profile) => `${fmtInt(profile.wins)}-${fmtInt(profile.losses)}-${fmtInt(profile.draws || 0)}`;
     const profileUrl = (profile) => `/fighter-card/?fighter=${encodeURIComponent(profile.name)}`;
 
+    // ── Visual fighter card ─────────────────────────────────────────────────
+    // Mirrors the markup/classes from src/components/FighterCard.astro so the same
+    // shared CSS (.fp-card, .fp-card-banner, …) renders the Yu-Gi-Oh style card.
+    const initialsOf = (n) => String(n || '').split(/\s+/).map((p) => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+    const wcAbbrOf = (wc) => {
+      if (!wc) return '';
+      const map = {
+        'flyweight': 'FLW', 'bantamweight': 'BW', 'featherweight': 'FW',
+        'lightweight': 'LW', 'welterweight': 'WW', 'middleweight': 'MW',
+        'light heavyweight': 'LHW', 'heavyweight': 'HW', 'strawweight': 'SW',
+        "women's strawweight": 'WSW', "women's flyweight": 'WFLW',
+        "women's bantamweight": 'WBW', "women's featherweight": 'WFW',
+      };
+      const key = wc.toLowerCase().trim();
+      return map[key] || wc.split(/\s+/).map((p) => p[0]).join('').toUpperCase().slice(0, 4);
+    };
+
+    function buildVisualCardHtml(profile) {
+      const isChamp = !!profile.is_current_champion;
+      const init = initialsOf(profile.name);
+      const wc = profile.current_belt_weight_classes || '';
+      const abbr = wcAbbrOf(wc);
+      const wins = fmtInt(profile.wins);
+      const losses = fmtInt(profile.losses);
+      const rec = wins !== '—' && losses !== '—' ? `${wins}-${losses}` : (wins !== '—' ? wins : '—');
+      const typeLine = [wc || 'MMA Fighter', profile.country].filter(Boolean).join(' / ');
+      const flag = profile.country_flag || '';
+      const ratingNum = isChamp ? 'C' : rec;
+      const ratingPos = abbr ? `<span class="fp-card-rating-pos">${escapeHtml(abbr)}</span>` : '';
+      const finRate = fmtPct(profile.finish_rate);
+      const subRate = fmtPct(profile.sub_rate_win_shrunk);
+      const wStreak = fmtInt(profile.longest_win_streak);
+      const lStreak = fmtInt(profile.longest_loss_streak);
+      const ptsLabel = fmtInt(profile.bonuses_won_count);
+
+      return `<a class="fp-card ${isChamp ? 'is-champ' : 'is-default'} is-compact" href="${escapeHtml(profileUrl(profile))}">
+        <div class="fp-card-frame" aria-hidden="true"></div>
+        <div class="fp-card-top">
+          <div class="fp-card-rating">
+            <span class="fp-card-rating-num">${escapeHtml(ratingNum)}</span>
+            ${ratingPos}
+          </div>
+          ${flag ? `<span class="fp-card-flag" title="${escapeHtml(profile.country)}">${escapeHtml(flag)}</span>` : ''}
+        </div>
+        <header class="fp-card-banner"><span class="fp-card-name">${escapeHtml(profile.name)}</span></header>
+        <div class="fp-card-portrait">
+          <span class="fp-card-portrait-silhouette" aria-hidden="true">👤</span>
+          <span class="fp-card-initials" aria-hidden="true">${escapeHtml(init)}</span>
+          ${isChamp ? '<span class="fp-card-crown" aria-label="Current champion">👑</span>' : ''}
+        </div>
+        <div class="fp-card-type-bar">[ ${escapeHtml(typeLine)} ]</div>
+        <div class="fp-card-desc">
+          <div class="fp-card-stat-row">
+            <span class="fp-card-stat"><em>FIN</em><b>${escapeHtml(finRate)}</b></span>
+            <span class="fp-card-stat"><em>SUB</em><b>${escapeHtml(subRate)}</b></span>
+            <span class="fp-card-stat"><em>W★</em><b>${escapeHtml(wStreak)}</b></span>
+            <span class="fp-card-stat"><em>L✗</em><b>${escapeHtml(lStreak)}</b></span>
+          </div>
+          <div class="fp-card-atkdef">
+            <span class="fp-card-atk">PTS/${escapeHtml(ptsLabel)}</span>
+            <span class="fp-card-sep">·</span>
+            <span class="fp-card-def">REC/${escapeHtml(rec)}</span>
+          </div>
+        </div>
+      </a>`;
+    }
+
     function filteredProfiles() {
       const query = String(search?.value || '').trim().toLowerCase();
       const statusValue = String(status?.value || 'All');
@@ -295,6 +372,8 @@ const historyRows = fighterData.debug.historyCount;
     function selectProfile(profile, pushState = true) {
       selectedProfile = profile;
       if (pushState) window.history.replaceState({}, '', profileUrl(profile));
+
+      if (visualCardSlot) visualCardSlot.innerHTML = buildVisualCardHtml(profile);
 
       profileName.textContent = profile.name;
       profileMeta.textContent = [
@@ -452,6 +531,269 @@ const historyRows = fighterData.debug.historyCount;
   })();
 </script>
 
+<!-- Global card CSS — mirrors src/components/FighterCard.astro so the JS-rendered
+     visual card inherits the same Yu-Gi-Oh styling as rankings/predictions. -->
+<style is:global>
+  .fp-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-inline: auto;
+    aspect-ratio: 59 / 86;
+    min-height: 188px;
+    text-decoration: none;
+    color: #fef2f2;
+    border-radius: 0.5rem;
+    padding: 0.34rem 0.36rem 0.36rem;
+    overflow: hidden;
+    isolation: isolate;
+    font-family: Inter, system-ui, sans-serif;
+    transition: transform 180ms cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 180ms ease;
+  }
+  .fp-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    z-index: -1;
+  }
+  .fp-card-frame {
+    position: absolute;
+    inset: 0.18rem;
+    border-radius: 0.32rem;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .fp-card.is-default::before {
+    background: linear-gradient(160deg, #ef4444 0%, #b91c1c 35%, #7f1d1d 70%, #2a0808 100%);
+  }
+  .fp-card.is-default .fp-card-frame {
+    background:
+      radial-gradient(110% 80% at 50% 0%, rgba(220, 38, 38, 0.18), transparent 70%),
+      linear-gradient(180deg, #1a0c0c 0%, #100808 100%);
+    border: 1px solid rgba(185, 28, 28, 0.7);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55), inset 0 0 18px rgba(0, 0, 0, 0.5);
+  }
+  .fp-card.is-champ::before {
+    background: linear-gradient(160deg, #ffe27a 0%, #d09312 30%, #6c4404 60%, #2a1908 100%);
+  }
+  .fp-card.is-champ .fp-card-frame {
+    background:
+      radial-gradient(110% 80% at 50% 0%, rgba(255, 240, 170, 0.28), transparent 70%),
+      linear-gradient(180deg, #4a311a 0%, #1c1207 100%);
+    border: 1px solid rgba(255, 240, 170, 0.72);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.45), inset 0 0 22px rgba(255, 220, 140, 0.18);
+  }
+  .fp-card:hover { transform: translateY(-2px) scale(1.01); }
+  .fp-card.is-default:hover { box-shadow: 0 0 18px rgba(255, 180, 80, 0.34); }
+  .fp-card.is-champ:hover { box-shadow: 0 0 22px rgba(255, 220, 130, 0.55); }
+  .fp-card-top {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.32rem;
+    margin: 0 0 0.18rem;
+    min-height: 1.4rem;
+  }
+  .fp-card-rating {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.34rem;
+    padding: 0.18rem 0.42rem;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(185, 28, 28, 0.65);
+    border-radius: 0.42rem;
+    line-height: 1;
+  }
+  .fp-card.is-champ .fp-card-rating {
+    background: linear-gradient(180deg, rgba(255, 240, 170, 0.92), rgba(180, 120, 30, 0.85));
+    border-color: rgba(255, 240, 170, 0.85);
+  }
+  .fp-card-rating-num {
+    font-size: 0.86rem;
+    font-weight: 900;
+    color: #fee2e2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  }
+  .fp-card.is-champ .fp-card-rating-num { color: #1a0e00; text-shadow: 0 1px 0 rgba(255, 240, 170, 0.55); }
+  .fp-card-rating-pos {
+    font-size: 0.48rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(252, 165, 165, 0.92);
+  }
+  .fp-card.is-champ .fp-card-rating-pos { color: rgba(31, 19, 0, 0.78); }
+  .fp-card-flag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.4rem;
+    line-height: 1;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(185, 28, 28, 0.6);
+    border-radius: 999px;
+    padding: 0.14rem 0.42rem;
+  }
+  .fp-card.is-champ .fp-card-flag { border-color: rgba(255, 220, 140, 0.55); }
+  .fp-card-banner {
+    position: relative;
+    z-index: 2;
+    padding: 0.18rem 0.32rem;
+    background: linear-gradient(180deg, #ef4444 0%, #b91c1c 60%, #7f1d1d 100%);
+    border: 1px solid rgba(248, 113, 113, 0.65);
+    border-radius: 0.22rem;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.22);
+    text-align: center;
+  }
+  .fp-card.is-champ .fp-card-banner {
+    background: linear-gradient(180deg, #fff0a8 0%, #d6a32a 50%, #8a5905 100%);
+    border-color: rgba(255, 235, 170, 0.6);
+  }
+  .fp-card-name {
+    display: -webkit-box;
+    min-height: 1.5em;
+    font-size: 0.74rem;
+    font-weight: 900;
+    line-height: 1.08;
+    color: #fff5f5;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    text-wrap: balance;
+  }
+  .fp-card.is-champ .fp-card-name { color: #1a0e00; text-shadow: 0 1px 0 rgba(255, 230, 160, 0.55); }
+  .fp-card-portrait {
+    position: relative;
+    z-index: 2;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0.06rem 0.04rem;
+    border: 1.5px solid rgba(185, 28, 28, 0.75);
+    border-radius: 0.18rem;
+    background:
+      radial-gradient(circle at 50% 35%, rgba(248, 113, 113, 0.16), transparent 56%),
+      linear-gradient(180deg, #2a1010 0%, #0f0606 100%);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 -10px 18px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+    min-height: 64px;
+  }
+  .fp-card.is-champ .fp-card-portrait {
+    border-color: rgba(255, 240, 170, 0.85);
+    background:
+      radial-gradient(circle at 50% 35%, rgba(255, 240, 200, 0.24), transparent 58%),
+      linear-gradient(180deg, #4a3214 0%, #1a1108 100%);
+  }
+  .fp-card-portrait-silhouette { font-size: 2.6rem; opacity: 0.18; line-height: 1; filter: blur(0.35px); }
+  .fp-card.is-champ .fp-card-portrait-silhouette { opacity: 0.24; }
+  .fp-card-initials {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    color: rgba(254, 226, 226, 0.95);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+  }
+  .fp-card.is-champ .fp-card-initials { color: rgba(255, 240, 200, 0.95); }
+  .fp-card-crown {
+    position: absolute;
+    top: 0.18rem;
+    left: 0.22rem;
+    font-size: 0.78rem;
+    line-height: 1;
+    z-index: 3;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+  }
+  .fp-card-type-bar {
+    position: relative;
+    z-index: 2;
+    margin: 0.18rem 0 0.14rem;
+    padding: 0.18rem 0.24rem;
+    background: linear-gradient(180deg, #3a1414 0%, #180808 100%);
+    border-top: 1px solid rgba(185, 28, 28, 0.65);
+    border-bottom: 1px solid rgba(185, 28, 28, 0.65);
+    font-size: 0.56rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(252, 165, 165, 0.95);
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .fp-card.is-champ .fp-card-type-bar {
+    background: linear-gradient(180deg, #3c2a14 0%, #1a1107 100%);
+    border-top-color: rgba(255, 220, 140, 0.55);
+    border-bottom-color: rgba(255, 220, 140, 0.55);
+    color: rgba(255, 240, 180, 0.95);
+  }
+  .fp-card-desc {
+    position: relative;
+    z-index: 2;
+    padding: 0.22rem 0.06rem 0.16rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.14rem;
+  }
+  .fp-card-stat-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.12rem 0.4rem;
+    font-size: 0.72rem;
+  }
+  .fp-card-stat {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.2rem;
+    line-height: 1;
+  }
+  .fp-card-stat em {
+    font-style: normal;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    color: rgba(252, 165, 165, 0.92);
+  }
+  .fp-card-stat b {
+    font-weight: 900;
+    color: #fef2f2;
+    font-size: 0.88rem;
+  }
+  .fp-card.is-champ .fp-card-stat em { color: rgba(255, 240, 180, 0.92); }
+  .fp-card.is-champ .fp-card-stat b { color: #fff5d6; }
+  .fp-card-atkdef {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    padding-top: 0.16rem;
+    border-top: 1px solid rgba(185, 28, 28, 0.4);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+  }
+  .fp-card.is-champ .fp-card-atkdef { border-top-color: rgba(255, 220, 140, 0.32); }
+  .fp-card-atk { color: #ff9a9a; }
+  .fp-card-def { color: #cbd5ff; }
+  .fp-card-sep { color: rgba(252, 165, 165, 0.65); }
+  .fp-card.is-champ .fp-card-atk { color: #ffb38a; }
+  .fp-card.is-champ .fp-card-def { color: #9ec9ff; }
+  .fp-card.is-champ .fp-card-sep { color: rgba(255, 220, 140, 0.6); }
+</style>
+
 <style>
   .fp-fighters-page {
     display: grid;
@@ -523,50 +865,112 @@ const historyRows = fighterData.debug.historyCount;
   .fp-kpi-strip-label { color: #d4d4d8; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.12rem; font-weight: 700; }
   .fp-kpi-strip-value { color: #fff; font-size: 1.08rem; font-weight: 800; line-height: 1; }
 
-  /* ── Meta strip (Str Def, TD Def, SApM, Bonuses, Streaks) — unified row ── */
-  .fp-meta-strip {
+  /* ── Hero grid: visual fighter card on the left, identity + KPIs on the right ── */
+  .fp-fighter-hero {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 0;
-    margin-bottom: 0.95rem;
-    background: linear-gradient(145deg, rgba(28,28,32,0.92), rgba(39,39,42,0.76));
-    border: 1px solid rgba(248,113,113,0.16);
-    border-top: 2px solid rgba(185,28,28,0.52);
-    border-radius: 1rem;
-    overflow: hidden;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 6px 16px rgba(0,0,0,0.18);
+    grid-template-columns: 232px minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+    margin-bottom: 0.85rem;
   }
-  .fp-meta-cell {
+  .fp-fighter-hero-card {
+    --fp-card-scale: 1;
+    --fp-card-font-scale: 1;
+    width: 100%;
+    min-width: 0;
+    aspect-ratio: 59 / 86;
+    display: block;
+  }
+  /* Force the JS-rendered card to fill the slot regardless of its inherent max-width */
+  .fp-fighter-hero-card .fp-card { max-width: none; }
+  /* Info column fills the visual card's height so chips space out instead of
+     bunching at the top with empty space underneath. */
+  .fp-fighter-hero-info {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.32rem;
-    min-height: 112px;
-    padding: 0.72rem 0.5rem;
-    text-align: center;
-    border-right: 1px solid rgba(248,113,113,0.12);
-    background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0));
+    gap: 0.9rem;
+    min-width: 0;
+    align-self: stretch;
+    min-height: 100%;
   }
-  .fp-meta-cell:last-child { border-right: 0; }
-  .fp-meta-cell img {
-    width: 38px;
-    height: 38px;
-    object-fit: contain;
-    display: block;
-    opacity: 0.94;
-    filter: drop-shadow(0 0 0.4px rgba(127, 29, 29, 0.6));
+  .fp-fighter-hero-info .fp-fighter-header { margin-bottom: 0; }
+  /* Push the stat sections down so the column breathes — header at top, stats fill the rest */
+  .fp-hero-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    flex: 1 1 auto;
+    justify-content: space-evenly;
   }
-  .fp-meta-cell span { color: #a1a1aa; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 800; line-height: 1.15; }
-  .fp-meta-cell strong { color: #fef2f2; font-size: 1.1rem; font-weight: 800; letter-spacing: -0.01em; }
 
-  /* ── Profile KPI icon (plain png, balanced for readability) ── */
-  .fp-profile-kpi-icon {
+  /* Section heading above each chip row — small caps with a thin divider line on the right */
+  .fp-chip-section { display: flex; flex-direction: column; gap: 0.48rem; }
+  .fp-chip-section-label {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #fca5a5;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .fp-chip-section-label::after {
+    content: '';
+    flex: 1 1 auto;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(185, 28, 28, 0.42), rgba(63, 63, 70, 0));
+  }
+
+  /* ── Unified pill-chip — used for every chip in the hero right column ── */
+  .fp-kpi-chips {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .fp-kpi-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.46rem 0.85rem 0.46rem 0.55rem;
+    background: linear-gradient(160deg, rgba(34, 18, 18, 0.78), rgba(15, 15, 18, 0.72));
+    border: 1px solid rgba(63, 63, 70, 0.6);
+    border-top: 2px solid rgba(185, 28, 28, 0.42);
+    border-radius: 999px;
+    line-height: 1;
+    white-space: nowrap;
+    transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+  }
+  .fp-kpi-chip:hover {
+    border-color: rgba(248, 113, 113, 0.55);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(127, 29, 29, 0.22);
+  }
+  .fp-kpi-chip img {
+    width: 30px;
+    height: 30px;
     object-fit: contain;
-    display: block;
-    margin: 0 auto 0.25rem;
+    flex-shrink: 0;
     opacity: 0.94;
     filter: drop-shadow(0 0 0.4px rgba(127, 29, 29, 0.6));
+  }
+  .fp-kpi-chip span {
+    color: #a1a1aa;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .fp-kpi-chip strong {
+    color: #fef2f2;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
   }
   .fp-tool-controls {
     display: grid;
@@ -737,46 +1141,6 @@ const historyRows = fighterData.debug.historyCount;
   .fp-fighter-select-label:focus-within {
     border-color: rgba(248, 113, 113, 0.62);
     box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.18);
-  }
-  /* ── Profile KPI strip (Win Rate / Finish Rate / Win Streak / Last Fight) ── */
-  .fp-profile-kpis {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0;
-    margin-bottom: 0.85rem;
-    background: linear-gradient(145deg, rgba(28,28,32,0.92), rgba(39,39,42,0.76));
-    border: 1px solid rgba(248,113,113,0.16);
-    border-top: 2px solid rgba(185,28,28,0.52);
-    border-radius: 1rem;
-    overflow: hidden;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 6px 16px rgba(0,0,0,0.18);
-  }
-  .fp-profile-kpis div {
-    min-height: 110px;
-    padding: 0.85rem 0.65rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    border-right: 1px solid rgba(248,113,113,0.12);
-    background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0));
-  }
-  .fp-profile-kpis div:last-child { border-right: 0; }
-  .fp-profile-kpis span {
-    display: block;
-    color: #a1a1aa;
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-top: 0.2rem;
-  }
-  .fp-profile-kpis strong {
-    color: #fef2f2;
-    font-size: 1.45rem;
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -0.01em;
   }
   /* ── Career Snapshot / Skills / Method sections ── */
   .fp-career-snapshot,
@@ -1047,44 +1411,28 @@ const historyRows = fighterData.debug.historyCount;
 
   .fp-list-empty { color: #a1a1aa; font-size: 0.88rem; }
   @media (max-width: 1020px) {
+    .fp-fighter-hero { grid-template-columns: 200px minmax(0, 1fr); gap: 0.85rem; }
     .fp-profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .fp-meta-strip { grid-template-columns: repeat(3, minmax(0,1fr)); }
-    .fp-meta-cell:nth-child(3) { border-right: 0; }
-    .fp-meta-cell:nth-child(4),
-    .fp-meta-cell:nth-child(5),
-    .fp-meta-cell:nth-child(6) { border-top: 1px solid rgba(248,113,113,0.12); }
     .fp-kpi-strip { grid-template-columns: repeat(2, minmax(0,1fr)); }
     .fp-kpi-strip-item:nth-child(2) { border-right: 0; }
     .fp-kpi-strip-item:nth-child(3) { border-right: 1px solid rgba(248,113,113,0.12); }
     .fp-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
   @media (max-width: 760px) {
+    /* Stack hero: card centered above, info below */
+    .fp-fighter-hero {
+      grid-template-columns: 1fr;
+      justify-items: center;
+    }
+    .fp-fighter-hero-card { max-width: 200px; }
+    .fp-fighter-hero-info { width: 100%; }
     .fp-tool-controls,
     .fp-fighter-header { grid-template-columns: 1fr; }
     .fp-fighter-header { display: grid; }
     .fp-record-mark { width: fit-content; }
-    .fp-profile-kpis {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      border-radius: 0.75rem;
-    }
-    .fp-profile-kpis div {
-      min-height: 100px;
-      padding: 0.7rem 0.5rem;
-    }
-    .fp-profile-kpis div:nth-child(2) { border-right: 0; }
-    .fp-profile-kpis div:nth-child(3) { border-right: 1px solid rgba(248,113,113,0.12); }
-    .fp-profile-kpis div:nth-child(3),
-    .fp-profile-kpis div:nth-child(4) {
-      border-top: 1px solid rgba(248,113,113,0.12);
-    }
-    .fp-profile-kpi-icon { width: 38px; height: 38px; }
-    .fp-profile-kpis span { font-size: 0.62rem; letter-spacing: 0.04em; }
-    .fp-profile-kpis strong { font-size: 1.25rem; }
-    .fp-meta-strip { grid-template-columns: repeat(3, minmax(0,1fr)); border-radius: 0.75rem; }
-    .fp-meta-cell { min-height: 88px; padding: 0.55rem 0.3rem; }
-    .fp-meta-cell img { width: 30px; height: 30px; }
-    .fp-meta-cell span { font-size: 0.55rem; letter-spacing: 0.04em; }
-    .fp-meta-cell strong { font-size: 0.92rem; }
+    .fp-kpi-chip { padding: 0.38rem 0.7rem 0.38rem 0.46rem; gap: 0.46rem; }
+    .fp-kpi-chip img { width: 26px; height: 26px; }
+    .fp-kpi-chip strong { font-size: 0.96rem; }
     .fp-profile-grid { grid-template-columns: 1fr; }
     .fp-profile-grid section { padding: 0.7rem; }
     .fp-career-snapshot { padding: 0.7rem; }
@@ -1125,13 +1473,5 @@ const historyRows = fighterData.debug.historyCount;
       font-size: 1rem;
       padding: 0.45rem 0.58rem;
     }
-    .fp-meta-strip { grid-template-columns: repeat(2, minmax(0,1fr)); }
-    .fp-meta-cell:nth-child(2) { border-right: 0; }
-    .fp-meta-cell:nth-child(3),
-    .fp-meta-cell:nth-child(4),
-    .fp-meta-cell:nth-child(5),
-    .fp-meta-cell:nth-child(6) { border-top: 1px solid rgba(248,113,113,0.12); }
-    .fp-meta-cell:nth-child(odd) { border-right: 1px solid rgba(248,113,113,0.12); }
-    .fp-meta-cell:nth-child(even) { border-right: 0; }
   }
 </style>

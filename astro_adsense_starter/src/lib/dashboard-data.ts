@@ -68,6 +68,8 @@ export interface FighterProfile {
   fighter_id: string;
   name: string;
   country: string;
+  country_iso2: string;
+  country_flag: string;
   dob: string;
   stance: string;
   reach: string;
@@ -824,11 +826,17 @@ export async function getFighterCardsData(env?: RuntimeEnv): Promise<FighterCard
     .map((row) => {
       const name = cleanStr(row.fighter_name_display) || cleanStr(row.fighter_name) || cleanStr(row.fighter_name_plain);
       const country = countryName(countryIndex.byAlias, row.country);
+      const rawCountry = String(row.country ?? '').trim().toUpperCase();
+      const countryEntry = countryIndex.byAlias[rawCountry];
+      const countryIso2 = countryEntry?.iso2 ?? (rawCountry.length === 2 ? rawCountry : '');
+      const countryFlag = flagEmojiFor(countryIndex.byAlias, row.country);
       const currentBelts = cleanStr(row.current_belt_weight_classes) || cleanStr(row.belt);
       const profile: FighterProfile = {
         fighter_id: cleanStr(row.fighter_id),
         name,
         country,
+        country_iso2: countryIso2,
+        country_flag: countryFlag,
         dob: coerceDate(row.dob),
         stance: cleanStr(row.stance),
         reach: cleanStr(row.reach),
