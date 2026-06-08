@@ -62,9 +62,20 @@ The MCP server exposes:
 
 - `health_check`
 - `search_code_index`
+- `read_code_lines`
+- `replace_code_lines`
+- `replace_text_once`
 
 Use Continue Agent mode and ask for the Chroma Code RAG Retriever when you want
 retrieval from this local Chroma DB.
+
+For files that are too large for Continue Apply, use the MCP write flow:
+
+1. `search_code_index` to find relevant chunks.
+2. `read_code_lines` to inspect the exact range.
+3. `replace_text_once` or `replace_code_lines` with `dry_run=true` to preview
+   a diff.
+4. Call the same write tool with `dry_run=false` to apply the small edit.
 
 ## Nomic Streamlit Demo
 
