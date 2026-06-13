@@ -158,3 +158,7 @@ az containerapp registry set \
   --server ghcr.io \
   --username datatomas \
   --password "$GHCR_PAT"
+
+
+# get env python
+source /home/ares/Documents/uppercutanalytics/venv/bin/activate
