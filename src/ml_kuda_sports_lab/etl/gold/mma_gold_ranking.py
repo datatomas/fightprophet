@@ -1208,7 +1208,11 @@ def main() -> None:
 
     logger.info("Finished processing bouts; prepared %s fight log rows", len(fight_log_rows))
 
-    # Persist fight log (append by default)
+    # Persist fight log. Each run recomputes the COMPLETE per-bout log, so replace
+    # the table contents — appending (the old behaviour) accumulated one identical
+    # batch per run, which squared the rank_per_fighter joins in mma_gold_features
+    # into a ~395x row explosion. Latest run is the only state any reader wants.
+    conn.execute("DELETE FROM gold.mma_ranking_fight_log")
     logger.info("Writing %s rows to gold.mma_ranking_fight_log", len(fight_log_rows))
     conn.executemany(
     """
