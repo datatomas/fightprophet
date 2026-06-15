@@ -162,3 +162,11 @@ az containerapp registry set \
 
 # get env python
 source /home/ares/Documents/uppercutanalytics/venv/bin/activate
+
+# trigger pages bulid
+cd /home/ares/Documents/gitrepos/ml_kuda_sports_lab/astro_adsense_starter
+npm run build            # reads the latest Azure export at build time → ./dist
+npx wrangler pages deploy ./dist --project-name fight-prophet
+
+# re buidl astro site
+cd astro_adsense_starter && npm run build && npx wrangler pages deploy ./dist --project-name fight-prophet
