@@ -170,3 +170,7 @@ npx wrangler pages deploy ./dist --project-name fight-prophet
 
 # re buidl astro site
 cd astro_adsense_starter && npm run build && npx wrangler pages deploy ./dist --project-name fight-prophet
+
+# docker pipeline refresh after export + DuckDB backup
+docker compose --env-file /home/ares/.config/ml_kuda_sports_lab/pipeline.env \
+  --profile sunday run --rm --no-deps astro_site_refresh
