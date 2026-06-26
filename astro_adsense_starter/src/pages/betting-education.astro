@@ -5,12 +5,12 @@ import ContentPage from '../components/ContentPage.astro';
 
 <BaseLayout
   title="Betting Education — Odds, Hold, Fair Odds, EV & ROI | Fight Prophet"
-  description="Learn the exact betting math Fight Prophet shows: American odds, implied probability, sportsbook hold, fair (devigged) odds, expected value, ROI, edge, and parlays — with live calculators."
+  description="Learn the exact betting math Fight Prophet shows: American odds, implied probability, sportsbook hold, fair (devigged) odds, expected value, ROI, edge, and parlays — plus a live odds calculator."
 >
   <ContentPage
     eyebrow="Betting Education"
     title="Betting Education"
-    intro="Plain-English explanations of the exact betting math shown across Fight Prophet — and live calculators that use the same formulas as our backend. Educational only, not betting advice."
+    intro="Plain-English explanations of the exact betting math shown across Fight Prophet — and a live odds calculator that uses the same formulas as our backend. Educational only, not betting advice."
     updated="June 26, 2026"
   >
     <section>
@@ -117,123 +117,86 @@ import ContentPage from '../components/ContentPage.astro';
     </section>
 
     <section class="fp-calc-wrap">
-      <h2>Calculators</h2>
-      <p class="fp-calc-sub">These run the same formulas as our backend (<code>betting_math.py</code>). Educational only.</p>
+      <h2>Fight odds calculator</h2>
+      <p class="fp-calc-sub">Enter both fighters' American odds — everything else is worked out for you, live, with the same formulas as our backend (<code>betting_math.py</code>). Educational only.</p>
 
-      <div class="fp-calc-grid">
-        <div class="fp-calc">
-          <h3>American odds → implied probability</h3>
-          <label>American odds <input type="number" id="ic-odds" value="-150" /></label>
-          <p class="fp-calc-out">Implied probability: <b id="ic-out">—</b></p>
+      <datalist id="odds-suggestions">
+        <option value="-300"></option><option value="-250"></option><option value="-200"></option>
+        <option value="-175"></option><option value="-150"></option><option value="-130"></option>
+        <option value="-120"></option><option value="-110"></option><option value="100"></option>
+        <option value="110"></option><option value="120"></option><option value="130"></option>
+        <option value="150"></option><option value="175"></option><option value="200"></option>
+        <option value="250"></option><option value="300"></option>
+      </datalist>
+
+      <div class="fp-calc fp-calc-hero">
+        <div class="fp-calc-row">
+          <div class="fp-calc-field">
+            <label for="oa">Fighter A odds</label>
+            <input type="number" id="oa" value="-150" step="5" inputmode="numeric" list="odds-suggestions" placeholder="e.g. -150" />
+          </div>
+          <div class="fp-calc-field">
+            <label for="ob">Fighter B odds</label>
+            <input type="number" id="ob" value="+130" step="5" inputmode="numeric" list="odds-suggestions" placeholder="e.g. +130" />
+          </div>
         </div>
 
-        <div class="fp-calc">
-          <h3>Two-way hold</h3>
-          <label>Fighter odds <input type="number" id="hc-a" value="-150" /></label>
-          <label>Opponent odds <input type="number" id="hc-b" value="+130" /></label>
-          <p class="fp-calc-out">Hold: <b id="hc-out">—</b></p>
-        </div>
+        <div class="fp-calc-result"><span>Sportsbook hold (margin)</span><b id="r-hold">—</b></div>
 
-        <div class="fp-calc">
-          <h3>Fair odds (devig)</h3>
-          <label>Side odds <input type="number" id="fc-a" value="-150" /></label>
-          <label>Other side odds <input type="number" id="fc-b" value="+130" /></label>
-          <p class="fp-calc-out">Fair prob: <b id="fc-prob">—</b> · Fair odds: <b id="fc-out">—</b></p>
+        <div class="fp-calc-sides">
+          <div class="fp-side">
+            <div class="fp-side-name">Fighter A</div>
+            <div class="fp-side-line"><span>Implied</span><b id="r-a-imp">—</b></div>
+            <div class="fp-side-line"><span>Fair (no-vig)</span><b id="r-a-fair">—</b></div>
+            <div class="fp-side-line"><span>Fair odds</span><b id="r-a-fairodds">—</b></div>
+          </div>
+          <div class="fp-side">
+            <div class="fp-side-name">Fighter B</div>
+            <div class="fp-side-line"><span>Implied</span><b id="r-b-imp">—</b></div>
+            <div class="fp-side-line"><span>Fair (no-vig)</span><b id="r-b-fair">—</b></div>
+            <div class="fp-side-line"><span>Fair odds</span><b id="r-b-fairodds">—</b></div>
+          </div>
         </div>
-
-        <div class="fp-calc">
-          <h3>Expected value</h3>
-          <label>Model win % <input type="number" id="ec-prob" value="55" step="0.5" /></label>
-          <label>American odds <input type="number" id="ec-odds" value="+120" /></label>
-          <p class="fp-calc-out">EV on $100: <b id="ec-out">—</b></p>
-        </div>
-
-        <div class="fp-calc">
-          <h3>Expected ROI</h3>
-          <label>Model win % <input type="number" id="rc-prob" value="55" step="0.5" /></label>
-          <label>American odds <input type="number" id="rc-odds" value="+120" /></label>
-          <p class="fp-calc-out">Expected ROI: <b id="rc-out">—</b></p>
-        </div>
-
-        <div class="fp-calc">
-          <h3>Parlay odds</h3>
-          <label>Legs (American, comma-sep) <input type="text" id="pc-legs" value="-150, +130, +200" /></label>
-          <label>Model win % per leg (optional) <input type="text" id="pc-probs" value="60, 48, 35" /></label>
-          <p class="fp-calc-out">
-            Sportsbook price: <b id="pc-odds">—</b><br />
-            Fair price: <b id="pc-fair">—</b> · ROI: <b id="pc-roi">—</b>
-          </p>
-        </div>
+        <p class="fp-calc-q">Implied = the price's break-even win rate (includes the book's margin). Fair = the same with the hold removed, so both sides add to 100%. Leave a field blank and hold/fair can't be computed.</p>
       </div>
     </section>
   </ContentPage>
 </BaseLayout>
 
-<script type="module">
+<script>
+  // Plain <script> (no type="module") so Astro bundles it and resolves the
+  // betting-math.mjs import at build time. With type="module" Astro leaves it
+  // inline and the relative import 404s in the browser.
   import * as bm from '../lib/betting-math.mjs';
 
   const $ = (id) => document.getElementById(id);
   const n = (el) => (el && el.value !== '' ? Number(el.value) : NaN);
-  const list = (el) =>
-    String(el?.value || '')
-      .split(',')
-      .map((s) => Number(s.trim()))
-      .filter((x) => Number.isFinite(x));
-
   const pct = (v) => (Number.isFinite(v) ? `${(Math.round(v * 1000) / 10).toFixed(1)}%` : '—');
   const odds = (v) => (Number.isFinite(v) ? (v > 0 ? `+${Math.round(v)}` : String(Math.round(v))) : '—');
-  const money = (v) => (Number.isFinite(v) ? `${v >= 0 ? '+$' : '-$'}${Math.abs(v).toFixed(2)}` : '—');
-  const signedPct = (v) => (Number.isFinite(v) ? `${v > 0 ? '+' : ''}${(Math.round(v * 1000) / 10).toFixed(1)}%` : '—');
-  const cls = (el, v) => {
-    if (!el) return;
-    el.classList.remove('fp-pos', 'fp-neg', 'fp-warn');
-    if (Number.isFinite(v)) el.classList.add(v > 0 ? 'fp-pos' : v < 0 ? 'fp-neg' : 'fp-warn');
-  };
 
   function recompute() {
-    // implied
-    $('ic-out').textContent = pct(bm.impliedProbFromAmerican(n($('ic-odds'))));
+    const a = n($('oa'));
+    const b = n($('ob'));
+    const pa = bm.impliedProbFromAmerican(a);
+    const pb = bm.impliedProbFromAmerican(b);
 
-    // hold
-    const ha = bm.impliedProbFromAmerican(n($('hc-a')));
-    const hb = bm.impliedProbFromAmerican(n($('hc-b')));
-    const hold = bm.marketHold(ha, hb);
-    $('hc-out').textContent = pct(hold);
-    const holdEl = $('hc-out');
+    // hold (needs both sides) — colour by threshold
+    const hold = bm.marketHold(pa, pb);
+    const holdEl = $('r-hold');
+    holdEl.textContent = pct(hold);
     holdEl.classList.remove('fp-pos', 'fp-neg', 'fp-warn');
     const lbl = bm.holdLabel(hold);
     if (lbl) holdEl.classList.add(lbl === 'low' ? 'fp-pos' : lbl === 'medium' ? 'fp-warn' : 'fp-neg');
 
-    // fair odds
-    const fa = bm.impliedProbFromAmerican(n($('fc-a')));
-    const fb = bm.impliedProbFromAmerican(n($('fc-b')));
-    const fair = bm.devigFairProb(fa, fa, fb);
-    $('fc-prob').textContent = pct(fair);
-    $('fc-out').textContent = odds(bm.fairAmericanOdds(fair));
-
-    // EV
-    const ev = bm.expectedValue(n($('ec-prob')) / 100, n($('ec-odds')));
-    $('ec-out').textContent = money(ev);
-    cls($('ec-out'), ev);
-
-    // ROI
-    const roi = bm.expectedRoi(n($('rc-prob')) / 100, n($('rc-odds')));
-    $('rc-out').textContent = signedPct(roi);
-    cls($('rc-out'), roi);
-
-    // parlay
-    const legs = list($('pc-legs'));
-    $('pc-odds').textContent = odds(bm.parlayAmericanOdds(legs));
-    const probs = list($('pc-probs')).map((x) => x / 100);
-    if (probs.length === legs.length && legs.length > 0) {
-      $('pc-fair').textContent = odds(bm.parlayFairOdds(probs));
-      const proi = bm.parlayRoi(probs, legs);
-      $('pc-roi').textContent = signedPct(proi);
-      cls($('pc-roi'), proi);
-    } else {
-      $('pc-fair').textContent = '—';
-      $('pc-roi').textContent = '—';
-    }
+    // per-side implied + fair (devig needs both sides)
+    $('r-a-imp').textContent = pct(pa);
+    $('r-b-imp').textContent = pct(pb);
+    const fairA = bm.devigFairProb(pa, pa, pb);
+    const fairB = bm.devigFairProb(pb, pa, pb);
+    $('r-a-fair').textContent = pct(fairA);
+    $('r-b-fair').textContent = pct(fairB);
+    $('r-a-fairodds').textContent = odds(bm.fairAmericanOdds(fairA));
+    $('r-b-fairodds').textContent = odds(bm.fairAmericanOdds(fairB));
   }
 
   document.querySelectorAll('.fp-calc input').forEach((el) => el.addEventListener('input', recompute));
@@ -247,40 +210,66 @@ import ContentPage from '../components/ContentPage.astro';
   .fp-warn { color: #b45309; }
 
   .fp-calc-sub { opacity: 0.7; margin-top: -0.3rem; }
-  .fp-calc-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-    gap: 0.9rem;
-    margin-top: 0.8rem;
-  }
   .fp-calc {
     border: 1px solid rgba(0, 0, 0, 0.12);
-    border-radius: 12px;
-    padding: 0.9rem 1rem;
+    border-radius: 14px;
+    padding: 1.1rem 1.15rem;
     display: grid;
-    gap: 0.5rem;
+    gap: 0.75rem;
     align-content: start;
   }
-  .fp-calc h3 { margin: 0; font-size: 0.98rem; }
-  .fp-calc label {
-    display: grid;
-    gap: 0.2rem;
-    font-size: 0.78rem;
-    opacity: 0.8;
+  .fp-calc-hero { max-width: 560px; margin-top: 0.4rem; }
+  .fp-calc-q { margin: 0.1rem 0 0; font-size: 0.78rem; opacity: 0.65; line-height: 1.4; }
+  .fp-calc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+  .fp-calc-field { display: grid; gap: 0.3rem; }
+  .fp-calc-field label {
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    opacity: 0.7;
   }
   .fp-calc input {
     font: inherit;
-    padding: 0.4rem 0.5rem;
-    border-radius: 8px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    background: transparent;
+    font-size: 1.1rem;
+    font-variant-numeric: tabular-nums;
+    padding: 0.6rem 0.7rem;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.22);
+    background: rgba(0, 0, 0, 0.02);
     color: inherit;
+    width: 100%;
+    box-sizing: border-box;
   }
-  .fp-calc-out { margin: 0.2rem 0 0; font-size: 0.95rem; }
-  .fp-calc-out b { font-variant-numeric: tabular-nums; }
+  .fp-calc input:focus { outline: 2px solid rgba(37, 99, 235, 0.45); outline-offset: 1px; }
+  /* prominent hold result */
+  .fp-calc-result {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding-top: 0.6rem;
+    border-top: 1px dashed rgba(0, 0, 0, 0.14);
+  }
+  .fp-calc-result span { font-size: 0.82rem; opacity: 0.7; }
+  .fp-calc-result b { font-size: 1.6rem; font-variant-numeric: tabular-nums; line-height: 1; }
+  /* per-side breakdown */
+  .fp-calc-sides { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+  .fp-side {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 0.6rem 0.7rem;
+    display: grid;
+    gap: 0.3rem;
+  }
+  .fp-side-name { font-size: 0.78rem; font-weight: 700; opacity: 0.85; }
+  .fp-side-line { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+  .fp-side-line span { font-size: 0.74rem; opacity: 0.62; }
+  .fp-side-line b { font-size: 1rem; font-variant-numeric: tabular-nums; }
   @media (prefers-color-scheme: dark) {
     .fp-calc { border-color: rgba(255, 255, 255, 0.14); }
-    .fp-calc input { border-color: rgba(255, 255, 255, 0.22); }
+    .fp-calc input { border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.03); }
+    .fp-calc-result { border-top-color: rgba(255, 255, 255, 0.18); }
+    .fp-side { border-color: rgba(255, 255, 255, 0.12); }
     .fp-warn { color: #eab308; }
   }
 </style>
