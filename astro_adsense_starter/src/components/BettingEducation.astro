@@ -1,0 +1,196 @@
+---
+// Shared, localized Betting Education content: calculator first, then a compact
+// infographic of the formulas. All copy comes from the i18n dictionary so every
+// /<lang>/ page stays in sync; formulas are universal literals (not translated).
+import ContentPage from './ContentPage.astro';
+import { getLangFromUrl, useTranslations } from '../lib/i18n';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
+// concept key -> formula literal (math is language-neutral)
+const formulas: Record<string, string[]> = {
+  c1: ['+150 → +$150', '−200 → +$50'],
+  c2: ['p = 100 / (odds + 100)', '|odds| / (|odds| + 100)'],
+  c3: ['hold = pA + pB − 1'],
+  c4: ['fair = side / (pA + pB)'],
+  c5: ['p<½ → 100(1−p)/p', 'p>½ → −100p/(1−p)'],
+  c6: ['EV = p·profit − (1−p)·100'],
+  c7: ['ROI = EV / stake'],
+  c8: ['edge = model − fair'],
+  c9: ['parlay = p₁ · p₂ · … · pₙ'],
+};
+const concepts = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9'] as const;
+---
+
+<ContentPage eyebrow={t('edu.eyebrow')} title={t('edu.title')} intro={t('edu.intro')}>
+  <!-- Calculator first -->
+  <section class="fp-calc-wrap">
+    <h2>{t('calc.heading')}</h2>
+    <p class="fp-calc-sub">{t('calc.sub')} <code>betting_math.py</code>.</p>
+
+    <datalist id="odds-suggestions">
+      <option value="-300"></option><option value="-250"></option><option value="-200"></option>
+      <option value="-175"></option><option value="-150"></option><option value="-130"></option>
+      <option value="-120"></option><option value="-110"></option><option value="100"></option>
+      <option value="110"></option><option value="120"></option><option value="130"></option>
+      <option value="150"></option><option value="175"></option><option value="200"></option>
+      <option value="250"></option><option value="300"></option>
+    </datalist>
+
+    <div class="fp-calc fp-calc-hero">
+      <div class="fp-calc-row">
+        <div class="fp-calc-field">
+          <label for="oa">{t('calc.fighterA')}</label>
+          <input type="number" id="oa" value="-150" step="5" inputmode="numeric" list="odds-suggestions" />
+        </div>
+        <div class="fp-calc-field">
+          <label for="ob">{t('calc.fighterB')}</label>
+          <input type="number" id="ob" value="+130" step="5" inputmode="numeric" list="odds-suggestions" />
+        </div>
+      </div>
+
+      <div class="fp-calc-result"><span>{t('calc.hold')}</span><b id="r-hold">—</b></div>
+
+      <div class="fp-calc-sides">
+        <div class="fp-side">
+          <div class="fp-side-name">{t('calc.sideA')}</div>
+          <div class="fp-side-line"><span>{t('calc.implied')}</span><b id="r-a-imp">—</b></div>
+          <div class="fp-side-line"><span>{t('calc.fair')}</span><b id="r-a-fair">—</b></div>
+          <div class="fp-side-line"><span>{t('calc.fairOdds')}</span><b id="r-a-fairodds">—</b></div>
+        </div>
+        <div class="fp-side">
+          <div class="fp-side-name">{t('calc.sideB')}</div>
+          <div class="fp-side-line"><span>{t('calc.implied')}</span><b id="r-b-imp">—</b></div>
+          <div class="fp-side-line"><span>{t('calc.fair')}</span><b id="r-b-fair">—</b></div>
+          <div class="fp-side-line"><span>{t('calc.fairOdds')}</span><b id="r-b-fairodds">—</b></div>
+        </div>
+      </div>
+      <p class="fp-calc-q">{t('calc.note')}</p>
+    </div>
+  </section>
+
+  <!-- Infographic: the formulas behind every number -->
+  <section>
+    <h2>{t('edu.formulasTitle')}</h2>
+    <div class="fp-fgrid">
+      {concepts.map((c, i) => (
+        <div class="fp-fcard">
+          <span class="fp-fcard-num">{i + 1}</span>
+          <h3 class="fp-fcard-title">{t(`${c}.title` as any)}</h3>
+          <div class="fp-fcard-formula">
+            {formulas[c].map((f) => <code>{f}</code>)}
+          </div>
+          <p class="fp-fcard-blurb">{t(`${c}.blurb` as any)}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+</ContentPage>
+
+<script>
+  import * as bm from '../lib/betting-math.mjs';
+  const $ = (id) => document.getElementById(id);
+  const n = (el) => (el && el.value !== '' ? Number(el.value) : NaN);
+  const pct = (v) => (Number.isFinite(v) ? `${(Math.round(v * 1000) / 10).toFixed(1)}%` : '—');
+  const odds = (v) => (Number.isFinite(v) ? (v > 0 ? `+${Math.round(v)}` : String(Math.round(v))) : '—');
+
+  function recompute() {
+    const pa = bm.impliedProbFromAmerican(n($('oa')));
+    const pb = bm.impliedProbFromAmerican(n($('ob')));
+    const hold = bm.marketHold(pa, pb);
+    const holdEl = $('r-hold');
+    holdEl.textContent = pct(hold);
+    holdEl.classList.remove('fp-pos', 'fp-neg', 'fp-warn');
+    const lbl = bm.holdLabel(hold);
+    if (lbl) holdEl.classList.add(lbl === 'low' ? 'fp-pos' : lbl === 'medium' ? 'fp-warn' : 'fp-neg');
+    $('r-a-imp').textContent = pct(pa);
+    $('r-b-imp').textContent = pct(pb);
+    const fairA = bm.devigFairProb(pa, pa, pb);
+    const fairB = bm.devigFairProb(pb, pa, pb);
+    $('r-a-fair').textContent = pct(fairA);
+    $('r-b-fair').textContent = pct(fairB);
+    $('r-a-fairodds').textContent = odds(bm.fairAmericanOdds(fairA));
+    $('r-b-fairodds').textContent = odds(bm.fairAmericanOdds(fairB));
+  }
+  document.querySelectorAll('.fp-calc input').forEach((el) => el.addEventListener('input', recompute));
+  recompute();
+</script>
+
+<style>
+  .fp-pos { color: #16a34a; }
+  .fp-neg { color: #dc2626; }
+  .fp-warn { color: #b45309; }
+
+  .fp-calc-wrap h2 { margin-bottom: 0.3rem; }
+  .fp-calc-sub { opacity: 0.7; margin-top: 0; }
+  .fp-calc {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 14px;
+    padding: 1.1rem 1.15rem;
+    display: grid;
+    gap: 0.75rem;
+    align-content: start;
+  }
+  .fp-calc-hero { max-width: 560px; }
+  .fp-calc-q { margin: 0.1rem 0 0; font-size: 0.78rem; opacity: 0.65; line-height: 1.4; }
+  .fp-calc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+  .fp-calc-field { display: grid; gap: 0.3rem; }
+  .fp-calc-field label { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.03em; opacity: 0.7; }
+  .fp-calc input {
+    font: inherit; font-size: 1.1rem; font-variant-numeric: tabular-nums;
+    padding: 0.6rem 0.7rem; border-radius: 10px; border: 1px solid rgba(0, 0, 0, 0.22);
+    background: rgba(0, 0, 0, 0.02); color: inherit; width: 100%; box-sizing: border-box;
+  }
+  .fp-calc input:focus { outline: 2px solid rgba(37, 99, 235, 0.45); outline-offset: 1px; }
+  .fp-calc-result {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem;
+    padding-top: 0.6rem; border-top: 1px dashed rgba(0, 0, 0, 0.14);
+  }
+  .fp-calc-result span { font-size: 0.82rem; opacity: 0.7; }
+  .fp-calc-result b { font-size: 1.6rem; font-variant-numeric: tabular-nums; line-height: 1; }
+  .fp-calc-sides { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+  .fp-side { border: 1px solid rgba(0, 0, 0, 0.1); border-radius: 10px; padding: 0.6rem 0.7rem; display: grid; gap: 0.3rem; }
+  .fp-side-name { font-size: 0.78rem; font-weight: 700; opacity: 0.85; }
+  .fp-side-line { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+  .fp-side-line span { font-size: 0.74rem; opacity: 0.62; }
+  .fp-side-line b { font-size: 1rem; font-variant-numeric: tabular-nums; }
+
+  /* Infographic formula grid */
+  .fp-fgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 215px), 1fr));
+    gap: 0.7rem;
+    margin-top: 0.6rem;
+  }
+  .fp-fcard {
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 12px;
+    padding: 0.85rem 0.9rem;
+    display: grid;
+    gap: 0.35rem;
+    align-content: start;
+  }
+  .fp-fcard-num {
+    position: absolute; top: 0.6rem; right: 0.7rem;
+    font-size: 0.9rem; font-weight: 800; opacity: 0.18;
+  }
+  .fp-fcard-title { margin: 0; font-size: 0.92rem; padding-right: 1.2rem; }
+  .fp-fcard-formula { display: grid; gap: 0.2rem; }
+  .fp-fcard-formula code {
+    font-size: 0.82rem; font-variant-numeric: tabular-nums;
+    background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.16);
+    border-radius: 6px; padding: 0.2rem 0.4rem; width: fit-content; max-width: 100%;
+  }
+  .fp-fcard-blurb { margin: 0.1rem 0 0; font-size: 0.8rem; opacity: 0.72; line-height: 1.35; }
+
+  @media (prefers-color-scheme: dark) {
+    .fp-calc, .fp-fcard { border-color: rgba(255, 255, 255, 0.14); }
+    .fp-calc input { border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.03); }
+    .fp-calc-result { border-top-color: rgba(255, 255, 255, 0.18); }
+    .fp-side { border-color: rgba(255, 255, 255, 0.12); }
+    .fp-warn { color: #eab308; }
+    .fp-fcard-formula code { background: rgba(96, 165, 250, 0.1); border-color: rgba(96, 165, 250, 0.22); }
+  }
+</style>

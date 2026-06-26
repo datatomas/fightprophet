@@ -14,14 +14,14 @@ const historyRows = fighterData.debug.historyCount;
 ---
 
 <BaseLayout
-  title="MMA Fighter Cards — Stats, Records & Fight History | Fight Prophet"
-  description="Search public MMA fighter cards with records, country, status, method breakdowns, striking and grappling stats, belt context, and recent fight history."
+  title="MMA Fighter Stats — Records, Striking & Grappling Metrics | Fight Prophet"
+  description="Search public MMA fighter stats with records, country, status, method breakdowns, striking and grappling stats, belt context, and recent fight history."
 >
   <article class="fp-fighters-page">
     <header class="fp-tool-hero">
       <a class="fp-tool-breadcrumb" href="/">← Fight Prophet</a>
-      <p class="fp-section-label">Fighter Cards</p>
-      <h1>MMA Fighter Cards</h1>
+      <p class="fp-section-label">Fighter Stats</p>
+      <h1>MMA Fighter Stats</h1>
       <p>
         Search tracked UFC fighters and inspect career snapshots, method mix, activity status, belt context, striking and grappling metrics, and recent fight history.
       </p>
@@ -198,7 +198,7 @@ const historyRows = fighterData.debug.historyCount;
       </>
     ) : (
       <section class="fp-empty-state">
-        <strong>Fighter cards are temporarily unavailable.</strong>
+        <strong>Fighter stats are temporarily unavailable.</strong>
         <span>The public cards read from the exported dashboard parquet feed. If this is empty, the latest export has not landed yet.</span>
       </section>
     )}

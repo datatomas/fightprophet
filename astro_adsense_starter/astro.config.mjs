@@ -9,7 +9,7 @@ export default defineConfig({
   // src/lib/i18n.ts), so links never 404. No fallback rewrite — that needs SSR
   // and emits empty files in this static build.
   i18n: {
-    locales: ['en', 'es', 'pt', 'ru'],
+    locales: ['en', 'es', 'pt', 'ru', 'ka'],
     defaultLocale: 'en',
     routing: {
       prefixDefaultLocale: false,

@@ -1,6 +1,6 @@
 ---
 import AdSenseScript from '../components/AdSenseScript.astro';
-import { getLangFromUrl, useTranslations, localizeUrl, switchLocalePath, stripLocale, isLocalized, locales, localeNames } from '../lib/i18n';
+import { getLangFromUrl, useTranslations, localizeUrl, switchLocalePath, stripLocale, isLocalized, availableLocales, localeFlags, localeTitles, defaultLang } from '../lib/i18n';
 
 interface Props {
   title?: string;
@@ -45,10 +45,13 @@ const isActive = (href: string) => {
 };
 // Only show the routed language switcher / alternate links where a translated
 // page exists, so we never link to a non-existent localized page.
-const hasTranslation = isLocalized(stripLocale(Astro.url.pathname));
-const localeLinks = locales.map((code) => ({
+const strippedPath = stripLocale(Astro.url.pathname);
+const hasTranslation = isLocalized(strippedPath);
+// Switcher shows English + the locales this page is actually translated into.
+const localeLinks = [defaultLang, ...availableLocales(strippedPath)].map((code) => ({
   code,
-  label: localeNames[code],
+  flag: localeFlags[code],
+  title: localeTitles[code],
   href: switchLocalePath(Astro.url, code),
   active: code === lang,
 }));
@@ -150,7 +153,7 @@ const structuredData = [
         </a>
 
         <!-- Legacy client-side translator (es/pt/en). Hidden on pages that have
-             real routed translations (those use the .fp-locale-pill switcher). -->
+             real routed translations (those use the .fp-locale-flags switcher). -->
         {!hasTranslation && (
           <div class="fp-lang-switch fp-lang-switch-rail" aria-label="Language selector">
             <button type="button" class="fp-lang-btn" data-lang="es" title="Español">🇨🇴</button>
@@ -183,9 +186,9 @@ const structuredData = [
           <a class={`fp-app-rail-nav-link${isActive('/about/') ? ' is-active' : ''}`} href={L('/about/')}><span class="fp-app-rail-nav-copy"><img src={aboutEmojiUrl} alt="" class="fp-app-rail-nav-icon is-about-icon" loading="lazy" aria-hidden="true" /><span>{t('nav.about')}</span></span></a>
           <a class={`fp-app-rail-nav-link${isActive('/terms/') ? ' is-active' : ''}`} href={L('/terms/')}><span class="fp-app-rail-nav-copy"><img src={termsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>{t('nav.terms')}</span></span></a>
           {hasTranslation && (
-            <div class="fp-locale-pill" role="group" aria-label={t('lang.label')}>
+            <div class="fp-locale-flags" role="group" aria-label={t('lang.label')}>
               {localeLinks.map((l) => (
-                <a class={l.active ? 'is-active' : ''} href={l.href} hreflang={l.code}>{l.label}</a>
+                <a class={l.active ? 'is-active' : ''} href={l.href} hreflang={l.code} title={l.title} aria-label={l.title}>{l.flag}</a>
               ))}
             </div>
           )}
@@ -685,28 +688,28 @@ const structuredData = [
     display: grid;
     gap: 0.22rem;
   }
-  /* Language switcher */
-  .fp-lang-switch {
+  /* Routed language switcher — flag buttons (matches the original flag picker) */
+  .fp-locale-flags {
     display: inline-flex;
-    gap: 0.35rem;
+    flex-wrap: wrap;
+    gap: 0.3rem;
     margin: 0.5rem 0 0 0.3rem;
   }
-  .fp-lang-switch a {
-    font-size: 0.74rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    padding: 0.18rem 0.5rem;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    color: #d4d4d8;
+  .fp-locale-flags a {
+    font-size: 1.15rem;
+    line-height: 1;
+    padding: 0.2rem 0.32rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
     text-decoration: none;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    filter: grayscale(0.5) opacity(0.7);
+    transition: filter 0.15s, border-color 0.15s, background 0.15s, transform 0.1s;
   }
-  .fp-lang-switch a:hover { border-color: rgba(248, 113, 113, 0.5); color: #fff; }
-  .fp-lang-switch a.is-active {
-    background: rgba(248, 113, 113, 0.16);
+  .fp-locale-flags a:hover { filter: none; transform: translateY(-1px); }
+  .fp-locale-flags a.is-active {
+    filter: none;
     border-color: rgba(248, 113, 113, 0.55);
-    color: #fff;
+    background: rgba(248, 113, 113, 0.14);
   }
   .fp-app-rail-nav-copy {
     display: grid;
