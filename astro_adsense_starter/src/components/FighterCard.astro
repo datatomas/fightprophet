@@ -39,7 +39,7 @@ const {
   compact = false,
 } = Astro.props as Props;
 
-const profileUrl = `/fighter-card/?fighter=${encodeURIComponent(name)}`;
+const profileUrl = `/fighter-stats/?fighter=${encodeURIComponent(name)}`;
 const countryIndex = ((Astro.locals.countryMaster as CountryMasterIndex | undefined)?.byAlias ?? {});
 
 function normalizeCountryKey(value: string): string {

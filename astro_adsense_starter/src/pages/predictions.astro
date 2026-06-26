@@ -283,7 +283,7 @@ const hasData = totalFights > 0;
       const record = wTxt !== '—' && lTxt !== '—' ? `${wTxt}-${lTxt}` : (wTxt !== '—' ? wTxt : '—');
       const typeLine = esc([wc || 'MMA Fighter', country].filter(Boolean).join(' / '));
       const cardCls = isChamp ? 'fp-card is-champ is-compact' : 'fp-card is-default is-compact';
-      const profileHref = `/fighter-card/?fighter=${encodeURIComponent(name || '')}`;
+      const profileHref = `/fighter-stats/?fighter=${encodeURIComponent(name || '')}`;
       const statusLower = String(status || '').toLowerCase();
       const statusHtml = statusLower
         ? `<span class="fp-card-status fp-card-status--${esc(statusLower)}">${esc(statusLower)}</span>`

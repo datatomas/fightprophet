@@ -285,7 +285,7 @@ const historyRows = fighterData.debug.historyCount;
       </article>`;
     };
     const record = (profile) => `${fmtInt(profile.wins)}-${fmtInt(profile.losses)}-${fmtInt(profile.draws || 0)}`;
-    const profileUrl = (profile) => `/fighter-card/?fighter=${encodeURIComponent(profile.name)}`;
+    const profileUrl = (profile) => `/fighter-stats/?fighter=${encodeURIComponent(profile.name)}`;
 
     // ── Visual fighter card ─────────────────────────────────────────────────
     // Mirrors the markup/classes from src/components/FighterCard.astro so the same
@@ -450,7 +450,7 @@ const historyRows = fighterData.debug.historyCount;
         const resLabel = row.result || '—';
         const method = escapeHtml(row.method || row.method_category || '—');
         const titleBadge = row.is_title_fight ? '<span class="fp-title-badge" aria-label="Title fight">★</span>' : '';
-        const oppHref = `/fighter-card/?fighter=${encodeURIComponent(row.opponent_name_display || '')}`;
+        const oppHref = `/fighter-stats/?fighter=${encodeURIComponent(row.opponent_name_display || '')}`;
         const weightTag = row.weight_class ? `<span class="fp-wc-tag">${escapeHtml(row.weight_class)}</span>` : '';
 
         return `<tr class="fp-fight-tr fp-fight-tr--${resCls}">

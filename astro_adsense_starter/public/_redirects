@@ -1,2 +1,6 @@
 /rankigns/ /rankings/ 301
 /rankigns /rankings/ 301
+# Fighter Cards renamed to Fighter Stats (URL changed; preserve SEO + old links).
+# Cloudflare keeps the query string (?fighter=...) on redirects automatically.
+/fighter-card/ /fighter-stats/ 301
+/fighter-card /fighter-stats/ 301

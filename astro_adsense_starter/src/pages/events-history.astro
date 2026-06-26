@@ -226,7 +226,7 @@ const pastEvents = totalEvents - upcomingEvents;
       const isUpcoming = event.event_phase === 'Upcoming';
       fightTable.innerHTML = rows.map((fight) => {
         const winner = fight.winner_name_display || '';
-        const fLink = (n) => n ? `<a class="fp-ft-link" href="/fighter-card/?fighter=${encodeURIComponent(n)}">${escapeHtml(n)}</a>` : escapeHtml(n) || '—';
+        const fLink = (n) => n ? `<a class="fp-ft-link" href="/fighter-stats/?fighter=${encodeURIComponent(n)}">${escapeHtml(n)}</a>` : escapeHtml(n) || '—';
         const winnerCell = isUpcoming || !winner
           ? `<span class="fp-winner-tbd">${winner ? escapeHtml(winner) : 'TBD'}</span>`
           : `<span class="fp-winner-badge">✓ ${fLink(winner)}</span>`;

@@ -261,7 +261,7 @@ const hasData = labData.catboost.rows.length > 0;
           : '—';
 
         const fLink = (name) => name
-          ? `<a class="fp-fighter-link" href="/fighter-card/?fighter=${encodeURIComponent(name)}">${esc(name)}</a>`
+          ? `<a class="fp-fighter-link" href="/fighter-stats/?fighter=${encodeURIComponent(name)}">${esc(name)}</a>`
           : '—';
         const flagName = (flag, name) => `${flag ? esc(flag) + ' ' : ''}${fLink(name)}`;
 
