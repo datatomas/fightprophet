@@ -97,7 +97,25 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_STATUS_OVERRIDES_JSON_PATH,
         help="Path to local fighter-status override JSON file.",
     )
+    # --- Title-reign weighting (tune to surface long-reign champs like DJ / Mighty
+    
+    p.add_argument("--champ-base-mult", type=float, default=1.15,
+                   help="Win-points multiplier for a reigning/ex champion (0 defenses).")
+    p.add_argument("--champ-defense-mult", type=float, default=0.12,
+                   help="Extra win multiplier per title defense, compounding a reign (Fight Minds uses 0.15).")
+    p.add_argument("--defense-bonus-coeff", type=float, default=0.45,
+                   help="Snapshot boost per title defense: points *= 1 + coeff*defenses.")
     return p.parse_args()
+
+
+def champion_multiplier(has_title: bool, title_defenses: int, *, base: float, per_defense: float) -> float:
+    """Per-bout win multiplier for champions, scaling with the reign length so a
+    long title run (many defenses) compounds — surfaces DJ/Mighty Mouse-type
+    resumes. Non-champions get 1.0. ``title_defenses`` is the count *before* this
+    bout (so the current title win is rewarded next time)."""
+    if not has_title:
+        return 1.0
+    return base + per_defense * float(max(0, title_defenses))
 
 
 def _parse_as_of_date(s: Optional[str]) -> date:
@@ -579,8 +597,11 @@ def main() -> None:
 
     # Snapshot-only boosts (do not affect per-bout deltas)
     fights_bonus_coeff = 0.60  # multiplies log1p(org_fights) (career matters a lot)
-    defense_bonus_coeff = 0.35  # per title defense (defenses matter a lot)
+    defense_bonus_coeff = float(args.defense_bonus_coeff)  # per title defense (tunable; default 0.45)
     loss_penalty_coeff = 0.75  # strong penalty per org-wide loss (applied as losses^2)
+    # Per-bout champion win multiplier, scaling with title defenses (tunable).
+    champ_base_mult = float(args.champ_base_mult)
+    champ_defense_mult = float(args.champ_defense_mult)
 
     # Per-bout: a non-DQ loss should send a fighter "back in line".
     # Implemented as a cap on the loser's post-fight points.
@@ -903,7 +924,7 @@ def main() -> None:
             streak_w = streak_multiplier(s1.win_streak)
             streak_l = streak_multiplier(s2.loss_streak)
 
-            champ_mult = 1.15 if s1.has_won_title else 1.0
+            champ_mult = champion_multiplier(s1.has_won_title, s1.title_defenses, base=champ_base_mult, per_defense=champ_defense_mult)
 
             gain = (
                 (opponent_term(p2_before, c_med) * opponent_share * method_mult)
@@ -936,7 +957,7 @@ def main() -> None:
 
             ostreak_w = streak_multiplier(os1.win_streak)
             ostreak_l = streak_multiplier(os2.loss_streak)
-            ochamp_mult = 1.15 if os1.has_won_title else 1.0
+            ochamp_mult = champion_multiplier(os1.has_won_title, os1.title_defenses, base=champ_base_mult, per_defense=champ_defense_mult)
 
             ogain = (
                 (opponent_term(op2_before, o_med) * opponent_share * method_mult)
@@ -1064,7 +1085,7 @@ def main() -> None:
             streak_w = streak_multiplier(s2.win_streak)
             streak_l = streak_multiplier(s1.loss_streak)
 
-            champ_mult = 1.15 if s2.has_won_title else 1.0
+            champ_mult = champion_multiplier(s2.has_won_title, s2.title_defenses, base=champ_base_mult, per_defense=champ_defense_mult)
 
             gain = (
                 (opponent_term(p1_before, c_med) * opponent_share * method_mult)
@@ -1097,7 +1118,7 @@ def main() -> None:
 
             ostreak_w = streak_multiplier(os2.win_streak)
             ostreak_l = streak_multiplier(os1.loss_streak)
-            ochamp_mult = 1.15 if os2.has_won_title else 1.0
+            ochamp_mult = champion_multiplier(os2.has_won_title, os2.title_defenses, base=champ_base_mult, per_defense=champ_defense_mult)
 
             ogain = (
                 (opponent_term(op1_before, o_med) * opponent_share * method_mult)
