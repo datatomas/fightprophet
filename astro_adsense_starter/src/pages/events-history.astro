@@ -112,6 +112,7 @@ const pastEvents = totalEvents - upcomingEvents;
                     <th>Model</th>
                     <th>Market</th>
                     <th>Edge</th>
+                    <th title="Realized return on a 1-unit bet on the model's pick, at the captured odds">Bet ROI</th>
                   </tr>
                 </thead>
                 <tbody data-fight-table></tbody>
@@ -175,6 +176,12 @@ const pastEvents = totalEvents - upcomingEvents;
       const shown = Math.round((num <= 1 && num >= -1 ? num * 100 : num) * 10) / 10;
       return `${shown > 0 ? '+' : ''}${shown}%`;
     };
+    // realized ROI is a return ratio (+1.5 = +150%, -1 = -100%); always ×100
+    const roiPct = (value) => {
+      if (value == null || Number.isNaN(Number(value))) return '—';
+      const shown = Math.round(Number(value) * 1000) / 10;
+      return `${shown > 0 ? '+' : ''}${shown}%`;
+    };
     const modelHitRate = (event) => {
       if (!event || !event.model_total_count) return '—';
       return `${Math.round((event.model_correct_count / event.model_total_count) * 100)}%`;
@@ -213,7 +220,7 @@ const pastEvents = totalEvents - upcomingEvents;
 
       const rows = fights.filter((fight) => fight.event_name === event.event_name);
       if (!rows.length) {
-        fightTable.innerHTML = '<tr><td colspan="7">Fight-level rows are not available for this event yet.</td></tr>';
+        fightTable.innerHTML = '<tr><td colspan="8">Fight-level rows are not available for this event yet.</td></tr>';
         return;
       }
       const isUpcoming = event.event_phase === 'Upcoming';
@@ -238,6 +245,7 @@ const pastEvents = totalEvents - upcomingEvents;
           <td>${pct(fight.model_prob)}</td>
           <td>${pct(fight.market_prob)}</td>
           <td class="${Number(fight.edge) > 0.05 ? 'pos' : Number(fight.edge) < -0.05 ? 'neg' : ''}">${edge(fight.edge)}</td>
+          <td class="${fight.realized_roi == null ? '' : Number(fight.realized_roi) > 0 ? 'pos' : 'neg'}">${roiPct(fight.realized_roi)}</td>
         </tr>`;
       }).join('');
     }

@@ -50,6 +50,18 @@ export interface EventFightRow {
   market_prob: number | null;
   edge: number | null;
   model_correct: boolean | null;
+  // betting intelligence (computed in backend betting_math.py)
+  bet_on_name: string;
+  odds_source: string;
+  odds_sportsbook: string;
+  bet_market_prob: number | null;
+  market_hold: number | null;
+  bet_fair_prob: number | null;
+  bet_fair_odds: number | null;
+  expected_value: number | null;
+  expected_roi: number | null;
+  edge_vs_fair: number | null;
+  realized_roi: number | null;
 }
 
 export interface EventsHistoryData {
@@ -184,6 +196,17 @@ export interface UpcomingFightRow {
   fighter_odds: number | null;
   opponent_odds: number | null;
   bet_on_name: string;
+  // betting intelligence (computed in backend betting_math.py)
+  odds_source: string;
+  odds_sportsbook: string;
+  bet_market_prob: number | null;
+  market_hold: number | null;
+  bet_fair_prob: number | null;
+  bet_fair_odds: number | null;
+  bet_side_model_prob: number | null;
+  expected_value: number | null;
+  expected_roi: number | null;
+  edge_vs_fair: number | null;
 }
 
 export interface UpcomingPredictionsData {
@@ -399,7 +422,15 @@ async function readParquetRowsAzure(
     // columns=undefined reads all columns; columns=[] or array reads specified columns
     const opts: Parameters<typeof parquetReadObjects>[0] = { file, compressors };
     if (columns && columns.length > 0) opts.columns = columns;
-    const fileRows = await parquetReadObjects(opts);
+    let fileRows;
+    try {
+      fileRows = await parquetReadObjects(opts);
+    } catch {
+      // A requested column may not exist yet on an older export (e.g. new
+      // betting-math columns before the ETL re-runs). Fall back to reading all
+      // columns so the page never breaks during a schema transition.
+      fileRows = await parquetReadObjects({ file, compressors });
+    }
     rows.push(...fileRows as Record<string, any>[]);
   }
 
@@ -622,6 +653,9 @@ function normalizeFightRow(row: Record<string, any>, phaseHint?: 'Upcoming' | 'P
     market_prob: coerceNum(row.market_prob),
     edge: coerceNum(row.edge),
     model_correct: row.model_correct == null ? null : coerceBool(row.model_correct),
+    bet_on_name: cleanStr(row.bet_on_name),
+    ...mapBettingFields(row),
+    realized_roi: coerceNum(row.realized_roi),
   };
 }
 
@@ -643,17 +677,21 @@ export async function getEventsHistoryData(env?: RuntimeEnv): Promise<EventsHist
     'market_prob',
     'edge',
     'model_correct',
+    'bet_on_name',
+    ...BETTING_COLUMNS,
   ];
+  // realized_roi is only present on the (settled) historical exports.
+  const histColumns = [...fightColumns, 'realized_roi'];
 
   const [eventsRows, upcomingPrimary, historicalPrimary] = await Promise.all([
     readLatestDashboardRows(env, FOLDER_EVENTS, eventColumns),
     readLatestDashboardRows(env, FOLDER_UPCOMING, fightColumns),
-    readLatestDashboardRows(env, FOLDER_HISTORICAL, fightColumns),
+    readLatestDashboardRows(env, FOLDER_HISTORICAL, histColumns),
   ]);
 
   const [upcomingFallback, historicalFallback] = await Promise.all([
     upcomingPrimary.length > 0 ? Promise.resolve([]) : readLatestDashboardRows(env, FOLDER_UPCOMING_CATBOOST, fightColumns),
-    historicalPrimary.length > 0 ? Promise.resolve([]) : readLatestDashboardRows(env, FOLDER_HISTORICAL_CATBOOST, fightColumns),
+    historicalPrimary.length > 0 ? Promise.resolve([]) : readLatestDashboardRows(env, FOLDER_HISTORICAL_CATBOOST, histColumns),
   ]);
 
   const upcomingRows = upcomingPrimary.length > 0 ? upcomingPrimary : upcomingFallback;
@@ -939,6 +977,29 @@ export async function getFighterCardsData(env?: RuntimeEnv): Promise<FighterCard
   return cachedFighters;
 }
 
+// Betting-intelligence columns + mapper, shared by every prediction/event read
+// so the frontend never re-derives betting math (all baked by betting_math.py).
+const BETTING_COLUMNS = [
+  'odds_source', 'odds_sportsbook',
+  'bet_market_prob', 'market_hold', 'bet_fair_prob', 'bet_fair_odds',
+  'bet_side_model_prob', 'expected_value', 'expected_roi', 'edge_vs_fair',
+];
+
+function mapBettingFields(row: Record<string, any>) {
+  return {
+    odds_source: cleanStr(row.odds_source),
+    odds_sportsbook: cleanStr(row.odds_sportsbook),
+    bet_market_prob: coerceNum(row.bet_market_prob),
+    market_hold: coerceNum(row.market_hold),
+    bet_fair_prob: coerceNum(row.bet_fair_prob),
+    bet_fair_odds: coerceNum(row.bet_fair_odds),
+    bet_side_model_prob: coerceNum(row.bet_side_model_prob),
+    expected_value: coerceNum(row.expected_value),
+    expected_roi: coerceNum(row.expected_roi),
+    edge_vs_fair: coerceNum(row.edge_vs_fair),
+  };
+}
+
 export async function getUpcomingPredictionsData(env?: RuntimeEnv): Promise<UpcomingPredictionsData> {
   const now = Date.now();
   if (cachedPredictions && now < cacheExpiresAt) return cachedPredictions;
@@ -960,6 +1021,7 @@ export async function getUpcomingPredictionsData(env?: RuntimeEnv): Promise<Upco
     'signal_strength', 'recommended_bet',
     'fighter_odds', 'opponent_odds',
     'bet_on_name',
+    ...BETTING_COLUMNS,
   ];
 
   const [primaryRows, countryIndex, fighterData, rankedCards] = await Promise.all([
@@ -1020,6 +1082,7 @@ export async function getUpcomingPredictionsData(env?: RuntimeEnv): Promise<Upco
         fighter_odds: coerceNum(row.fighter_odds),
         opponent_odds: coerceNum(row.opponent_odds),
         bet_on_name: cleanStr(row.bet_on_name),
+        ...mapBettingFields(row),
       };
     })
     .filter(Boolean) as UpcomingFightRow[];
@@ -1057,6 +1120,7 @@ export async function getAllModelsPredictionsData(env?: RuntimeEnv): Promise<All
     'signal_strength', 'recommended_bet',
     'fighter_odds', 'opponent_odds',
     'bet_on_name',
+    ...BETTING_COLUMNS,
   ];
 
   const [catboostRows, ensembleRows, logregRows, countryIndex, fighterData, rankedCards] = await Promise.all([
@@ -1119,6 +1183,7 @@ export async function getAllModelsPredictionsData(env?: RuntimeEnv): Promise<All
           fighter_odds: coerceNum(row.fighter_odds),
           opponent_odds: coerceNum(row.opponent_odds),
           bet_on_name: cleanStr(row.bet_on_name),
+          ...mapBettingFields(row),
         };
       })
       .filter(Boolean) as UpcomingFightRow[];

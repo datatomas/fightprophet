@@ -1,0 +1,286 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ContentPage from '../components/ContentPage.astro';
+---
+
+<BaseLayout
+  title="Betting Education — Odds, Hold, Fair Odds, EV & ROI | Fight Prophet"
+  description="Learn the exact betting math Fight Prophet shows: American odds, implied probability, sportsbook hold, fair (devigged) odds, expected value, ROI, edge, and parlays — with live calculators."
+>
+  <ContentPage
+    eyebrow="Betting Education"
+    title="Betting Education"
+    intro="Plain-English explanations of the exact betting math shown across Fight Prophet — and live calculators that use the same formulas as our backend. Educational only, not betting advice."
+    updated="June 26, 2026"
+  >
+    <section>
+      <h2>1. American Odds</h2>
+      <p>
+        American odds describe a bet relative to a <b>$100 stake</b>.
+        <b>Positive</b> odds (e.g. <code>+150</code>) are an underdog: a $100 stake wins
+        <code>$150</code> profit. <b>Negative</b> odds (e.g. <code>-200</code>) are a favourite:
+        you must stake <code>$200</code> to win <code>$100</code> profit.
+      </p>
+      <ul>
+        <li>Positive: profit on $100 = the odds value (<code>+150</code> → $150).</li>
+        <li>Negative: profit on $100 = <code>10000 / |odds|</code> (<code>-200</code> → $50).</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>2. Implied Probability</h2>
+      <p>Every price implies a win probability. That is the break-even win rate for the bet.</p>
+      <ul>
+        <li>Positive odds: <code>p = 100 / (odds + 100)</code></li>
+        <li>Negative odds: <code>p = |odds| / (|odds| + 100)</code></li>
+      </ul>
+      <p>
+        Add up both fighters' implied probabilities and you will get <i>more</i> than 100% —
+        that extra is the sportsbook's built-in margin (the hold).
+      </p>
+    </section>
+
+    <section>
+      <h2>3. Sportsbook Hold</h2>
+      <p>
+        The <b>hold</b> (a.k.a. vig or overround) is how the book makes money. For a two-way
+        fight market it is simply how far the two implied probabilities sum above 100%:
+      </p>
+      <p><code>hold = fighter_implied + opponent_implied - 1</code></p>
+      <p>
+        We colour it <span class="fp-pos">green</span> below 3%, <span class="fp-warn">yellow</span> from
+        3–6%, and <span class="fp-neg">red</span> above 6%. Lower hold means a fairer market and more
+        of your edge survives. If we only have one side's odds, hold is shown as “—”.
+      </p>
+    </section>
+
+    <section>
+      <h2>4. Fair Odds (Devigging)</h2>
+      <p>
+        <b>Devigging</b> removes the hold so both sides sum to exactly 100%. The result is the
+        market's <b>fair probability</b> — its honest opinion with the margin stripped out:
+      </p>
+      <p><code>fair_prob = side_implied / (fighter_implied + opponent_implied)</code></p>
+      <p>Convert that fair probability back to a price to get <b>fair odds</b>:</p>
+      <ul>
+        <li><code>p &lt; 0.5</code>: <code>fair = 100 · (1 - p) / p</code></li>
+        <li><code>p &gt; 0.5</code>: <code>fair = -100 · p / (1 - p)</code></li>
+        <li><code>p = 0.5</code>: <code>+100</code></li>
+      </ul>
+      <p>Fair probability differs from raw market probability precisely by the hold.</p>
+    </section>
+
+    <section>
+      <h2>5. Expected Value (EV)</h2>
+      <p>
+        EV is the average profit per bet if you could replay the fight many times, using the
+        <b>model's</b> probability and a $100 stake:
+      </p>
+      <p><code>EV = (model_prob · profit) − ((1 − model_prob) · 100)</code></p>
+      <ul>
+        <li><b>Positive EV</b>: the price pays more than your probability says it should — a good bet long term.</li>
+        <li><b>Negative EV</b>: the price is too short — a bad bet long term.</li>
+        <li>A +EV bet can still lose a single fight; a −EV bet can still win one. EV is about the long run, not one result.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>6. ROI</h2>
+      <p>We use standard bettor ROI: return per dollar staked.</p>
+      <ul>
+        <li><b>Expected ROI</b> (before the fight): <code>EV / stake</code>. With a $100 stake, <code>ROI = EV / 100</code>.</li>
+        <li><b>Realized ROI</b> (after results): the actual return on settled picks — win returns <code>decimal − 1</code> per unit, a loss returns <code>−1</code>. You'll see this on the Events History page once a fight closes.</li>
+      </ul>
+      <p>We do not headline volume-adjusted ROI; the user-facing number is per-dollar ROI.</p>
+    </section>
+
+    <section>
+      <h2>7. Edge</h2>
+      <p>Edge is the key value signal — how much higher the model rates a side than the fair market:</p>
+      <p><code>edge = model_prob − fair_prob</code></p>
+      <p>
+        Comparing against <i>fair</i> probability (not the raw price) means edge is not just an
+        artifact of the hold — it reflects genuine disagreement with the de-vigged market.
+      </p>
+    </section>
+
+    <section>
+      <h2>8. Parlays</h2>
+      <p>A parlay needs every leg to win, so probabilities multiply:</p>
+      <p><code>parlay_prob = p₁ · p₂ · … · pₙ</code></p>
+      <p>
+        Each extra leg shrinks your probability fast, which is why parlays are hard to beat and
+        why sportsbooks promote them — the hold compounds across legs. Fair parlay odds come from
+        converting the combined probability back to a price; the sportsbook payout is the product
+        of each leg's decimal odds.
+      </p>
+    </section>
+
+    <section class="fp-calc-wrap">
+      <h2>Calculators</h2>
+      <p class="fp-calc-sub">These run the same formulas as our backend (<code>betting_math.py</code>). Educational only.</p>
+
+      <div class="fp-calc-grid">
+        <div class="fp-calc">
+          <h3>American odds → implied probability</h3>
+          <label>American odds <input type="number" id="ic-odds" value="-150" /></label>
+          <p class="fp-calc-out">Implied probability: <b id="ic-out">—</b></p>
+        </div>
+
+        <div class="fp-calc">
+          <h3>Two-way hold</h3>
+          <label>Fighter odds <input type="number" id="hc-a" value="-150" /></label>
+          <label>Opponent odds <input type="number" id="hc-b" value="+130" /></label>
+          <p class="fp-calc-out">Hold: <b id="hc-out">—</b></p>
+        </div>
+
+        <div class="fp-calc">
+          <h3>Fair odds (devig)</h3>
+          <label>Side odds <input type="number" id="fc-a" value="-150" /></label>
+          <label>Other side odds <input type="number" id="fc-b" value="+130" /></label>
+          <p class="fp-calc-out">Fair prob: <b id="fc-prob">—</b> · Fair odds: <b id="fc-out">—</b></p>
+        </div>
+
+        <div class="fp-calc">
+          <h3>Expected value</h3>
+          <label>Model win % <input type="number" id="ec-prob" value="55" step="0.5" /></label>
+          <label>American odds <input type="number" id="ec-odds" value="+120" /></label>
+          <p class="fp-calc-out">EV on $100: <b id="ec-out">—</b></p>
+        </div>
+
+        <div class="fp-calc">
+          <h3>Expected ROI</h3>
+          <label>Model win % <input type="number" id="rc-prob" value="55" step="0.5" /></label>
+          <label>American odds <input type="number" id="rc-odds" value="+120" /></label>
+          <p class="fp-calc-out">Expected ROI: <b id="rc-out">—</b></p>
+        </div>
+
+        <div class="fp-calc">
+          <h3>Parlay odds</h3>
+          <label>Legs (American, comma-sep) <input type="text" id="pc-legs" value="-150, +130, +200" /></label>
+          <label>Model win % per leg (optional) <input type="text" id="pc-probs" value="60, 48, 35" /></label>
+          <p class="fp-calc-out">
+            Sportsbook price: <b id="pc-odds">—</b><br />
+            Fair price: <b id="pc-fair">—</b> · ROI: <b id="pc-roi">—</b>
+          </p>
+        </div>
+      </div>
+    </section>
+  </ContentPage>
+</BaseLayout>
+
+<script type="module">
+  import * as bm from '../lib/betting-math.mjs';
+
+  const $ = (id) => document.getElementById(id);
+  const n = (el) => (el && el.value !== '' ? Number(el.value) : NaN);
+  const list = (el) =>
+    String(el?.value || '')
+      .split(',')
+      .map((s) => Number(s.trim()))
+      .filter((x) => Number.isFinite(x));
+
+  const pct = (v) => (Number.isFinite(v) ? `${(Math.round(v * 1000) / 10).toFixed(1)}%` : '—');
+  const odds = (v) => (Number.isFinite(v) ? (v > 0 ? `+${Math.round(v)}` : String(Math.round(v))) : '—');
+  const money = (v) => (Number.isFinite(v) ? `${v >= 0 ? '+$' : '-$'}${Math.abs(v).toFixed(2)}` : '—');
+  const signedPct = (v) => (Number.isFinite(v) ? `${v > 0 ? '+' : ''}${(Math.round(v * 1000) / 10).toFixed(1)}%` : '—');
+  const cls = (el, v) => {
+    if (!el) return;
+    el.classList.remove('fp-pos', 'fp-neg', 'fp-warn');
+    if (Number.isFinite(v)) el.classList.add(v > 0 ? 'fp-pos' : v < 0 ? 'fp-neg' : 'fp-warn');
+  };
+
+  function recompute() {
+    // implied
+    $('ic-out').textContent = pct(bm.impliedProbFromAmerican(n($('ic-odds'))));
+
+    // hold
+    const ha = bm.impliedProbFromAmerican(n($('hc-a')));
+    const hb = bm.impliedProbFromAmerican(n($('hc-b')));
+    const hold = bm.marketHold(ha, hb);
+    $('hc-out').textContent = pct(hold);
+    const holdEl = $('hc-out');
+    holdEl.classList.remove('fp-pos', 'fp-neg', 'fp-warn');
+    const lbl = bm.holdLabel(hold);
+    if (lbl) holdEl.classList.add(lbl === 'low' ? 'fp-pos' : lbl === 'medium' ? 'fp-warn' : 'fp-neg');
+
+    // fair odds
+    const fa = bm.impliedProbFromAmerican(n($('fc-a')));
+    const fb = bm.impliedProbFromAmerican(n($('fc-b')));
+    const fair = bm.devigFairProb(fa, fa, fb);
+    $('fc-prob').textContent = pct(fair);
+    $('fc-out').textContent = odds(bm.fairAmericanOdds(fair));
+
+    // EV
+    const ev = bm.expectedValue(n($('ec-prob')) / 100, n($('ec-odds')));
+    $('ec-out').textContent = money(ev);
+    cls($('ec-out'), ev);
+
+    // ROI
+    const roi = bm.expectedRoi(n($('rc-prob')) / 100, n($('rc-odds')));
+    $('rc-out').textContent = signedPct(roi);
+    cls($('rc-out'), roi);
+
+    // parlay
+    const legs = list($('pc-legs'));
+    $('pc-odds').textContent = odds(bm.parlayAmericanOdds(legs));
+    const probs = list($('pc-probs')).map((x) => x / 100);
+    if (probs.length === legs.length && legs.length > 0) {
+      $('pc-fair').textContent = odds(bm.parlayFairOdds(probs));
+      const proi = bm.parlayRoi(probs, legs);
+      $('pc-roi').textContent = signedPct(proi);
+      cls($('pc-roi'), proi);
+    } else {
+      $('pc-fair').textContent = '—';
+      $('pc-roi').textContent = '—';
+    }
+  }
+
+  document.querySelectorAll('.fp-calc input').forEach((el) => el.addEventListener('input', recompute));
+  recompute();
+</script>
+
+<style>
+  .fp-content-body code { font-size: 0.92em; }
+  .fp-pos { color: #16a34a; }
+  .fp-neg { color: #dc2626; }
+  .fp-warn { color: #b45309; }
+
+  .fp-calc-sub { opacity: 0.7; margin-top: -0.3rem; }
+  .fp-calc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 0.9rem;
+    margin-top: 0.8rem;
+  }
+  .fp-calc {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    display: grid;
+    gap: 0.5rem;
+    align-content: start;
+  }
+  .fp-calc h3 { margin: 0; font-size: 0.98rem; }
+  .fp-calc label {
+    display: grid;
+    gap: 0.2rem;
+    font-size: 0.78rem;
+    opacity: 0.8;
+  }
+  .fp-calc input {
+    font: inherit;
+    padding: 0.4rem 0.5rem;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    background: transparent;
+    color: inherit;
+  }
+  .fp-calc-out { margin: 0.2rem 0 0; font-size: 0.95rem; }
+  .fp-calc-out b { font-variant-numeric: tabular-nums; }
+  @media (prefers-color-scheme: dark) {
+    .fp-calc { border-color: rgba(255, 255, 255, 0.14); }
+    .fp-calc input { border-color: rgba(255, 255, 255, 0.22); }
+    .fp-warn { color: #eab308; }
+  }
+</style>
