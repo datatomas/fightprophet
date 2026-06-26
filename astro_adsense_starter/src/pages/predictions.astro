@@ -346,6 +346,9 @@ const hasData = totalFights > 0;
       const marketBetSide = fight.market_prob != null ? (betOnFighter ? fight.market_prob : 1 - fight.market_prob) : null;
       const fProbW = Math.max(0, Math.min((fighterProb || 0) * 100, 100));
       const oProbW = Math.max(0, Math.min((opponentProb || 0) * 100, 100));
+      // Highlight the model's favoured side (higher win probability)
+      const fighterFavored = modelProb != null && fighterProb >= opponentProb;
+      const opponentFavored = modelProb != null && opponentProb > fighterProb;
       const matchupLabel = fight.weight_class || 'Fight Matchup';
 
       const isUnderdog = marketBetSide != null && marketBetSide < 0.5;
@@ -393,16 +396,16 @@ const hasData = totalFights > 0;
             <div class="fp-versus-mark">⚔️</div>
             <div class="fp-versus-title">Model probabilities</div>
             <div class="fp-prob-stack">
-              <div class="fp-prob-row">
+              <div class="fp-prob-row${fighterFavored ? ' is-favored' : ''}">
                 <div class="fp-prob-meta">
-                  <span class="fp-prob-name">${esc(fName)}</span>
+                  <span class="fp-prob-name">${fighterFavored ? '★ ' : ''}${esc(fName)}</span>
                   <span class="fp-prob-value">${esc(fmtProb(fighterProb))}</span>
                 </div>
                 <div class="fp-prob-track"><div class="fp-prob-fill" style="width:${fProbW.toFixed(1)}%;"></div></div>
               </div>
-              <div class="fp-prob-row">
+              <div class="fp-prob-row${opponentFavored ? ' is-favored' : ''}">
                 <div class="fp-prob-meta">
-                  <span class="fp-prob-name">${esc(oName)}</span>
+                  <span class="fp-prob-name">${opponentFavored ? '★ ' : ''}${esc(oName)}</span>
                   <span class="fp-prob-value">${esc(fmtProb(opponentProb))}</span>
                 </div>
                 <div class="fp-prob-track"><div class="fp-prob-fill fp-prob-fill--alt" style="width:${oProbW.toFixed(1)}%;"></div></div>
@@ -783,6 +786,12 @@ const hasData = totalFights > 0;
   .fp-prob-track{height:0.4rem;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden;}
   .fp-prob-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,#f59e0b,#ef4444);}
   .fp-prob-fill--alt{background:linear-gradient(90deg,#93c5fd,#38bdf8);}
+  /* favoured side — make the model's pick pop */
+  .fp-prob-row.is-favored{background:rgba(250,204,21,0.12);border:1px solid rgba(250,204,21,0.45);border-radius:0.45rem;padding:0.22rem 0.4rem;margin:-0.06rem -0.1rem;}
+  .fp-prob-row.is-favored .fp-prob-name{color:#fde047;font-weight:800;}
+  .fp-prob-row.is-favored .fp-prob-value{color:#fde047;}
+  .fp-prob-row.is-favored .fp-prob-fill{background:linear-gradient(90deg,#fde047,#f59e0b);}
+  .fp-prob-row.is-favored .fp-prob-fill--alt{background:linear-gradient(90deg,#fde047,#f59e0b);}
 
   .fp-pick-summary{position:relative;z-index:1;margin-top:1rem;padding:0.82rem 0.95rem;border-radius:1rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);}
   .fp-pick-winner{font-size:1.04rem;font-weight:800;color:#fafafa;text-align:center;line-height:1.32;}
@@ -819,9 +828,12 @@ const hasData = totalFights > 0;
     .fp-card:hover::after{transform:translateX(-180%) rotate(8deg);}
     .fp-card.is-compact{max-width:min(42vw,150px);min-height:132px;aspect-ratio:11/15;padding:0.2rem 0.22rem 0.22rem;border-radius:0.34rem;}
     .fp-card.is-compact .fp-card-frame{inset:0.11rem;border-radius:0.22rem;}
-    .fp-card.is-compact .fp-card-top{justify-content:center;min-height:auto;margin:0 0 0.1rem;}
-    .fp-card.is-compact .fp-card-top-right{display:none;}
-    .fp-card.is-compact .fp-card-rating{width:100%;justify-content:center;box-sizing:border-box;padding:0.1rem 0.18rem;gap:0.18rem;}
+    .fp-card.is-compact .fp-card-top{justify-content:space-between;align-items:center;min-height:auto;margin:0 0 0.1rem;gap:0.18rem;}
+    /* keep the country flag on mobile; only the status badge is dropped for space */
+    .fp-card.is-compact .fp-card-top-right{display:inline-flex;}
+    .fp-card.is-compact .fp-card-status{display:none;}
+    .fp-card.is-compact .fp-card-flag{font-size:0.92rem;padding:0.08rem 0.26rem;}
+    .fp-card.is-compact .fp-card-rating{width:auto;justify-content:center;box-sizing:border-box;padding:0.1rem 0.18rem;gap:0.18rem;}
     .fp-card.is-compact .fp-card-rating-num{font-size:0.64rem;}
     .fp-card.is-compact .fp-card-rating-pos{font-size:0.34rem;letter-spacing:0.04em;}
     .fp-card.is-compact .fp-card-banner{padding:0.12rem 0.16rem;border-radius:0.18rem;}

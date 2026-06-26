@@ -1,11 +1,16 @@
 ---
 import AdSenseScript from '../components/AdSenseScript.astro';
+import { getLangFromUrl, useTranslations, localizeUrl, switchLocalePath, stripLocale, isLocalized, locales, localeNames } from '../lib/i18n';
 
 interface Props {
   title?: string;
   description?: string;
   robots?: string;
 }
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const L = (path: string) => localizeUrl(path, lang);
 
 const {
   title = 'Fight Prophet',
@@ -32,11 +37,21 @@ const betsEmojiUrl = '/branding/b91c1c-bets-emoji.png';
 const madeInColombiaEmojiUrl = '/branding/b91c1c-madeincolombia-emoji.png';
 const earProEmojiUrl = '/branding/b91c1c-earpro-emoji.png';
 
-const currentPath = Astro.url.pathname;
+// Compare against the locale-stripped path so /ru/predictions/ matches /predictions/.
+const currentPath = (Astro.url.pathname.replace(/^\/ru(?=\/|$)/, '') || '/');
 const isActive = (href: string) => {
   if (href === '/') return currentPath === '/' || currentPath === '/rankings' || currentPath === '/rankings/';
   return currentPath.startsWith(href);
 };
+// Only show the routed language switcher / alternate links where a translated
+// page exists, so we never link to a non-existent localized page.
+const hasTranslation = isLocalized(stripLocale(Astro.url.pathname));
+const localeLinks = locales.map((code) => ({
+  code,
+  label: localeNames[code],
+  href: switchLocalePath(Astro.url, code),
+  active: code === lang,
+}));
 
 const organizationId = `${siteUrl}/#organization`;
 const structuredData = [
@@ -65,7 +80,7 @@ const structuredData = [
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={lang}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -73,6 +88,14 @@ const structuredData = [
     <meta name="robots" content={robots} />
     {googleSiteVerification && <meta name="google-site-verification" content={googleSiteVerification} />}
     <link rel="canonical" href={canonicalUrl} />
+    {hasTranslation && (
+      <>
+        {localeLinks.map((l) => (
+          <link rel="alternate" hreflang={l.code} href={new URL(l.href, siteUrl).toString()} />
+        ))}
+        <link rel="alternate" hreflang="x-default" href={new URL(switchLocalePath(Astro.url, 'en'), siteUrl).toString()} />
+      </>
+    )}
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -126,12 +149,15 @@ const structuredData = [
           <img src="/branding/fightprophet_logo_white.png" alt="Fight Prophet" class="fp-app-rail-logo" loading="lazy" />
         </a>
 
-        <!-- Language switcher -->
-        <div class="fp-lang-switch fp-lang-switch-rail" aria-label="Language selector">
-          <button type="button" class="fp-lang-btn" data-lang="es" title="Español">🇨🇴</button>
-          <button type="button" class="fp-lang-btn" data-lang="pt" title="Português">🇧🇷</button>
-          <button type="button" class="fp-lang-btn" data-lang="en" title="English">🇺🇸</button>
-        </div>
+        <!-- Legacy client-side translator (es/pt/en). Hidden on pages that have
+             real routed translations (those use the .fp-locale-pill switcher). -->
+        {!hasTranslation && (
+          <div class="fp-lang-switch fp-lang-switch-rail" aria-label="Language selector">
+            <button type="button" class="fp-lang-btn" data-lang="es" title="Español">🇨🇴</button>
+            <button type="button" class="fp-lang-btn" data-lang="pt" title="Português">🇧🇷</button>
+            <button type="button" class="fp-lang-btn" data-lang="en" title="English">🇺🇸</button>
+          </div>
+        )}
 
         <div class="fp-app-rail-heading">Bet wisely with Fight Prophet</div>
         <div class="fp-app-rail-subheading">AI-powered MMA fight predictions</div>
@@ -147,15 +173,22 @@ const structuredData = [
         <div class="fp-app-rail-section-label">Navigate</div>
 
         <nav class="fp-app-rail-nav" aria-label="Site sections">
-          <a class={`fp-app-rail-nav-link${isActive('/') ? ' is-active is-primary-nav' : ''}`} href="/"><span class="fp-app-rail-nav-copy"><img src={rankingsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Home &amp; Rankings</span></span></a>
-          <a class={`fp-app-rail-nav-link${isActive('/predictions/') ? ' is-active' : ''}`} href="/predictions/"><span class="fp-app-rail-nav-copy"><img src={predictionsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Predictions</span></span></a>
-          <a class={`fp-app-rail-nav-link${isActive('/fighter-card/') ? ' is-active' : ''}`} href="/fighter-card/"><span class="fp-app-rail-nav-copy"><img src={fighterCardsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Fighter Cards</span></span></a>
-          <a class={`fp-app-rail-nav-link${isActive('/belt-holders/') ? ' is-active' : ''}`} href="/belt-holders/"><span class="fp-app-rail-nav-copy"><img src={beltEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Belt Holders</span></span></a>
-          <a class={`fp-app-rail-nav-link${isActive('/events-history/') ? ' is-active' : ''}`} href="/events-history/"><span class="fp-app-rail-nav-copy"><img src={eventsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Events History</span></span></a>
-          <a class={`fp-app-rail-nav-link${isActive('/fight-lab/') ? ' is-active' : ''}`} href="/fight-lab/"><span class="fp-app-rail-nav-copy"><img src={labEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Fight Lab</span></span></a>
-          <a class={`fp-app-rail-nav-link${isActive('/betting-education/') ? ' is-active' : ''}`} href="/betting-education/"><span class="fp-app-rail-nav-copy"><img src={betsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Betting Education</span></span></a>
-          <a class={`fp-app-rail-nav-link${isActive('/about/') ? ' is-active' : ''}`} href="/about/"><span class="fp-app-rail-nav-copy"><img src={aboutEmojiUrl} alt="" class="fp-app-rail-nav-icon is-about-icon" loading="lazy" aria-hidden="true" /><span>About</span></span></a>
-          <a class={`fp-app-rail-nav-link${isActive('/terms/') ? ' is-active' : ''}`} href="/terms/"><span class="fp-app-rail-nav-copy"><img src={termsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>Terms &amp; Conditions</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/') ? ' is-active is-primary-nav' : ''}`} href={L('/')}><span class="fp-app-rail-nav-copy"><img src={rankingsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>{t('nav.home')}</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/predictions/') ? ' is-active' : ''}`} href={L('/predictions/')}><span class="fp-app-rail-nav-copy"><img src={predictionsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>{t('nav.predictions')}</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/fighter-card/') ? ' is-active' : ''}`} href={L('/fighter-card/')}><span class="fp-app-rail-nav-copy"><img src={fighterCardsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>{t('nav.fighterCards')}</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/belt-holders/') ? ' is-active' : ''}`} href={L('/belt-holders/')}><span class="fp-app-rail-nav-copy"><img src={beltEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>{t('nav.beltHolders')}</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/events-history/') ? ' is-active' : ''}`} href={L('/events-history/')}><span class="fp-app-rail-nav-copy"><img src={eventsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>{t('nav.eventsHistory')}</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/fight-lab/') ? ' is-active' : ''}`} href={L('/fight-lab/')}><span class="fp-app-rail-nav-copy"><img src={labEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>{t('nav.fightLab')}</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/betting-education/') ? ' is-active' : ''}`} href={L('/betting-education/')}><span class="fp-app-rail-nav-copy"><img src={betsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>{t('nav.bettingEducation')}</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/about/') ? ' is-active' : ''}`} href={L('/about/')}><span class="fp-app-rail-nav-copy"><img src={aboutEmojiUrl} alt="" class="fp-app-rail-nav-icon is-about-icon" loading="lazy" aria-hidden="true" /><span>{t('nav.about')}</span></span></a>
+          <a class={`fp-app-rail-nav-link${isActive('/terms/') ? ' is-active' : ''}`} href={L('/terms/')}><span class="fp-app-rail-nav-copy"><img src={termsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>{t('nav.terms')}</span></span></a>
+          {hasTranslation && (
+            <div class="fp-locale-pill" role="group" aria-label={t('lang.label')}>
+              {localeLinks.map((l) => (
+                <a class={l.active ? 'is-active' : ''} href={l.href} hreflang={l.code}>{l.label}</a>
+              ))}
+            </div>
+          )}
         </nav>
 
         <!-- Footer -->
@@ -195,23 +228,23 @@ const structuredData = [
       </main>
       <footer class="fp-site-footer">
         <nav class="fp-site-footer-nav" aria-label="Site sections">
-          <a href="/">Home</a>
-          <a href="/predictions/">Predictions</a>
-          <a href="/#fp-newsletter">Newsletter</a>
-          <a href="/fight-lab/">Fight Lab</a>
-          <a href="/rankings/">Rankings</a>
-          <a href="/belt-holders/">Belt Holders</a>
-          <a href="/fighter-card/">Fighter Cards</a>
-          <a href="/events-history/">Events History</a>
-          <a href="/betting-education/">Betting Education</a>
-          <a href="/editorial-policy/">Editorial Policy</a>
-          <a href="/responsible-use/">Responsible Use</a>
-          <a href="/about/">About</a>
-          <a href="/contact/">Contact</a>
-          <a href="/privacy/">Privacy</a>
-          <a href="/terms/">Terms</a>
+          <a href={L('/')}>{t('footer.home')}</a>
+          <a href={L('/predictions/')}>{t('nav.predictions')}</a>
+          <a href={L('/#fp-newsletter')}>{t('footer.newsletter')}</a>
+          <a href={L('/fight-lab/')}>{t('nav.fightLab')}</a>
+          <a href={L('/rankings/')}>{t('footer.rankings')}</a>
+          <a href={L('/belt-holders/')}>{t('nav.beltHolders')}</a>
+          <a href={L('/fighter-card/')}>{t('nav.fighterCards')}</a>
+          <a href={L('/events-history/')}>{t('nav.eventsHistory')}</a>
+          <a href={L('/betting-education/')}>{t('nav.bettingEducation')}</a>
+          <a href={L('/editorial-policy/')}>{t('footer.editorialPolicy')}</a>
+          <a href={L('/responsible-use/')}>{t('footer.responsibleUse')}</a>
+          <a href={L('/about/')}>{t('nav.about')}</a>
+          <a href={L('/contact/')}>{t('footer.contact')}</a>
+          <a href={L('/privacy/')}>{t('footer.privacy')}</a>
+          <a href={L('/terms/')}>{t('nav.terms')}</a>
         </nav>
-        <p class="fp-site-footer-meta">© Fight Prophet · Information and education only — not financial advice.</p>
+        <p class="fp-site-footer-meta">{t('footer.meta')}</p>
         <div class="fp-footer-marks">
           <img src={earProEmojiUrl} alt="" class="fp-footer-emoji-mark" loading="lazy" decoding="async" width="136" height="136" aria-hidden="true" />
           <img src={madeInColombiaEmojiUrl} alt="Made in Colombia" class="fp-made-in-mark" loading="lazy" decoding="async" width="136" height="136" />
@@ -651,6 +684,29 @@ const structuredData = [
   .fp-app-rail-nav {
     display: grid;
     gap: 0.22rem;
+  }
+  /* Language switcher */
+  .fp-lang-switch {
+    display: inline-flex;
+    gap: 0.35rem;
+    margin: 0.5rem 0 0 0.3rem;
+  }
+  .fp-lang-switch a {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #d4d4d8;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .fp-lang-switch a:hover { border-color: rgba(248, 113, 113, 0.5); color: #fff; }
+  .fp-lang-switch a.is-active {
+    background: rgba(248, 113, 113, 0.16);
+    border-color: rgba(248, 113, 113, 0.55);
+    color: #fff;
   }
   .fp-app-rail-nav-copy {
     display: grid;
