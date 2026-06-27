@@ -23,6 +23,37 @@ function flagEmoji(iso2?: string): string {
 function fighterHref(name?: string): string {
   return `/fighter-stats/?fighter=${encodeURIComponent(String(name || ''))}`;
 }
+
+// Freshness anchor: the most recent title fight in the data (real, not a faked
+// build date). Drives the visible "Champions current as of …" line + SEO intent
+// for "current ufc belt holders".
+const latestTitleFightDate = titleHistory
+  .map((t) => t.event_date)
+  .filter(Boolean)
+  .sort()
+  .at(-1) || '';
+const lastUpdatedLabel = latestTitleFightDate
+  ? new Date(latestTitleFightDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  : '';
+
+// FAQ structured data — "Who is the current UFC <division> champion?" answered
+// for each held belt. Helps topical relevance / People-Also-Ask for the exact
+// queries Search Console shows (ufc belt holders, current ufc <div> champion).
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: champions
+    .filter((c) => !c.is_vacant && c.name && c.weight_class)
+    .map((c) => ({
+      '@type': 'Question',
+      name: `Who is the current UFC ${c.weight_class} champion?`,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: `${c.name} is the current UFC ${c.weight_class} champion`
+          + ((c.title_defenses ?? 0) > 0 ? ` with ${c.title_defenses} title defense${c.title_defenses === 1 ? '' : 's'}.` : '.'),
+      },
+    })),
+};
 ---
 
 <BaseLayout
@@ -38,7 +69,13 @@ function fighterHref(name?: string): string {
         The current champions board and title lineage lives directly in Fight Prophet:
         active belts first, then manual title vacates and full title-fight history.
       </p>
+      {lastUpdatedLabel && (
+        <p class="fp-hero-updated">Champions current as of {lastUpdatedLabel}</p>
+      )}
     </header>
+    {faqSchema.mainEntity.length > 0 && (
+      <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+    )}
 
     {hasData ? (
       <>
@@ -308,6 +345,7 @@ function fighterHref(name?: string): string {
   .fp-tool-hero .fp-section-label { margin-top: 0.45rem; }
   .fp-tool-hero h1 { margin: 0.25rem 0 0.45rem; color: #fef2f2; font-size: clamp(1.7rem, 4vw, 2.45rem); line-height: 1.08; }
   .fp-hero-copy { max-width: 76ch; margin: 0; color: #d4d4d8; line-height: 1.6; }
+  .fp-hero-updated { margin: 0.5rem 0 0; font-size: 0.82rem; color: #a1a1aa; font-weight: 600; }
 
   .fp-kpi-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); border: 1px solid rgba(248,113,113,0.16); border-top: 2px solid rgba(185,28,28,0.52); border-radius: 1rem; overflow: hidden; background: linear-gradient(145deg, rgba(28,28,32,0.92), rgba(39,39,42,0.76)); }
   .fp-kpi-card { min-height: 118px; display: grid; place-items: center; align-content: center; gap: 0.25rem; padding: 0.85rem; text-align: center; border-right: 1px solid rgba(248,113,113,0.12); }

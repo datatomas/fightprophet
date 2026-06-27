@@ -18,11 +18,25 @@ const eventCount = new Set(fights.map((f) => f.event_name)).size;
 const strongSignals = fights.filter((f) => f.signal_strength === 'STRONG').length;
 const recommendedBets = fights.filter((f) => f.recommended_bet).length;
 const hasData = totalFights > 0;
+
+// Put the upcoming event in the title so it matches event-name searches
+// ("UFC 3xx predictions"). Prefer the soonest by date; but event_date is often
+// empty in the export, so fall back to the first event_name in the slate.
+const datedNext = fights
+  .filter((f) => f.event_name && f.event_date)
+  .sort((a, b) => a.event_date.localeCompare(b.event_date))[0]?.event_name;
+const nextEvent = datedNext || fights.find((f) => f.event_name)?.event_name || '';
+const predTitle = nextEvent
+  ? `${nextEvent} Predictions — AI Fight Picks | Fight Prophet`
+  : 'MMA Predictions — Upcoming UFC Fights | Fight Prophet';
+const predDescription = nextEvent
+  ? `AI-powered predictions for ${nextEvent}: model win probability vs market odds, confidence signals, edge, and value bets for every fight on the card.`
+  : 'AI-powered MMA predictions for upcoming UFC fights — model probability vs market probability, confidence signals, and edge analysis for the next events.';
 ---
 
 <BaseLayout
-  title="MMA Predictions — Upcoming UFC Fights | Fight Prophet"
-  description="AI-powered MMA predictions for upcoming UFC fights — model probability vs market probability, confidence signals, and edge analysis for the next events."
+  title={predTitle}
+  description={predDescription}
 >
   <article class="fp-pred-page">
 
