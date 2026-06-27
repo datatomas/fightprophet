@@ -1,6 +1,6 @@
 ---
 import AdSenseScript from '../components/AdSenseScript.astro';
-import { getLangFromUrl, useTranslations, localizeUrl, switchLocalePath, stripLocale, isLocalized, availableLocales, localeFlags, localeTitles, defaultLang } from '../lib/i18n';
+import { getLangFromUrl, useTranslations, localizeUrl, switchLocalePath, stripLocale, isLocalized, availableLocales, localeFlags, localeTitles, defaultLang, locales } from '../lib/i18n';
 
 interface Props {
   title?: string;
@@ -152,15 +152,16 @@ const structuredData = [
           <img src="/branding/fightprophet_logo_white.png" alt="Fight Prophet" class="fp-app-rail-logo" loading="lazy" />
         </a>
 
-        <!-- Legacy client-side translator (es/pt/en). Hidden on pages that have
-             real routed translations (those use the .fp-locale-flags switcher). -->
-        {!hasTranslation && (
-          <div class="fp-lang-switch fp-lang-switch-rail" aria-label="Language selector">
-            <button type="button" class="fp-lang-btn" data-lang="es" title="Español">🇨🇴</button>
-            <button type="button" class="fp-lang-btn" data-lang="pt" title="Português">🇧🇷</button>
-            <button type="button" class="fp-lang-btn" data-lang="en" title="English">🇺🇸</button>
-          </div>
-        )}
+        <div class="fp-locale-flags fp-locale-flags-top" role="group" aria-label={t('lang.label')}>
+          {hasTranslation
+            ? localeLinks.map((l) => (
+                <a class={l.active ? 'is-active' : ''} href={l.href} hreflang={l.code} title={l.title} aria-label={l.title}>{l.flag}</a>
+              ))
+            : locales.map((code) => (
+                <button type="button" class={`fp-lang-btn${code === lang ? ' is-active' : ''}`} data-lang={code} title={localeTitles[code]} aria-label={localeTitles[code]}>{localeFlags[code]}</button>
+              ))
+          }
+        </div>
 
         <div class="fp-app-rail-heading">Bet wisely with Fight Prophet</div>
         <div class="fp-app-rail-subheading">AI-powered MMA fight predictions</div>
@@ -185,13 +186,6 @@ const structuredData = [
           <a class={`fp-app-rail-nav-link${isActive('/betting-education/') ? ' is-active' : ''}`} href={L('/betting-education/')}><span class="fp-app-rail-nav-copy"><img src={betsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>{t('nav.bettingEducation')}</span></span></a>
           <a class={`fp-app-rail-nav-link${isActive('/about/') ? ' is-active' : ''}`} href={L('/about/')}><span class="fp-app-rail-nav-copy"><img src={aboutEmojiUrl} alt="" class="fp-app-rail-nav-icon is-about-icon" loading="lazy" aria-hidden="true" /><span>{t('nav.about')}</span></span></a>
           <a class={`fp-app-rail-nav-link${isActive('/terms/') ? ' is-active' : ''}`} href={L('/terms/')}><span class="fp-app-rail-nav-copy"><img src={termsEmojiUrl} alt="" class="fp-app-rail-nav-icon" loading="lazy" aria-hidden="true" /><span>{t('nav.terms')}</span></span></a>
-          {hasTranslation && (
-            <div class="fp-locale-flags" role="group" aria-label={t('lang.label')}>
-              {localeLinks.map((l) => (
-                <a class={l.active ? 'is-active' : ''} href={l.href} hreflang={l.code} title={l.title} aria-label={l.title}>{l.flag}</a>
-              ))}
-            </div>
-          )}
         </nav>
 
         <!-- Footer -->
@@ -561,40 +555,6 @@ const structuredData = [
     object-fit: contain;
   }
 
-  /* Language switch — always fills the full rail content width */
-  .fp-lang-switch {
-    display: flex;
-    width: 100%;
-    gap: 0.28rem;
-    background: rgba(15, 15, 18, 0.64);
-    border: 1px solid rgba(113, 113, 122, 0.42);
-    border-radius: 9999px;
-    padding: 0.25rem;
-    box-sizing: border-box;
-  }
-  :global(.fp-lang-btn) {
-    /* Each button takes an equal share of the container width and stays square */
-    flex: 1 1 0;
-    min-width: 0;
-    aspect-ratio: 1 / 1;
-    border: 0;
-    background: transparent;
-    color: #f4f4f5;
-    border-radius: 9999px;
-    cursor: pointer;
-    font-size: clamp(1rem, 4.5cqi, 1.5rem);
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    box-sizing: border-box;
-  }
-  :global(.fp-lang-btn.is-active) {
-    background: linear-gradient(160deg, #ef4444, #b91c1c);
-    /* ring sits outside the box model — never displaces sibling buttons */
-    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5);
-  }
   .fp-app-rail-heading {
     margin: 0.3rem 0 0.15rem;
     color: #f4f4f5;
@@ -688,25 +648,34 @@ const structuredData = [
     display: grid;
     gap: 0.22rem;
   }
-  /* Routed language switcher — flag buttons (matches the original flag picker) */
+  /* Language switcher — flag buttons/links */
   .fp-locale-flags {
     display: inline-flex;
     flex-wrap: wrap;
     gap: 0.3rem;
     margin: 0.5rem 0 0 0.3rem;
   }
-  .fp-locale-flags a {
+  .fp-locale-flags-top {
+    margin: 0.5rem 0 0.6rem 0.3rem;
+  }
+  .fp-locale-flags a,
+  :global(.fp-lang-btn) {
     font-size: 1.15rem;
     line-height: 1;
     padding: 0.2rem 0.32rem;
     border-radius: 8px;
     border: 1px solid transparent;
+    background: transparent;
     text-decoration: none;
+    cursor: pointer;
+    color: inherit;
     filter: grayscale(0.5) opacity(0.7);
     transition: filter 0.15s, border-color 0.15s, background 0.15s, transform 0.1s;
   }
-  .fp-locale-flags a:hover { filter: none; transform: translateY(-1px); }
-  .fp-locale-flags a.is-active {
+  .fp-locale-flags a:hover,
+  :global(.fp-lang-btn:hover) { filter: none; transform: translateY(-1px); }
+  .fp-locale-flags a.is-active,
+  :global(.fp-lang-btn.is-active) {
     filter: none;
     border-color: rgba(248, 113, 113, 0.55);
     background: rgba(248, 113, 113, 0.14);
