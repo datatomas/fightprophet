@@ -137,7 +137,7 @@ const analysisNotes = [
                 <span id="i18n-score-rule-1-copy">Global points compare every UFC fighter across every weight class.</span>
               </div>
               <div class="fp-score-rule">
-                <strong id="i18n-score-rule-2-title">Active GOAT</strong>
+                <strong id="i18n-score-rule-2-title">The Champs</strong>
                 <span id="i18n-score-rule-2-copy">The live race without retired or long-inactive names.</span>
               </div>
               <div class="fp-score-rule">
@@ -203,7 +203,7 @@ const analysisNotes = [
                       data-division-rank={c.rank ?? ''}
                       data-search-text={`${c.name || ''} ${c.country || ''} ${c.weight_class || ''}`.toLowerCase()}
                     >
-                      <span class="fp-rank-tier-label" aria-hidden="true" hidden={cardIdx !== 0}>THE GOAT</span>
+                      <span class="fp-rank-tier-label" aria-hidden="true" hidden={cardIdx !== 0}>{deck.slug === 'goat-list' ? 'THE GOAT' : 'THE CHAMP'}</span>
                       <div class="fp-card-holder">
                         <FighterCard
                           name={c.name}
@@ -388,7 +388,10 @@ const analysisNotes = [
         const label = shell.querySelector('.fp-rank-tier-label');
         if (label) {
           label.hidden = !isKing;
-          label.textContent = 'THE GOAT';
+          // GOAT only on the all-time list; division #1 is the champ, not the GOAT.
+          const deckEl = shell.closest('[data-deck-kind]');
+          const isGoatDeck = deckEl && deckEl.getAttribute('data-deck-kind') === 'goat';
+          label.textContent = isGoatDeck ? 'THE GOAT' : 'THE CHAMP';
         }
       }
 
@@ -645,7 +648,7 @@ const analysisNotes = [
         scoreStamp: 'Ranking Engine',
         scoreTitle: 'Points are won in the cage, then boosted for legacy.',
         scoreRule1Title: 'All-time GOAT', scoreRule1Copy: 'Global points compare every UFC fighter across every weight class.',
-        scoreRule2Title: 'Active GOAT', scoreRule2Copy: 'The live race without retired or long-inactive names.',
+        scoreRule2Title: 'The Champs', scoreRule2Copy: 'The active title holders — the live race without retired or long-inactive names.',
         scoreRule3Title: 'By weight', scoreRule3Copy: 'Division tabs reveal the king of each class using the same point logic.',
         scoreRule4Title: 'How points move', scoreRule4Copy: 'Elite wins, finishes, title stakes, bonuses, streaks, and defenses matter. Losses hurt.',
         rankSearchLabel: 'Search',
@@ -683,7 +686,7 @@ const analysisNotes = [
         scoreStamp: 'Motor de ranking',
         scoreTitle: 'Los puntos se ganan en la jaula y luego se impulsan por legado.',
           scoreRule1Title: 'GOAT histórico', scoreRule1Copy: 'Los puntos globales comparan peleadores UFC de todas las divisiones.',
-        scoreRule2Title: 'GOAT activo', scoreRule2Copy: 'La carrera actual sin retirados o inactivos largos.',
+        scoreRule2Title: 'Los Campeones', scoreRule2Copy: 'Los campeones activos — la carrera actual sin retirados o inactivos largos.',
         scoreRule3Title: 'Por peso', scoreRule3Copy: 'Las pestañas por división revelan el rey de cada clase con la misma lógica.',
         scoreRule4Title: 'Cómo se mueven', scoreRule4Copy: 'Victorias élite, finalizaciones, títulos, bonos, rachas y defensas importan. Las derrotas duelen.',
         rankSearchLabel: 'Buscar',
@@ -721,7 +724,7 @@ const analysisNotes = [
         scoreStamp: 'Motor de ranking',
         scoreTitle: 'Os pontos são ganhos na jaula e depois impulsionados pelo legado.',
         scoreRule1Title: 'GOAT histórico', scoreRule1Copy: 'Pontos globais comparam todos os lutadores do UFC em todas as categorias.',
-        scoreRule2Title: 'GOAT ativo', scoreRule2Copy: 'A corrida atual sem aposentados ou longos inativos.',
+        scoreRule2Title: 'Os Campeões', scoreRule2Copy: 'Os campeões ativos — a corrida atual sem aposentados ou longos inativos.',
         scoreRule3Title: 'Por peso', scoreRule3Copy: 'As abas por divisão mostram o rei de cada categoria com a mesma lógica.',
         scoreRule4Title: 'Como sobe', scoreRule4Copy: 'Vitórias elite, finalizações, títulos, bônus, sequências e defesas importam. Derrotas pesam.',
         rankSearchLabel: 'Buscar',
