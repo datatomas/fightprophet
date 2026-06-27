@@ -82,6 +82,7 @@ const concepts = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9'] as const
             {formulas[c].map((f) => <code>{f}</code>)}
           </div>
           <p class="fp-fcard-blurb">{t(`${c}.blurb` as any)}</p>
+          <p class="fp-fcard-signal"><span class="fp-fcard-signal-tag">{t('signalsTitle')}</span> {t(`${c}.signal` as any)}</p>
         </div>
       ))}
     </div>
@@ -178,12 +179,23 @@ const concepts = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9'] as const
   }
   .fp-fcard-title { margin: 0; font-size: 0.92rem; padding-right: 1.2rem; }
   .fp-fcard-formula { display: grid; gap: 0.2rem; }
+  /* brand palette: neutral grey chip with a light-red (#b91c1c) accent */
   .fp-fcard-formula code {
     font-size: 0.82rem; font-variant-numeric: tabular-nums;
-    background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.16);
+    background: rgba(148, 148, 158, 0.12); border: 1px solid rgba(185, 28, 28, 0.28);
     border-radius: 6px; padding: 0.2rem 0.4rem; width: fit-content; max-width: 100%;
   }
   .fp-fcard-blurb { margin: 0.1rem 0 0; font-size: 0.8rem; opacity: 0.72; line-height: 1.35; }
+  .fp-fcard-signal { margin: 0.25rem 0 0; font-size: 0.78rem; line-height: 1.35; color: #b91c1c; }
+  .fp-fcard-signal-tag {
+    font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+    background: rgba(185, 28, 28, 0.12); color: #b91c1c;
+    border-radius: 5px; padding: 0.06rem 0.32rem; margin-right: 0.3rem; white-space: nowrap;
+  }
+  @media (prefers-color-scheme: dark) {
+    .fp-fcard-signal, .fp-fcard-signal-tag { color: #fca5a5; }
+    .fp-fcard-signal-tag { background: rgba(252, 165, 165, 0.14); }
+  }
 
   @media (prefers-color-scheme: dark) {
     .fp-calc, .fp-fcard { border-color: rgba(255, 255, 255, 0.14); }
@@ -191,6 +203,6 @@ const concepts = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9'] as const
     .fp-calc-result { border-top-color: rgba(255, 255, 255, 0.18); }
     .fp-side { border-color: rgba(255, 255, 255, 0.12); }
     .fp-warn { color: #eab308; }
-    .fp-fcard-formula code { background: rgba(96, 165, 250, 0.1); border-color: rgba(96, 165, 250, 0.22); }
+    .fp-fcard-formula code { background: rgba(255, 255, 255, 0.06); border-color: rgba(252, 165, 165, 0.3); }
   }
 </style>

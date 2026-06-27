@@ -275,14 +275,14 @@ const hasData = totalFights > 0;
     };
 
     // ── Fighter card HTML ─────────────────────────────────────────────────────
-    function buildCardHtml(name, country, flag, wc, isChamp, status, wins, losses, finRate, subRate, wStreak, lStreak) {
+    function buildCardHtml(name, country, flag, wc, isChamp, status, wins, losses, finRate, subRate, wStreak, lStreak, isWinner) {
       const init = initials(name);
       const abbr = wcAbbr(wc);
       const wTxt = fmtInt(wins);
       const lTxt = fmtInt(losses);
       const record = wTxt !== '—' && lTxt !== '—' ? `${wTxt}-${lTxt}` : (wTxt !== '—' ? wTxt : '—');
       const typeLine = esc([wc || 'MMA Fighter', country].filter(Boolean).join(' / '));
-      const cardCls = isChamp ? 'fp-card is-champ is-compact' : 'fp-card is-default is-compact';
+      const cardCls = (isChamp ? 'fp-card is-champ is-compact' : 'fp-card is-default is-compact') + (isWinner ? ' is-predicted-winner' : '');
       const profileHref = `/fighter-stats/?fighter=${encodeURIComponent(name || '')}`;
       const statusLower = String(status || '').toLowerCase();
       const statusHtml = statusLower
@@ -357,8 +357,8 @@ const hasData = totalFights > 0;
         ? ` <span class="fp-rec-chip"><img src="/branding/b91c1c-bets-emoji.png" alt="" width="14" height="14" class="fp-inline-icon" /> Recommended</span>`
         : '';
 
-      const fCard = buildCardHtml(fName, fight.fighter_country, fight.fighter_flag, fight.weight_class, fight.fighter_is_champion, fight.fighter_status, fight.fighter_wins, fight.fighter_losses, fight.fighter_finish_rate, fight.fighter_sub_rate, fight.fighter_win_streak, fight.fighter_loss_streak);
-      const oCard = buildCardHtml(oName, fight.opponent_country, fight.opponent_flag, fight.weight_class, fight.opponent_is_champion, fight.opponent_status, fight.opponent_wins, fight.opponent_losses, fight.opponent_finish_rate, fight.opponent_sub_rate, fight.opponent_win_streak, fight.opponent_loss_streak);
+      const fCard = buildCardHtml(fName, fight.fighter_country, fight.fighter_flag, fight.weight_class, fight.fighter_is_champion, fight.fighter_status, fight.fighter_wins, fight.fighter_losses, fight.fighter_finish_rate, fight.fighter_sub_rate, fight.fighter_win_streak, fight.fighter_loss_streak, fighterFavored);
+      const oCard = buildCardHtml(oName, fight.opponent_country, fight.opponent_flag, fight.weight_class, fight.opponent_is_champion, fight.opponent_status, fight.opponent_wins, fight.opponent_losses, fight.opponent_finish_rate, fight.opponent_sub_rate, fight.opponent_win_streak, fight.opponent_loss_streak, opponentFavored);
 
       const pickSummary = likelyWinner
         ? `<div class="fp-pick-summary">
@@ -786,6 +786,10 @@ const hasData = totalFights > 0;
   .fp-prob-track{height:0.4rem;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden;}
   .fp-prob-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,#f59e0b,#ef4444);}
   .fp-prob-fill--alt{background:linear-gradient(90deg,#93c5fd,#38bdf8);}
+  /* predicted-winner fighter card — yellow highlight so the pick reads instantly */
+  .fp-card.is-predicted-winner{box-shadow:0 0 0 2px rgba(250,204,21,0.85),0 0 18px rgba(250,204,21,0.35);}
+  .fp-card.is-predicted-winner .fp-card-frame{border-color:rgba(250,204,21,0.7);}
+
   /* favoured side — make the model's pick pop */
   .fp-prob-row.is-favored{background:rgba(250,204,21,0.12);border:1px solid rgba(250,204,21,0.45);border-radius:0.45rem;padding:0.22rem 0.4rem;margin:-0.06rem -0.1rem;}
   .fp-prob-row.is-favored .fp-prob-name{color:#fde047;font-weight:800;}

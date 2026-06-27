@@ -174,3 +174,18 @@ cd astro_adsense_starter && npm run build && npx wrangler pages deploy ./dist --
 # docker pipeline refresh after export + DuckDB backup
 docker compose --env-file /home/ares/.config/ml_kuda_sports_lab/pipeline.env \
   --profile sunday run --rm --no-deps astro_site_refresh
+
+## Brand colors
+
+The Fight Prophet palette — used across predictions, the betting blocks, and Betting Education.
+
+| Token | Hex | Where |
+|-------|-----|-------|
+| Brand red | `#b91c1c` | logo/emojis, formula accents, signal text |
+| Light red | `#fca5a5` / `#ef4444` | negative EV/ROI/edge, dark-mode accents, danger |
+| Positive green | `#16a34a` / `#22c55e` | positive EV / ROI / edge, low hold |
+| Warning yellow | `#eab308` / `#b45309` | medium hold; gold |
+| Winner highlight | `#facc15` (rgba 250,204,21) | predicted-winner card + favoured row glow |
+| Ink / surface | `#09090b` bg, `#f4f4f5` text, `#a1a1aa` muted grey | base UI |
+
+Meaning, not decoration: **green = good for the bettor, light red = bad, grey = neutral/unavailable**, and the **yellow** highlight marks the model's predicted winner. Hold uses green (<3%) / yellow (3–6%) / red (>6%).
