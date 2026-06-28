@@ -1,0 +1,58 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ContentPage from '../../components/ContentPage.astro';
+
+const contactEmail = import.meta.env.PUBLIC_CONTACT_EMAIL || 'tomsuarezx@gmail.com';
+---
+
+<BaseLayout
+  title="Contato Fight Prophet | Correções, perguntas e contato do editor"
+  description="Entre em contato com o Fight Prophet para correções, dúvidas sobre dados, consultas de imprensa/editor e feedback sobre o site de análise de MMA."
+>
+  <ContentPage
+    eyebrow="Contato"
+    title="Contato Fight Prophet"
+    intro="Use esta página para correções, dúvidas sobre a lógica do modelo, parcerias ou relatos de páginas quebradas e problemas de dados."
+    updated="17 de maio de 2026"
+  >
+    <section>
+      <h2>Contato principal</h2>
+      <p>
+        E-mail: <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+      </p>
+      <p>
+        Para correções, inclua a URL da página, o nome do lutador ou evento, o valor que parece
+        errado e uma fonte ou explicação quando disponível. Isso ajuda a manter o registro público
+        de dados mais limpo.
+      </p>
+    </section>
+
+    <div class="fp-content-grid">
+      <section>
+        <h2>Perfis da empresa</h2>
+        <ul>
+          <li><a href="https://www.linkedin.com/company/fight-prophet" target="_blank" rel="noopener noreferrer">Fight Prophet no LinkedIn</a></li>
+          <li><a href="https://github.com/datatomas/fightprophet" target="_blank" rel="noopener noreferrer">Fight Prophet no GitHub</a></li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Perfil do fundador</h2>
+        <p>
+          Você também pode ver o perfil do fundador no
+          <a href="https://www.linkedin.com/in/datatomas/" target="_blank" rel="noopener noreferrer">LinkedIn</a>.
+        </p>
+      </section>
+    </div>
+
+    <section>
+      <h2>Prioridades de resposta</h2>
+      <ul>
+        <li>Identidade, país, status ou cartel de lutas de um lutador incorretos.</li>
+        <li>Navegação quebrada, páginas indisponíveis ou problemas de rastreamento.</li>
+        <li>Dúvidas sobre limitações do modelo, critérios de ranking ou frequência de atualização dos dados.</li>
+        <li>Questões de publicidade, privacidade e conformidade de políticas.</li>
+      </ul>
+    </section>
+  </ContentPage>
+</BaseLayout>

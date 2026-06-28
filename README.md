@@ -163,13 +163,13 @@ az containerapp registry set \
 # get env python
 source /home/ares/Documents/uppercutanalytics/venv/bin/activate
 
-# trigger pages bulid
+# Preferred: trigger a Cloudflare-side rebuild from main (re-reads Azure). No token/wrangler.
+curl -X POST "$CLOUDFLARE_PAGES_DEPLOY_HOOK"
+
+# Fallback (local build + wrangler upload). Project is "ml-kuda-sports-lab", not "fight-prophet".
 cd /home/ares/Documents/gitrepos/ml_kuda_sports_lab/astro_adsense_starter
 npm run build            # reads the latest Azure export at build time → ./dist
-npx wrangler pages deploy ./dist --project-name fight-prophet
-
-# re buidl astro site
-cd astro_adsense_starter && npm run build && npx wrangler pages deploy ./dist --project-name fight-prophet
+npx wrangler pages deploy ./dist --project-name ml-kuda-sports-lab
 
 # docker pipeline refresh after export + DuckDB backup
 docker compose --env-file /home/ares/.config/ml_kuda_sports_lab/pipeline.env \

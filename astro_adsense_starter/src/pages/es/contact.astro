@@ -1,0 +1,58 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ContentPage from '../../components/ContentPage.astro';
+
+const contactEmail = import.meta.env.PUBLIC_CONTACT_EMAIL || 'tomsuarezx@gmail.com';
+---
+
+<BaseLayout
+  title="Contacto Fight Prophet | Correcciones, preguntas y contacto del editor"
+  description="Contacta con Fight Prophet para correcciones, preguntas sobre datos, consultas de prensa/editor y comentarios sobre el sitio de analítica de MMA."
+>
+  <ContentPage
+    eyebrow="Contacto"
+    title="Contacto Fight Prophet"
+    intro="Usa esta página para correcciones, preguntas sobre la lógica del modelo, consultas de colaboración o reportes de páginas rotas y problemas de datos."
+    updated="17 de mayo de 2026"
+  >
+    <section>
+      <h2>Contacto principal</h2>
+      <p>
+        Correo: <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+      </p>
+      <p>
+        Para correcciones, incluye la URL de la página, el nombre del peleador o evento, el valor
+        que parece incorrecto y una fuente o explicación si está disponible. Eso ayuda a mantener
+        más limpio el registro público de datos.
+      </p>
+    </section>
+
+    <div class="fp-content-grid">
+      <section>
+        <h2>Perfiles de empresa</h2>
+        <ul>
+          <li><a href="https://www.linkedin.com/company/fight-prophet" target="_blank" rel="noopener noreferrer">Fight Prophet en LinkedIn</a></li>
+          <li><a href="https://github.com/datatomas/fightprophet" target="_blank" rel="noopener noreferrer">Fight Prophet en GitHub</a></li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Perfil del fundador</h2>
+        <p>
+          También puedes ver el perfil del fundador en
+          <a href="https://www.linkedin.com/in/datatomas/" target="_blank" rel="noopener noreferrer">LinkedIn</a>.
+        </p>
+      </section>
+    </div>
+
+    <section>
+      <h2>Prioridades de respuesta</h2>
+      <ul>
+        <li>Identidad, país, estado o récord de peleas de un peleador incorrectos.</li>
+        <li>Navegación rota, páginas no disponibles o problemas de rastreo.</li>
+        <li>Preguntas sobre limitaciones del modelo, criterios de ranking o frecuencia de actualización de datos.</li>
+        <li>Asuntos de publicidad, privacidad y cumplimiento de políticas.</li>
+      </ul>
+    </section>
+  </ContentPage>
+</BaseLayout>

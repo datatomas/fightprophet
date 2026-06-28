@@ -1,0 +1,58 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ContentPage from '../../components/ContentPage.astro';
+
+const contactEmail = import.meta.env.PUBLIC_CONTACT_EMAIL || 'tomsuarezx@gmail.com';
+---
+
+<BaseLayout
+  title="კონტაქტი Fight Prophet | შესწორებები, კითხვები და გამომცემლის კონტაქტი"
+  description="დაუკავშირდით Fight Prophet-ს შესწორებების, მონაცემთა კითხვების, თანამშრომლობისა და MMA ანალიტიკის საიტზე გამოხმაურებისთვის."
+>
+  <ContentPage
+    eyebrow="კონტაქტი"
+    title="კონტაქტი Fight Prophet"
+    intro="გამოიყენეთ ეს გვერდი შესწორებებისთვის, მოდელის ლოგიკის კითხვებისთვის, თანამშრომლობისთვის ან გატეხილი გვერდებისა და მონაცემთა პრობლემების შესახებ შეტყობინებისთვის."
+    updated="2026 წლის 17 მაისი"
+  >
+    <section>
+      <h2>ძირითადი კონტაქტი</h2>
+      <p>
+        ელფოსტა: <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+      </p>
+      <p>
+        შესწორებისთვის მიუთითეთ გვერდის URL, მებრძოლის ან ღონისძიების სახელი, მნიშვნელობა,
+        რომელიც არასწორად გამოიყურება, და წყარო ან ახსნა, თუ ხელმისაწვდომია. ეს ეხმარება საჯარო
+        მონაცემების სისუფთავის შენარჩუნებას.
+      </p>
+    </section>
+
+    <div class="fp-content-grid">
+      <section>
+        <h2>კომპანიის პროფილები</h2>
+        <ul>
+          <li><a href="https://www.linkedin.com/company/fight-prophet" target="_blank" rel="noopener noreferrer">Fight Prophet LinkedIn-ზე</a></li>
+          <li><a href="https://github.com/datatomas/fightprophet" target="_blank" rel="noopener noreferrer">Fight Prophet GitHub-ზე</a></li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>დამფუძნებლის პროფილი</h2>
+        <p>
+          ასევე შეგიძლიათ ნახოთ დამფუძნებლის პროფილი
+          <a href="https://www.linkedin.com/in/datatomas/" target="_blank" rel="noopener noreferrer">LinkedIn-ზე</a>.
+        </p>
+      </section>
+    </div>
+
+    <section>
+      <h2>პასუხის პრიორიტეტები</h2>
+      <ul>
+        <li>მებრძოლის არასწორი ვინაობა, ქვეყანა, სტატუსი ან ბრძოლების ისტორია.</li>
+        <li>გატეხილი ნავიგაცია, მიუწვდომელი გვერდები ან crawl-ის პრობლემები.</li>
+        <li>კითხვები მოდელის შეზღუდვებზე, რეიტინგის კრიტერიუმებზე ან მონაცემთა განახლების სიხშირეზე.</li>
+        <li>რეკლამის, კონფიდენციალურობისა და პოლიტიკის შესაბამისობის საკითხები.</li>
+      </ul>
+    </section>
+  </ContentPage>
+</BaseLayout>

@@ -218,6 +218,7 @@ export type UIKey = keyof (typeof ui)['en'];
 // locales whose src/pages/<lang>/<page>.astro actually exists.
 export const AVAILABLE: Record<string, readonly Lang[]> = {
   '/betting-education/': ['es', 'pt', 'ru', 'ka'],
+  '/contact/': ['es', 'pt', 'ru', 'ka'],
 };
 
 export function availableLocales(strippedPath: string): readonly Lang[] {

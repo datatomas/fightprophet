@@ -1,0 +1,58 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ContentPage from '../../components/ContentPage.astro';
+
+const contactEmail = import.meta.env.PUBLIC_CONTACT_EMAIL || 'tomsuarezx@gmail.com';
+---
+
+<BaseLayout
+  title="Контакты Fight Prophet | Исправления, вопросы и контакт издателя"
+  description="Свяжитесь с Fight Prophet по вопросам исправлений, данных, сотрудничества и отзывов о сайте аналитики ММА."
+>
+  <ContentPage
+    eyebrow="Контакты"
+    title="Контакты Fight Prophet"
+    intro="Используйте эту страницу для исправлений, вопросов о логике модели, предложений о сотрудничестве или сообщений о неработающих страницах и проблемах с данными."
+    updated="17 мая 2026"
+  >
+    <section>
+      <h2>Основной контакт</h2>
+      <p>
+        Эл. почта: <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+      </p>
+      <p>
+        Для исправлений укажите URL страницы, имя бойца или турнира, значение, которое выглядит
+        неверным, и источник или пояснение, если есть. Это помогает поддерживать публичные данные
+        в порядке.
+      </p>
+    </section>
+
+    <div class="fp-content-grid">
+      <section>
+        <h2>Профили компании</h2>
+        <ul>
+          <li><a href="https://www.linkedin.com/company/fight-prophet" target="_blank" rel="noopener noreferrer">Fight Prophet в LinkedIn</a></li>
+          <li><a href="https://github.com/datatomas/fightprophet" target="_blank" rel="noopener noreferrer">Fight Prophet на GitHub</a></li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Профиль основателя</h2>
+        <p>
+          Также можно посмотреть профиль основателя в
+          <a href="https://www.linkedin.com/in/datatomas/" target="_blank" rel="noopener noreferrer">LinkedIn</a>.
+        </p>
+      </section>
+    </div>
+
+    <section>
+      <h2>Приоритеты ответа</h2>
+      <ul>
+        <li>Неверные личность, страна, статус или рекорд боёв бойца.</li>
+        <li>Сломанная навигация, недоступные страницы или проблемы со сканированием.</li>
+        <li>Вопросы об ограничениях модели, критериях рейтинга или частоте обновления данных.</li>
+        <li>Вопросы рекламы, конфиденциальности и соответствия политикам.</li>
+      </ul>
+    </section>
+  </ContentPage>
+</BaseLayout>
