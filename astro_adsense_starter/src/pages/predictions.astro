@@ -2,9 +2,11 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { runtimeEnvFromLocals } from '../lib/country-master';
 import { getAllModelsPredictionsData } from '../lib/dashboard-data';
+import { fighterImageAssetMap, getFighterImagesBaseUrl } from '../lib/fighter-images';
 
 const runtimeEnv = runtimeEnvFromLocals(Astro.locals);
 const allModels = await getAllModelsPredictionsData(runtimeEnv);
+const fighterImageAssets = fighterImageAssetMap(getFighterImagesBaseUrl(runtimeEnv));
 
 // Default model. The page ships ONLY the default model inline to keep the HTML lean;
 // the other two are fetched on-demand from /api/predictions/[model].json when the user clicks their tab.
@@ -43,9 +45,9 @@ const predDescription = nextEvent
     <!-- ── HERO ── -->
     <header class="fp-tool-hero">
       <a class="fp-tool-breadcrumb" href="/">← Fight Prophet</a>
-      <p class="fp-section-label">Upcoming Predictions</p>
-      <h1>MMA Predictions</h1>
-      <p class="fp-hero-copy">
+      <p class="fp-section-label" data-i18n="pred.eyebrow">Upcoming Predictions</p>
+      <h1 data-i18n="pred.title">MMA Predictions</h1>
+      <p class="fp-hero-copy" data-i18n="pred.intro">
         Fight Prophet uses machine learning trained on previous UFC fights to estimate how matchups may play out.
         Start with <strong>Ensemble</strong> for the clearest default view, then compare with the other models if you want a second opinion.
       </p>
@@ -59,55 +61,55 @@ const predDescription = nextEvent
             <div class="kpi-strip-icon">
               <img src="/branding/b91c1c-fights-emoji.png" alt="Fights" width="46" height="46" />
             </div>
-            <div class="kpi-strip-label">Total Fights</div>
+            <div class="kpi-strip-label" data-i18n="pred.kpi.totalFights">Total Fights</div>
             <div class="kpi-strip-value" data-kpi-fights>{totalFights.toLocaleString()}</div>
           </div>
           <div class="kpi-strip-item">
             <div class="kpi-strip-icon">
               <img src="/branding/b91c1c-predictions-emoji.png" alt="Events" width="46" height="46" />
             </div>
-            <div class="kpi-strip-label">Events</div>
+            <div class="kpi-strip-label" data-i18n="pred.kpi.events">Events</div>
             <div class="kpi-strip-value" data-kpi-events>{eventCount.toLocaleString()}</div>
           </div>
           <div class="kpi-strip-item">
             <div class="kpi-strip-icon">
               <img src="/branding/b91c1c-signals-emoji.png" alt="Strong signals" width="46" height="46" />
             </div>
-            <div class="kpi-strip-label">Strong Signals</div>
+            <div class="kpi-strip-label" data-i18n="pred.kpi.strongSignals">Strong Signals</div>
             <div class="kpi-strip-value" data-kpi-strong>{strongSignals.toLocaleString()}</div>
           </div>
           <div class="kpi-strip-item">
             <div class="kpi-strip-icon">
               <img src="/branding/b91c1c-bets-emoji.png" alt="Recommended bets" width="46" height="46" />
             </div>
-            <div class="kpi-strip-label">Recommended Bets</div>
+            <div class="kpi-strip-label" data-i18n="pred.kpi.recommendedBets">Recommended Bets</div>
             <div class="kpi-strip-value" data-kpi-recs>{recommendedBets.toLocaleString()}</div>
           </div>
         </div>
 
         <!-- ── MODEL GUIDE ── -->
         <div class="fp-model-guide">
-          <div class="fp-model-guide-eyebrow">Available model views</div>
-          <div class="fp-model-guide-title">Welcome to Fight Prophet predictions</div>
-          <div class="fp-model-guide-copy">
+          <div class="fp-model-guide-eyebrow" data-i18n="pred.modelGuide.eyebrow">Available model views</div>
+          <div class="fp-model-guide-title" data-i18n="pred.modelGuide.title">Welcome to Fight Prophet predictions</div>
+          <div class="fp-model-guide-copy" data-i18n="pred.modelGuide.copy">
             Fight Prophet uses machine learning trained on previous UFC fights to estimate how matchups may play out.
             Start with Ensemble for the clearest default view, then compare it with the other models if you want a second opinion.
           </div>
           <div class="fp-model-guide-grid">
             <div class="fp-model-guide-item">
               <div class="fp-model-guide-item-label">CatBoost</div>
-              <div class="fp-model-guide-item-copy">Gradient boosting optimised for structured / tabular MMA features.</div>
+              <div class="fp-model-guide-item-copy" data-i18n="pred.modelGuide.catboost">Gradient boosting optimised for structured / tabular MMA features.</div>
             </div>
             <div class="fp-model-guide-item">
               <div class="fp-model-guide-item-label">Ensemble</div>
-              <div class="fp-model-guide-item-copy">Combines multiple learners to reduce single-model bias.</div>
+              <div class="fp-model-guide-item-copy" data-i18n="pred.modelGuide.ensemble">Combines multiple learners to reduce single-model bias.</div>
             </div>
             <div class="fp-model-guide-item">
               <div class="fp-model-guide-item-label">LogReg</div>
-              <div class="fp-model-guide-item-copy">Interpretable baseline that stabilises directional probability checks.</div>
+              <div class="fp-model-guide-item-copy" data-i18n="pred.modelGuide.logreg">Interpretable baseline that stabilises directional probability checks.</div>
             </div>
           </div>
-          <div class="fp-model-guide-reco">⭐ Best starting point: Ensemble</div>
+          <div class="fp-model-guide-reco" data-i18n="pred.modelGuide.reco">⭐ Best starting point: Ensemble</div>
         </div>
 
         <!-- ── CONTROLS ── -->
@@ -119,18 +121,18 @@ const predDescription = nextEvent
             <button type="button" class="fp-model-btn" data-model="logreg">LogReg</button>
           </div>
           <label>
-            <span>Event</span>
+            <span data-i18n="pred.controls.event">Event</span>
             <select data-pred-event>
-              <option value="__all__">All events</option>
+              <option value="__all__" data-i18n="pred.controls.allEvents">All events</option>
             </select>
           </label>
           <label>
-            <span>Signal</span>
+            <span data-i18n="pred.controls.signal">Signal</span>
             <select data-pred-signal>
-              <option value="All">All signals</option>
-              <option value="STRONG">Strong</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="WEAK">Weak</option>
+              <option value="All" data-i18n="pred.controls.allSignals">All signals</option>
+              <option value="STRONG" data-i18n="pred.signal.strong">Strong</option>
+              <option value="MEDIUM" data-i18n="pred.signal.medium">Medium</option>
+              <option value="WEAK" data-i18n="pred.signal.weak">Weak</option>
             </select>
           </label>
         </section>
@@ -140,23 +142,26 @@ const predDescription = nextEvent
       </>
     ) : (
       <section class="fp-empty-state">
-        <strong>Predictions are temporarily unavailable.</strong>
-        <span>The upcoming cards feed reads from the exported dashboard parquet. Check back once the next event card export has landed.</span>
+        <strong data-i18n="pred.empty.title">Predictions are temporarily unavailable.</strong>
+        <span data-i18n="pred.empty.copy">The upcoming cards feed reads from the exported dashboard parquet. Check back once the next event card export has landed.</span>
       </section>
     )}
   </article>
 
   <script type="application/json" id="fp-all-models-data" set:html={pageJson}></script>
+  <script type="application/json" id="fp-fighter-image-assets" set:html={JSON.stringify(fighterImageAssets).replace(/</g, '\\u003c')}></script>
 </BaseLayout>
 
 <script is:inline>
   (() => {
     const dataNode = document.getElementById('fp-all-models-data');
     if (!dataNode) return;
+    const imageNode = document.getElementById('fp-fighter-image-assets');
     const DEFAULT_MODEL = 'ensemble';
     // allModels starts with only the default model inline. Others are fetched on demand
     // from /api/predictions/<model>.json the first time the user opens that tab.
     const allModels = JSON.parse(dataNode.textContent || '{}');
+    const fighterImageAssets = imageNode ? JSON.parse(imageNode.textContent || '{}') : {};
     if (!Array.isArray(allModels[DEFAULT_MODEL])) return;
 
     const feed = document.querySelector('[data-predictions-feed]');
@@ -192,6 +197,7 @@ const predDescription = nextEvent
     // ── Helpers ──────────────────────────────────────────────────────────────
     const esc = (v) =>
       String(v ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    const tr = (key, fallback) => window.__fpT ? window.__fpT(key, fallback) : fallback;
 
     const fmtPct = (v) => {
       if (v == null || Number.isNaN(Number(v))) return '—';
@@ -244,26 +250,26 @@ const predDescription = nextEvent
       const fName = fight.fighter_name_display || '';
       const betOnFighter = fight.bet_on_name === fName;
       const bookOdds = betOnFighter ? fight.fighter_odds : fight.opponent_odds;
-      const provider = fight.odds_sportsbook || fight.odds_source || 'Unknown';
+      const provider = fight.odds_sportsbook || fight.odds_source || tr('pred.dynamic.unknown', 'Unknown');
       const cell = (label, value, cls) =>
         `<div class="fp-bi-cell"><span class="fp-bi-label">${esc(label)}</span><span class="fp-bi-value ${cls || ''}">${value}</span></div>`;
-      return `<div class="fp-bi" role="group" aria-label="Betting intelligence">
+      return `<div class="fp-bi" role="group" aria-label="${esc(tr('pred.bi.title', 'Betting intelligence'))}">
         <div class="fp-bi-head">
-          <span class="fp-bi-title">Betting intelligence</span>
-          <span class="fp-bi-provider">Provider: <b>${esc(provider)}</b></span>
+          <span class="fp-bi-title">${esc(tr('pred.bi.title', 'Betting intelligence'))}</span>
+          <span class="fp-bi-provider">${esc(tr('pred.bi.provider', 'Provider'))}: <b>${esc(provider)}</b></span>
         </div>
         <div class="fp-bi-grid">
-          ${cell('Sportsbook odds', esc(fmtOdds(bookOdds)))}
-          ${cell('Market prob', esc(fmtProb(fight.bet_market_prob)))}
-          ${cell('Fair prob', esc(fmtProb(fight.bet_fair_prob)))}
-          ${cell('Fair odds', esc(fmtOdds(fight.bet_fair_odds)))}
-          ${cell('Market hold', esc(fmtPct(fight.market_hold)), holdClass(fight.market_hold))}
-          ${cell('Model prob', esc(fmtProb(fight.bet_side_model_prob)))}
-          ${cell('Edge', esc(fmtEdge(fight.edge_vs_fair)), signClass(fight.edge_vs_fair))}
-          ${cell('Expected value', esc(fmtMoney(fight.expected_value)), signClass(fight.expected_value))}
-          ${cell('Expected ROI', esc(fmtEdge(fight.expected_roi)), signClass(fight.expected_roi))}
+          ${cell(tr('pred.bi.sportsbookOdds', 'Sportsbook odds'), esc(fmtOdds(bookOdds)))}
+          ${cell(tr('pred.bi.marketProb', 'Market prob'), esc(fmtProb(fight.bet_market_prob)))}
+          ${cell(tr('pred.bi.fairProb', 'Fair prob'), esc(fmtProb(fight.bet_fair_prob)))}
+          ${cell(tr('pred.bi.fairOdds', 'Fair odds'), esc(fmtOdds(fight.bet_fair_odds)))}
+          ${cell(tr('pred.bi.marketHold', 'Market hold'), esc(fmtPct(fight.market_hold)), holdClass(fight.market_hold))}
+          ${cell(tr('pred.bi.modelProb', 'Model prob'), esc(fmtProb(fight.bet_side_model_prob)))}
+          ${cell(tr('pred.bi.edge', 'Edge'), esc(fmtEdge(fight.edge_vs_fair)), signClass(fight.edge_vs_fair))}
+          ${cell(tr('pred.bi.expectedValue', 'Expected value'), esc(fmtMoney(fight.expected_value)), signClass(fight.expected_value))}
+          ${cell(tr('pred.bi.expectedRoi', 'Expected ROI'), esc(fmtEdge(fight.expected_roi)), signClass(fight.expected_roi))}
         </div>
-        <div class="fp-bi-note">Math only — not betting advice. Hold &amp; fair values need both sides' odds; "—" means data unavailable.</div>
+        <div class="fp-bi-note">${esc(tr('pred.bi.note', `Math only — not betting advice. Hold & fair values need both sides' odds; "—" means data unavailable.`))}</div>
       </div>`;
     }
 
@@ -289,13 +295,14 @@ const predDescription = nextEvent
     };
 
     // ── Fighter card HTML ─────────────────────────────────────────────────────
-    function buildCardHtml(name, country, flag, wc, isChamp, status, wins, losses, finRate, subRate, wStreak, lStreak, isWinner) {
+    function buildCardHtml(id, name, country, flag, wc, isChamp, status, wins, losses, finRate, subRate, wStreak, lStreak, isWinner) {
       const init = initials(name);
+      const imageUrl = fighterImageAssets[String(id || '').trim().toLowerCase()] || '';
       const abbr = wcAbbr(wc);
       const wTxt = fmtInt(wins);
       const lTxt = fmtInt(losses);
       const record = wTxt !== '—' && lTxt !== '—' ? `${wTxt}-${lTxt}` : (wTxt !== '—' ? wTxt : '—');
-      const typeLine = esc([wc || 'MMA Fighter', country].filter(Boolean).join(' / '));
+      const typeLine = esc([wc || tr('pred.dynamic.mmaFighter', 'MMA Fighter'), country].filter(Boolean).join(' / '));
       const cardCls = (isChamp ? 'fp-card is-champ is-compact' : 'fp-card is-default is-compact') + (isWinner ? ' is-predicted-winner' : '');
       const profileHref = `/fighter-stats/?fighter=${encodeURIComponent(name || '')}`;
       const statusLower = String(status || '').toLowerCase();
@@ -306,10 +313,14 @@ const predDescription = nextEvent
       const topRightHtml = (statusHtml || flagHtml)
         ? `<div class="fp-card-top-right">${statusHtml}${flagHtml}</div>`
         : '';
-      const crownHtml = isChamp ? `<span class="fp-card-crown" aria-label="Champion">👑</span>` : '';
+      const crownHtml = isChamp ? `<span class="fp-card-crown" aria-label="${esc(tr('pred.dynamic.champion', 'Champion'))}">👑</span>` : '';
       const ratingPos = abbr ? `<span class="fp-card-rating-pos">${esc(abbr)}</span>` : '';
+      const portraitHtml = imageUrl
+        ? `<img class="fp-card-photo" src="${esc(imageUrl)}" alt="" loading="lazy" decoding="async" aria-hidden="true" />`
+        : `<span class="fp-card-portrait-silhouette" aria-hidden="true">👤</span>
+          <span class="fp-card-initials" aria-hidden="true">${esc(init)}</span>`;
 
-      return `<a class="${cardCls}" href="${esc(profileHref)}">
+      return `<a class="${cardCls}" href="${esc(profileHref)}" data-fighter-id="${esc(id || '')}">
         <div class="fp-card-frame"></div>
         <div class="fp-card-top">
           <div class="fp-card-rating">
@@ -320,8 +331,7 @@ const predDescription = nextEvent
         </div>
         <header class="fp-card-banner"><span class="fp-card-name">${esc(name || '')}</span></header>
         <div class="fp-card-portrait">
-          <span class="fp-card-portrait-silhouette" aria-hidden="true">👤</span>
-          <span class="fp-card-initials" aria-hidden="true">${esc(init)}</span>
+          ${portraitHtml}
           ${crownHtml}
         </div>
         <div class="fp-card-type-bar">[ ${typeLine} ]</div>
@@ -347,7 +357,7 @@ const predDescription = nextEvent
       const signal = String(fight.signal_strength || '');
       const signalKey = signal.toLowerCase();
       const signalCls = { strong: 'fp-matchup-signal--strong', medium: 'fp-matchup-signal--medium', weak: 'fp-matchup-signal--weak' }[signalKey] || 'fp-matchup-signal--neutral';
-      const signalLabel = signal.toUpperCase() || 'SIGNAL';
+      const signalLabel = signal.toUpperCase() || tr('pred.dynamic.signalFallback', 'SIGNAL');
 
       const fName = fight.fighter_name_display || '';
       const oName = fight.opponent_name_display || '';
@@ -363,32 +373,32 @@ const predDescription = nextEvent
       // Highlight the model's favoured side (higher win probability)
       const fighterFavored = modelProb != null && fighterProb >= opponentProb;
       const opponentFavored = modelProb != null && opponentProb > fighterProb;
-      const matchupLabel = fight.weight_class || 'Fight Matchup';
+      const matchupLabel = fight.weight_class || tr('pred.dynamic.fightMatchup', 'Fight Matchup');
 
       const isUnderdog = marketBetSide != null && marketBetSide < 0.5;
-      const valueLabel = isUnderdog ? 'Underdog value angle' : 'Best value bet';
+      const valueLabel = isUnderdog ? tr('pred.dynamic.underdogValue', 'Underdog value angle') : tr('pred.dynamic.bestValueBet', 'Best value bet');
       const recChip = fight.recommended_bet
-        ? ` <span class="fp-rec-chip"><img src="/branding/b91c1c-bets-emoji.png" alt="" width="14" height="14" class="fp-inline-icon" /> Recommended</span>`
+        ? ` <span class="fp-rec-chip"><img src="/branding/b91c1c-bets-emoji.png" alt="" width="14" height="14" class="fp-inline-icon" /> ${esc(tr('pred.dynamic.recommended', 'Recommended'))}</span>`
         : '';
 
-      const fCard = buildCardHtml(fName, fight.fighter_country, fight.fighter_flag, fight.weight_class, fight.fighter_is_champion, fight.fighter_status, fight.fighter_wins, fight.fighter_losses, fight.fighter_finish_rate, fight.fighter_sub_rate, fight.fighter_win_streak, fight.fighter_loss_streak, fighterFavored);
-      const oCard = buildCardHtml(oName, fight.opponent_country, fight.opponent_flag, fight.weight_class, fight.opponent_is_champion, fight.opponent_status, fight.opponent_wins, fight.opponent_losses, fight.opponent_finish_rate, fight.opponent_sub_rate, fight.opponent_win_streak, fight.opponent_loss_streak, opponentFavored);
+      const fCard = buildCardHtml(fight.fighter_id, fName, fight.fighter_country, fight.fighter_flag, fight.weight_class, fight.fighter_is_champion, fight.fighter_status, fight.fighter_wins, fight.fighter_losses, fight.fighter_finish_rate, fight.fighter_sub_rate, fight.fighter_win_streak, fight.fighter_loss_streak, fighterFavored);
+      const oCard = buildCardHtml(fight.opponent_id, oName, fight.opponent_country, fight.opponent_flag, fight.weight_class, fight.opponent_is_champion, fight.opponent_status, fight.opponent_wins, fight.opponent_losses, fight.opponent_finish_rate, fight.opponent_sub_rate, fight.opponent_win_streak, fight.opponent_loss_streak, opponentFavored);
 
       const pickSummary = likelyWinner
         ? `<div class="fp-pick-summary">
             <div class="fp-pick-winner">
-              <strong>MODEL PREDICTION TO WIN:</strong>
+              <strong>${esc(tr('pred.dynamic.modelPredictionToWin', 'MODEL PREDICTION TO WIN:'))}</strong>
               ${esc(likelyWinner)}
               <span class="fp-pick-confidence">(${fmtProb(likelyProb)})</span>
             </div>
             ${fight.bet_on_name ? `
               <div class="fp-pick-value">
                 ${signalIcon(signal)} <b>${esc(valueLabel)}:</b> ${esc(fight.bet_on_name)}
-                &nbsp;|&nbsp; Edge: <code>${esc(fmtEdge(fight.edge))}</code>
-                &nbsp;|&nbsp; Market: <code>${esc(fmtProb(marketBetSide))}</code>
-                &nbsp;|&nbsp; Signal: <b>${esc(signalLabel)}</b>${recChip}
+                &nbsp;|&nbsp; ${esc(tr('pred.bi.edge', 'Edge'))}: <code>${esc(fmtEdge(fight.edge))}</code>
+                &nbsp;|&nbsp; ${esc(tr('pred.table.market', 'Market'))}: <code>${esc(fmtProb(marketBetSide))}</code>
+                &nbsp;|&nbsp; ${esc(tr('pred.table.signal', 'Signal'))}: <b>${esc(signalLabel)}</b>${recChip}
               </div>` : ''}
-            <div class="fp-pick-note">Model probabilities reflect historical patterns — check the disclaimer before acting on any output.</div>
+            <div class="fp-pick-note">${esc(tr('pred.dynamic.pickNote', 'Model probabilities reflect historical patterns — check the disclaimer before acting on any output.'))}</div>
           </div>`
         : '';
 
@@ -403,12 +413,12 @@ const predDescription = nextEvent
           <div class="fp-fighter-pane">
             ${fCard}
             <div class="fp-odds-chip">
-              <span class="fp-odds-chip-label">Odds</span>${esc(fmtOdds(fight.fighter_odds))}
+              <span class="fp-odds-chip-label">${esc(tr('pred.dynamic.odds', 'Odds'))}</span>${esc(fmtOdds(fight.fighter_odds))}
             </div>
           </div>
           <div class="fp-versus-core">
             <div class="fp-versus-mark">⚔️</div>
-            <div class="fp-versus-title">Model probabilities</div>
+            <div class="fp-versus-title">${esc(tr('pred.dynamic.modelProbabilities', 'Model probabilities'))}</div>
             <div class="fp-prob-stack">
               <div class="fp-prob-row${fighterFavored ? ' is-favored' : ''}">
                 <div class="fp-prob-meta">
@@ -429,7 +439,7 @@ const predDescription = nextEvent
           <div class="fp-fighter-pane">
             ${oCard}
             <div class="fp-odds-chip">
-              <span class="fp-odds-chip-label">Odds</span>${esc(fmtOdds(fight.opponent_odds))}
+              <span class="fp-odds-chip-label">${esc(tr('pred.dynamic.odds', 'Odds'))}</span>${esc(fmtOdds(fight.opponent_odds))}
             </div>
           </div>
         </div>
@@ -443,7 +453,7 @@ const predDescription = nextEvent
       const current = eventSel?.value || '__all__';
       const names = [...new Set(fights.map((f) => f.event_name).filter(Boolean))];
       if (eventSel) {
-        eventSel.innerHTML = '<option value="__all__">All events</option>';
+        eventSel.innerHTML = `<option value="__all__">${esc(tr('pred.controls.allEvents', 'All events'))}</option>`;
         for (const name of names) {
           const opt = document.createElement('option');
           opt.value = name;
@@ -481,7 +491,7 @@ const predDescription = nextEvent
     function render() {
       const rows = filteredFights();
       if (!rows.length) {
-        feed.innerHTML = '<p class="fp-list-empty">No fights match the current filters.</p>';
+        feed.innerHTML = `<p class="fp-list-empty">${esc(tr('pred.empty.noFights', 'No fights match the current filters.'))}</p>`;
         return;
       }
       const byEvent = new Map();
@@ -513,7 +523,7 @@ const predDescription = nextEvent
 
         // Show a loading state if we have to fetch the model JSON the first time.
         if (!Array.isArray(allModels[next])) {
-          if (feed) feed.innerHTML = '<p class="fp-list-empty">Loading model predictions…</p>';
+          if (feed) feed.innerHTML = `<p class="fp-list-empty">${esc(tr('pred.dynamic.loading', 'Loading model predictions...'))}</p>`;
         }
         const allFights = await ensureModelLoaded(next);
         // User may have clicked a different tab while we were fetching — bail if so.
@@ -526,6 +536,10 @@ const predDescription = nextEvent
 
     eventSel?.addEventListener('change', render);
     signalSel?.addEventListener('change', render);
+    window.addEventListener('fp-lang-change', () => {
+      refreshEventDropdown(Array.isArray(allModels[currentModel]) ? allModels[currentModel] : []);
+      render();
+    });
 
     // Initial render — default model is already inlined.
     const initialFights = Array.isArray(allModels[DEFAULT_MODEL]) ? allModels[DEFAULT_MODEL] : [];
@@ -581,6 +595,7 @@ const predDescription = nextEvent
   .fp-card-portrait{position:relative;z-index:2;flex:1 1 auto;display:flex;align-items:center;justify-content:center;margin:0 0.04rem;border:1.5px solid rgba(185,28,28,0.75);border-radius:0.16rem;background:radial-gradient(circle at 50% 35%,rgba(248,113,113,0.16),transparent 56%),linear-gradient(180deg,#2a1010 0%,#0f0606 100%);box-shadow:inset 0 0 0 1px rgba(0,0,0,0.5),inset 0 -10px 18px rgba(0,0,0,0.45);overflow:hidden;min-height:64px;}
   .fp-card.is-champ .fp-card-portrait{border-color:rgba(255,240,170,0.85);background:radial-gradient(circle at 50% 35%,rgba(255,240,200,0.24),transparent 58%),linear-gradient(180deg,#4a3214 0%,#1a1108 100%);}
   .fp-card-portrait-silhouette{display:inline-flex;align-items:center;justify-content:center;font-size:2.6rem;opacity:0.18;line-height:1;filter:blur(0.35px);}
+  .fp-card-photo{position:absolute;inset:0.12rem;width:calc(100% - 0.24rem);height:calc(100% - 0.24rem);object-fit:contain;object-position:center bottom;filter:drop-shadow(0 12px 16px rgba(0,0,0,0.58));}
   .fp-card.is-champ .fp-card-portrait-silhouette{opacity:0.24;}
   .fp-card-initials{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;letter-spacing:0.06em;color:rgba(254,226,226,0.95);text-shadow:0 2px 6px rgba(0,0,0,0.7);}
   .fp-card.is-champ .fp-card-initials{color:rgba(255,240,200,0.95);}

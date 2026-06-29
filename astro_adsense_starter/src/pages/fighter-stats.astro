@@ -20,27 +20,27 @@ const historyRows = fighterData.debug.historyCount;
   <article class="fp-fighters-page">
     <header class="fp-tool-hero">
       <a class="fp-tool-breadcrumb" href="/">← Fight Prophet</a>
-      <p class="fp-section-label">Fighter Stats</p>
-      <h1>MMA Fighter Stats</h1>
-      <p>
+      <p class="fp-section-label" data-i18n="fighters.eyebrow">Fighter Stats</p>
+      <h1 data-i18n="fighters.title">MMA Fighter Stats</h1>
+      <p data-i18n="fighters.intro">
         Search tracked UFC fighters and inspect career snapshots, method mix, activity status, belt context, striking and grappling metrics, and recent fight history.
       </p>
       <ul class="fp-kpi-chips fp-kpi-chips--hero" aria-label="Fighter archive summary">
         <li class="fp-kpi-chip fp-kpi-chip--hero">
           <img src="/branding/b91c1c-fighterscard-emoji.png" alt="" width="36" height="36" />
-          <span>Fighters</span><strong data-kpi-total>{totalProfiles.toLocaleString()}</strong>
+          <span data-i18n="fighters.kpi.fighters">Fighters</span><strong data-kpi-total>{totalProfiles.toLocaleString()}</strong>
         </li>
         <li class="fp-kpi-chip fp-kpi-chip--hero">
           <img src="/branding/b91c1c-correct-emoji.png" alt="" width="36" height="36" />
-          <span>Active</span><strong data-kpi-active>{activeProfiles.toLocaleString()}</strong>
+          <span data-i18n="fighters.kpi.active">Active</span><strong data-kpi-active>{activeProfiles.toLocaleString()}</strong>
         </li>
         <li class="fp-kpi-chip fp-kpi-chip--hero">
           <img src="/branding/b91c1c-champion-emoji.png" alt="" width="36" height="36" />
-          <span>Champions</span><strong data-kpi-champs>{championProfiles.toLocaleString()}</strong>
+          <span data-i18n="fighters.kpi.champions">Champions</span><strong data-kpi-champs>{championProfiles.toLocaleString()}</strong>
         </li>
         <li class="fp-kpi-chip fp-kpi-chip--hero">
           <img src="/branding/b91c1c-fights-emoji.png" alt="" width="36" height="36" />
-          <span>Fight Rows</span><strong data-kpi-rows>{historyRows.toLocaleString()}</strong>
+          <span data-i18n="fighters.kpi.fightRows">Fight Rows</span><strong data-kpi-rows>{historyRows.toLocaleString()}</strong>
         </li>
       </ul>
     </header>
@@ -49,16 +49,16 @@ const historyRows = fighterData.debug.historyCount;
       <>
         <section class="fp-tool-controls" aria-label="Fighter filters">
           <label>
-            <span>Search</span>
-            <input type="search" data-fighter-search placeholder="Fighter, country, status" autocomplete="off" />
+            <span data-i18n="fighters.controls.search">Search</span>
+            <input type="search" data-fighter-search placeholder="Fighter, country, status" data-i18n-placeholder="fighters.controls.searchPlaceholder" autocomplete="off" />
           </label>
           <label>
-            <span>Status</span>
+            <span data-i18n="fighters.controls.status">Status</span>
             <select data-fighter-status>
-              <option value="All">All</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="champion">Current champions</option>
+              <option value="All" data-i18n="fighters.controls.all">All</option>
+              <option value="active" data-i18n="fighters.controls.active">Active</option>
+              <option value="inactive" data-i18n="fighters.controls.inactive">Inactive</option>
+              <option value="champion" data-i18n="fighters.controls.currentChampions">Current champions</option>
             </select>
           </label>
         </section>
@@ -66,14 +66,14 @@ const historyRows = fighterData.debug.historyCount;
         <div class="fp-fighters-layout">
           <section class="fp-fighter-picker" aria-label="Matching fighters">
             <div class="fp-panel-head">
-              <h2>Fighter Index</h2>
+              <h2 data-i18n="fighters.index.title">Fighter Index</h2>
               <span data-fighter-match-count>{totalProfiles.toLocaleString()} fighters</span>
             </div>
             <label class="fp-fighter-select-label">
-              <span>Choose fighter</span>
+              <span data-i18n="fighters.index.choose">Choose fighter</span>
               <select data-fighter-select aria-label="Choose fighter"></select>
             </label>
-            <p class="fp-list-empty" data-fighter-empty hidden>No fighters match these filters.</p>
+            <p class="fp-list-empty" data-fighter-empty data-i18n="fighters.index.empty" hidden>No fighters match these filters.</p>
           </section>
 
           <section class="fp-fighter-detail" aria-live="polite">
@@ -93,53 +93,53 @@ const historyRows = fighterData.debug.historyCount;
 
                 <div class="fp-hero-stats">
                   <section class="fp-chip-section" aria-labelledby="fp-stats-overview">
-                    <h3 class="fp-chip-section-label" id="fp-stats-overview">Overview</h3>
+                    <h3 class="fp-chip-section-label" id="fp-stats-overview" data-i18n="fighters.overview.title">Overview</h3>
                     <ul class="fp-kpi-chips">
                       <li class="fp-kpi-chip">
                         <img src="/branding/b91c1c-correct-emoji.png" alt="" width="30" height="30" />
-                        <span>Win Rate</span><strong data-kpi-win-rate>—</strong>
+                        <span data-i18n="fighters.stat.winRate">Win Rate</span><strong data-kpi-win-rate>—</strong>
                       </li>
                       <li class="fp-kpi-chip">
                         <img src="/branding/finish_rate_icon_b91c1c_transparent.png" alt="" width="30" height="30" />
-                        <span>Finish Rate</span><strong data-kpi-finish-rate>—</strong>
+                        <span data-i18n="fighters.stat.finishRate">Finish Rate</span><strong data-kpi-finish-rate>—</strong>
                       </li>
                       <li class="fp-kpi-chip">
                         <img src="/branding/b91c1c-winstreak-emoji.png" alt="" width="30" height="30" />
-                        <span>Win Streak</span><strong data-kpi-win-streak>—</strong>
+                        <span data-i18n="fighters.stat.winStreak">Win Streak</span><strong data-kpi-win-streak>—</strong>
                       </li>
                       <li class="fp-kpi-chip">
                         <img src="/branding/b91c1c-events-emoji.png" alt="" width="30" height="30" />
-                        <span>Last Fight</span><strong data-kpi-last-fight>—</strong>
+                        <span data-i18n="fighters.stat.lastFight">Last Fight</span><strong data-kpi-last-fight>—</strong>
                       </li>
                     </ul>
                   </section>
 
                   <section class="fp-chip-section" aria-labelledby="fp-stats-defense">
-                    <h3 class="fp-chip-section-label" id="fp-stats-defense">Defense &amp; Streaks</h3>
+                    <h3 class="fp-chip-section-label" id="fp-stats-defense" data-i18n="fighters.defense.title">Defense &amp; Streaks</h3>
                     <ul class="fp-kpi-chips">
                       <li class="fp-kpi-chip">
                         <img src="/branding/b91c1c-strikingdefence-emoji.png" alt="" width="30" height="30" />
-                        <span>Str Def</span><strong data-meta-str-def>—</strong>
+                        <span data-i18n="fighters.stat.strDef">Str Def</span><strong data-meta-str-def>—</strong>
                       </li>
                       <li class="fp-kpi-chip">
                         <img src="/branding/b91c1c-takedowndefence-emoji.png" alt="" width="30" height="30" />
-                        <span>TD Def</span><strong data-meta-td-def>—</strong>
+                        <span data-i18n="fighters.stat.tdDef">TD Def</span><strong data-meta-td-def>—</strong>
                       </li>
                       <li class="fp-kpi-chip">
                         <img src="/branding/b91c1c-strikingaccuracy-emoji.png" alt="" width="30" height="30" />
-                        <span>SApM</span><strong data-meta-sapm>—</strong>
+                        <span data-i18n="fighters.stat.sapm">SApM</span><strong data-meta-sapm>—</strong>
                       </li>
                       <li class="fp-kpi-chip">
                         <img src="/branding/b91c1c-bonus-emoji.png" alt="" width="30" height="30" />
-                        <span>Bonuses</span><strong data-meta-bonuses>—</strong>
+                        <span data-i18n="fighters.stat.bonuses">Bonuses</span><strong data-meta-bonuses>—</strong>
                       </li>
                       <li class="fp-kpi-chip">
                         <img src="/branding/b91c1c-winstreak-emoji.png" alt="" width="30" height="30" />
-                        <span>Best W Streak</span><strong data-meta-win-streak>—</strong>
+                        <span data-i18n="fighters.stat.bestWinStreak">Best W Streak</span><strong data-meta-win-streak>—</strong>
                       </li>
                       <li class="fp-kpi-chip">
                         <img src="/branding/b91c1c-incorrect-emoji.png" alt="" width="30" height="30" />
-                        <span>Worst L Streak</span><strong data-meta-loss-streak>—</strong>
+                        <span data-i18n="fighters.stat.worstLossStreak">Worst L Streak</span><strong data-meta-loss-streak>—</strong>
                       </li>
                     </ul>
                   </section>
@@ -148,16 +148,16 @@ const historyRows = fighterData.debug.historyCount;
             </div>
 
             <section class="fp-career-snapshot">
-              <h3>Career Snapshot</h3>
+              <h3 data-i18n="fighters.section.career">Career Snapshot</h3>
               <div class="fp-kpi-grid" data-career-list></div>
             </section>
             <div class="fp-profile-grid">
               <section>
-                <h3>Striking &amp; Grappling</h3>
+                <h3 data-i18n="fighters.section.skills">Striking &amp; Grappling</h3>
                 <div class="fp-kpi-grid" data-skills-list></div>
               </section>
               <section>
-                <h3>Method Mix</h3>
+                <h3 data-i18n="fighters.section.methodMix">Method Mix</h3>
                 <div class="fp-kpi-grid" data-method-list></div>
               </section>
             </div>
@@ -165,10 +165,10 @@ const historyRows = fighterData.debug.historyCount;
             <section class="fp-history-panel">
               <div class="fp-panel-head">
                 <div>
-                  <h3>Recent Fight History</h3>
+                  <h3 data-i18n="fighters.section.recentHistory">Recent Fight History</h3>
                   <span data-history-count></span>
                 </div>
-                <button type="button" class="fp-csv-btn" data-csv-download aria-label="Download fight history as CSV">
+                <button type="button" class="fp-csv-btn" data-csv-download aria-label="Download fight history as CSV" data-i18n-aria-label="fighters.csv.aria">
                   ↓ CSV
                 </button>
               </div>
@@ -176,17 +176,17 @@ const historyRows = fighterData.debug.historyCount;
                 <table class="fp-history-table" data-history-table>
                   <thead>
                     <tr>
-                      <th scope="col">Date</th>
-                      <th scope="col">Result</th>
-                      <th scope="col">Opponent</th>
-                      <th scope="col">Method</th>
+                      <th scope="col" data-i18n="fighters.history.date">Date</th>
+                      <th scope="col" data-i18n="fighters.history.result">Result</th>
+                      <th scope="col" data-i18n="fighters.history.opponent">Opponent</th>
+                      <th scope="col" data-i18n="fighters.history.method">Method</th>
                       <th scope="col" class="fp-col-center">Rd</th>
                       <th scope="col" class="fp-col-center">Time</th>
                       <th scope="col" class="fp-col-center">KD</th>
                       <th scope="col" class="fp-col-center">STR</th>
                       <th scope="col" class="fp-col-center">TD</th>
                       <th scope="col" class="fp-col-center">SUB</th>
-                      <th scope="col">Event</th>
+                      <th scope="col" data-i18n="fighters.history.event">Event</th>
                     </tr>
                   </thead>
                   <tbody data-history-body></tbody>
@@ -198,8 +198,8 @@ const historyRows = fighterData.debug.historyCount;
       </>
     ) : (
       <section class="fp-empty-state">
-        <strong>Fighter stats are temporarily unavailable.</strong>
-        <span>The public cards read from the exported dashboard parquet feed. If this is empty, the latest export has not landed yet.</span>
+        <strong data-i18n="fighters.empty.title">Fighter stats are temporarily unavailable.</strong>
+        <span data-i18n="fighters.empty.copy">The public cards read from the exported dashboard parquet feed. If this is empty, the latest export has not landed yet.</span>
       </section>
     )}
   </article>
@@ -256,6 +256,7 @@ const historyRows = fighterData.debug.historyCount;
       '"': '&quot;',
       "'": '&#39;',
     }[ch]));
+    const tr = (key, fallback) => window.__fpT ? window.__fpT(key, fallback) : fallback;
     const fmtInt = (value) => value == null || Number.isNaN(Number(value)) ? '—' : Number(value).toLocaleString();
     const fmtPct = (value, decimals = 0) => {
       if (value == null || Number.isNaN(Number(value))) return '—';
@@ -312,7 +313,7 @@ const historyRows = fighterData.debug.historyCount;
       const wins = fmtInt(profile.wins);
       const losses = fmtInt(profile.losses);
       const rec = wins !== '—' && losses !== '—' ? `${wins}-${losses}` : (wins !== '—' ? wins : '—');
-      const typeLine = [wc || 'MMA Fighter', profile.country].filter(Boolean).join(' / ');
+      const typeLine = [wc || tr('fighters.dynamic.mmaFighter', 'MMA Fighter'), profile.country].filter(Boolean).join(' / ');
       const flag = profile.country_flag || '';
       const ratingNum = isChamp ? 'C' : rec;
       const ratingPos = abbr ? `<span class="fp-card-rating-pos">${escapeHtml(abbr)}</span>` : '';
@@ -335,7 +336,7 @@ const historyRows = fighterData.debug.historyCount;
         <div class="fp-card-portrait">
           <span class="fp-card-portrait-silhouette" aria-hidden="true">👤</span>
           <span class="fp-card-initials" aria-hidden="true">${escapeHtml(init)}</span>
-          ${isChamp ? '<span class="fp-card-crown" aria-label="Current champion">👑</span>' : ''}
+          ${isChamp ? `<span class="fp-card-crown" aria-label="${escapeHtml(tr('fighters.controls.currentChampions', 'Current champion'))}">👑</span>` : ''}
         </div>
         <div class="fp-card-type-bar">[ ${escapeHtml(typeLine)} ]</div>
         <div class="fp-card-desc">
@@ -377,7 +378,9 @@ const historyRows = fighterData.debug.historyCount;
         profile.current_belt_weight_classes,
         profile.stance,
       ].filter(Boolean).join(' / ');
-      profileStatus.textContent = profile.is_current_champion ? 'Current Champion' : (profile.fighter_status || 'Fighter');
+      profileStatus.textContent = profile.is_current_champion
+        ? tr('fighters.dynamic.currentChampion', 'Current Champion')
+        : (profile.fighter_status ? tr(`fighters.status.${String(profile.fighter_status).toLowerCase()}`, String(profile.fighter_status).replace(/^./, (c) => c.toUpperCase())) : tr('fighters.dynamic.fighter', 'Fighter'));
       profileStatus.classList.toggle('is-champion', !!profile.is_current_champion);
       profileRecord.textContent = record(profile);
       winRate.textContent = fmtPct(profile.win_rate, 1);
@@ -392,40 +395,40 @@ const historyRows = fighterData.debug.historyCount;
       if (metaLossStreak) metaLossStreak.textContent = fmtInt(profile.longest_loss_streak);
 
       careerList.innerHTML = [
-        kpiCard('Country', profile.country || '—'),
-        kpiCard('Status', (profile.fighter_status || '—').toString().replace(/^./, (c) => c.toUpperCase()), { tone: profile.fighter_status === 'active' ? 'good' : 'muted' }),
-        kpiCard('Age', fmtInt(profile.age), { hint: profile.age ? 'years' : '' }),
-        kpiCard('Height', profile.height || '—'),
-        kpiCard('Weight', profile.weight || '—'),
-        kpiCard('Reach', profile.reach || '—'),
-        kpiCard('First Fight', profile.first_fight_date || '—'),
-        kpiCard('Title Fights', fmtInt(profile.title_fights), { tone: Number(profile.title_fights) > 0 ? 'accent' : 'default' }),
+        kpiCard(tr('fighters.kpiCard.country', 'Country'), profile.country || '—'),
+        kpiCard(tr('fighters.kpiCard.status', 'Status'), (profile.fighter_status ? tr(`fighters.status.${String(profile.fighter_status).toLowerCase()}`, String(profile.fighter_status).replace(/^./, (c) => c.toUpperCase())) : '—'), { tone: profile.fighter_status === 'active' ? 'good' : 'muted' }),
+        kpiCard(tr('fighters.kpiCard.age', 'Age'), fmtInt(profile.age), { hint: profile.age ? tr('fighters.hint.years', 'years') : '' }),
+        kpiCard(tr('fighters.kpiCard.height', 'Height'), profile.height || '—'),
+        kpiCard(tr('fighters.kpiCard.weight', 'Weight'), profile.weight || '—'),
+        kpiCard(tr('fighters.kpiCard.reach', 'Reach'), profile.reach || '—'),
+        kpiCard(tr('fighters.kpiCard.firstFight', 'First Fight'), profile.first_fight_date || '—'),
+        kpiCard(tr('fighters.kpiCard.titleFights', 'Title Fights'), fmtInt(profile.title_fights), { tone: Number(profile.title_fights) > 0 ? 'accent' : 'default' }),
       ].join('');
 
       skillsList.innerHTML = [
-        kpiCard('SLpM', fmtNum(profile.slpm, 2), { hint: 'per minute' }),
-        kpiCard('SApM', fmtNum(profile.sapm, 2), { hint: 'per minute' }),
-        kpiCard('Str Acc', fmtPct(profile.str_acc), { pct: pctValue(profile.str_acc), tone: 'pct' }),
-        kpiCard('Str Def', fmtPct(profile.str_def), { pct: pctValue(profile.str_def), tone: 'pct' }),
-        kpiCard('TD Avg', fmtNum(profile.td_avg, 2), { hint: 'per 15 min' }),
-        kpiCard('TD Acc', fmtPct(profile.td_acc), { pct: pctValue(profile.td_acc), tone: 'pct' }),
-        kpiCard('TD Def', fmtPct(profile.td_def), { pct: pctValue(profile.td_def), tone: 'pct' }),
-        kpiCard('Sub Avg', fmtNum(profile.sub_avg, 2), { hint: 'per 15 min' }),
+        kpiCard(tr('fighters.kpiCard.slpm', 'SLpM'), fmtNum(profile.slpm, 2), { hint: tr('fighters.hint.perMinute', 'per minute') }),
+        kpiCard(tr('fighters.kpiCard.sapm', 'SApM'), fmtNum(profile.sapm, 2), { hint: tr('fighters.hint.perMinute', 'per minute') }),
+        kpiCard(tr('fighters.kpiCard.strAcc', 'Str Acc'), fmtPct(profile.str_acc), { pct: pctValue(profile.str_acc), tone: 'pct' }),
+        kpiCard(tr('fighters.kpiCard.strDef', 'Str Def'), fmtPct(profile.str_def), { pct: pctValue(profile.str_def), tone: 'pct' }),
+        kpiCard(tr('fighters.kpiCard.tdAvg', 'TD Avg'), fmtNum(profile.td_avg, 2), { hint: tr('fighters.hint.per15', 'per 15 min') }),
+        kpiCard(tr('fighters.kpiCard.tdAcc', 'TD Acc'), fmtPct(profile.td_acc), { pct: pctValue(profile.td_acc), tone: 'pct' }),
+        kpiCard(tr('fighters.kpiCard.tdDef', 'TD Def'), fmtPct(profile.td_def), { pct: pctValue(profile.td_def), tone: 'pct' }),
+        kpiCard(tr('fighters.kpiCard.subAvg', 'Sub Avg'), fmtNum(profile.sub_avg, 2), { hint: tr('fighters.hint.per15', 'per 15 min') }),
       ].join('');
 
       methodList.innerHTML = [
-        kpiCard('KO/TKO Wins', fmtInt(profile.ko_wins), { tone: 'count' }),
-        kpiCard('Submission Wins', fmtInt(profile.sub_wins), { tone: 'count' }),
-        kpiCard('Decision Wins', fmtInt(profile.dec_wins), { tone: 'count' }),
-        kpiCard('Bonuses', fmtInt(profile.bonuses_won_count), { tone: 'accent' }),
-        kpiCard('Bayes KO/TKO', fmtPct(profile.ko_rate_win_shrunk), { pct: pctValue(profile.ko_rate_win_shrunk), tone: 'pct' }),
-        kpiCard('Bayes Sub', fmtPct(profile.sub_rate_win_shrunk), { pct: pctValue(profile.sub_rate_win_shrunk), tone: 'pct' }),
-        kpiCard('Bayes Finish', fmtPct(profile.finish_rate_win_shrunk), { pct: pctValue(profile.finish_rate_win_shrunk), tone: 'pct' }),
-        kpiCard('Method Sample', fmtInt(profile.wins_method_known_count), { hint: 'fights' }),
+        kpiCard(tr('fighters.kpiCard.koTkoWins', 'KO/TKO Wins'), fmtInt(profile.ko_wins), { tone: 'count' }),
+        kpiCard(tr('fighters.kpiCard.submissionWins', 'Submission Wins'), fmtInt(profile.sub_wins), { tone: 'count' }),
+        kpiCard(tr('fighters.kpiCard.decisionWins', 'Decision Wins'), fmtInt(profile.dec_wins), { tone: 'count' }),
+        kpiCard(tr('fighters.kpiCard.bonuses', 'Bonuses'), fmtInt(profile.bonuses_won_count), { tone: 'accent' }),
+        kpiCard(tr('fighters.kpiCard.bayesKoTko', 'Bayes KO/TKO'), fmtPct(profile.ko_rate_win_shrunk), { pct: pctValue(profile.ko_rate_win_shrunk), tone: 'pct' }),
+        kpiCard(tr('fighters.kpiCard.bayesSub', 'Bayes Sub'), fmtPct(profile.sub_rate_win_shrunk), { pct: pctValue(profile.sub_rate_win_shrunk), tone: 'pct' }),
+        kpiCard(tr('fighters.kpiCard.bayesFinish', 'Bayes Finish'), fmtPct(profile.finish_rate_win_shrunk), { pct: pctValue(profile.finish_rate_win_shrunk), tone: 'pct' }),
+        kpiCard(tr('fighters.kpiCard.methodSample', 'Method Sample'), fmtInt(profile.wins_method_known_count), { hint: tr('fighters.hint.fights', 'fights') }),
       ].join('');
 
       const rows = history[profile.fighter_id] || [];
-      historyCount.textContent = `${rows.length.toLocaleString()} fight${rows.length === 1 ? '' : 's'}`;
+      historyCount.textContent = `${rows.length.toLocaleString()} ${rows.length === 1 ? tr('fighters.count.fight', 'fight') : tr('fighters.count.fights', 'fights')}`;
 
       // Wire CSV download for this fighter
       if (csvBtn) {
@@ -433,7 +436,7 @@ const historyRows = fighterData.debug.historyCount;
       }
 
       if (!rows.length) {
-        historyBody.innerHTML = `<tr><td colspan="11" class="fp-history-empty">No fight history available yet.</td></tr>`;
+        historyBody.innerHTML = `<tr><td colspan="11" class="fp-history-empty">${escapeHtml(tr('fighters.history.empty', 'No fight history available yet.'))}</td></tr>`;
         return;
       }
 
@@ -515,6 +518,7 @@ const historyRows = fighterData.debug.historyCount;
 
     search?.addEventListener('input', renderList);
     status?.addEventListener('change', renderList);
+    window.addEventListener('fp-lang-change', renderList);
     fighterSelect?.addEventListener('change', () => {
       const profile = filteredProfiles().find((candidate) => candidate.fighter_id === fighterSelect.value);
       if (profile) {

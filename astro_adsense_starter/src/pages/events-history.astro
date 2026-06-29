@@ -20,30 +20,30 @@ const pastEvents = totalEvents - upcomingEvents;
   <article class="fp-events-page">
     <header class="fp-tool-hero">
       <a class="fp-tool-breadcrumb" href="/">← Fight Prophet</a>
-      <p class="fp-section-label">Events History</p>
-      <h1>UFC &amp; MMA Events History</h1>
-      <p>
+      <p class="fp-section-label" data-i18n="events.eyebrow">Events History</p>
+      <h1 data-i18n="events.title">UFC &amp; MMA Events History</h1>
+      <p data-i18n="events.intro">
         Browse tracked cards with fight-level results, model signal, market context, and event summaries from the same dashboard exports that power the analytics app.
       </p>
       <div class="fp-kpi-strip" aria-label="Events archive summary">
         <div class="fp-kpi-item">
           <div class="fp-kpi-icon"><img src="/branding/b91c1c-events-emoji.png" alt="" width="42" height="42" /></div>
-          <div class="fp-kpi-label">Events</div>
+          <div class="fp-kpi-label" data-i18n="events.kpi.events">Events</div>
           <div class="fp-kpi-value">{totalEvents.toLocaleString()}</div>
         </div>
         <div class="fp-kpi-item">
           <div class="fp-kpi-icon"><img src="/branding/b91c1c-fights-emoji.png" alt="" width="42" height="42" /></div>
-          <div class="fp-kpi-label">Fight Rows</div>
+          <div class="fp-kpi-label" data-i18n="events.kpi.fightRows">Fight Rows</div>
           <div class="fp-kpi-value">{totalFights.toLocaleString()}</div>
         </div>
         <div class="fp-kpi-item">
           <div class="fp-kpi-icon"><img src="/branding/b91c1c-predictions-emoji.png" alt="" width="42" height="42" /></div>
-          <div class="fp-kpi-label">Upcoming</div>
+          <div class="fp-kpi-label" data-i18n="events.kpi.upcoming">Upcoming</div>
           <div class="fp-kpi-value">{upcomingEvents.toLocaleString()}</div>
         </div>
         <div class="fp-kpi-item">
           <div class="fp-kpi-icon"><img src="/branding/b91c1c-accuracy-emoji.png" alt="" width="42" height="42" /></div>
-          <div class="fp-kpi-label">Past</div>
+          <div class="fp-kpi-label" data-i18n="events.kpi.past">Past</div>
           <div class="fp-kpi-value">{pastEvents.toLocaleString()}</div>
         </div>
       </div>
@@ -53,21 +53,21 @@ const pastEvents = totalEvents - upcomingEvents;
       <>
         <section class="fp-tool-controls" aria-label="Event filters">
           <label>
-            <span>Search</span>
-            <input type="search" data-event-search placeholder="UFC 300, London, Holloway" autocomplete="off" />
+            <span data-i18n="events.controls.search">Search</span>
+            <input type="search" data-event-search placeholder="UFC 300, London, Holloway" data-i18n-placeholder="events.controls.searchPlaceholder" autocomplete="off" />
           </label>
           <label>
-            <span>Window</span>
+            <span data-i18n="events.controls.window">Window</span>
             <select data-event-phase>
-              <option value="All">All</option>
-              <option value="Upcoming">Upcoming</option>
-              <option value="Past">Past</option>
+              <option value="All" data-i18n="events.controls.all">All</option>
+              <option value="Upcoming" data-i18n="events.controls.upcoming">Upcoming</option>
+              <option value="Past" data-i18n="events.controls.past">Past</option>
             </select>
           </label>
           <label>
-            <span>Location</span>
+            <span data-i18n="events.controls.location">Location</span>
             <select data-event-location>
-              <option value="All">All locations</option>
+              <option value="All" data-i18n="events.controls.allLocations">All locations</option>
             </select>
           </label>
         </section>
@@ -75,14 +75,14 @@ const pastEvents = totalEvents - upcomingEvents;
         <div class="fp-events-layout">
           <section class="fp-events-list-panel" aria-label="Matching events">
             <div class="fp-panel-head">
-              <h2>Event Archive</h2>
+              <h2 data-i18n="events.archive.title">Event Archive</h2>
               <span data-event-match-count>{totalEvents.toLocaleString()} events</span>
             </div>
             <label class="fp-event-select-label">
-              <span>Choose event</span>
-              <select data-event-select aria-label="Choose event"></select>
+              <span data-i18n="events.archive.choose">Choose event</span>
+              <select data-event-select aria-label="Choose event" data-i18n-aria-label="events.archive.choose"></select>
             </label>
-            <p class="fp-list-empty" data-event-empty hidden>No events match these filters.</p>
+            <p class="fp-list-empty" data-event-empty data-i18n="events.archive.empty" hidden>No events match these filters.</p>
           </section>
 
           <section class="fp-event-detail" aria-live="polite">
@@ -95,24 +95,24 @@ const pastEvents = totalEvents - upcomingEvents;
             </div>
 
             <div class="fp-event-kpis">
-              <div><span>Date</span><strong data-kpi-date>—</strong></div>
-              <div><span>Fights</span><strong data-kpi-fights>—</strong></div>
-              <div><span>Fighters</span><strong data-kpi-fighters>—</strong></div>
-              <div><span>Model Hit Rate</span><strong data-kpi-model>—</strong></div>
+              <div><span data-i18n="events.detail.date">Date</span><strong data-kpi-date>—</strong></div>
+              <div><span data-i18n="events.detail.fights">Fights</span><strong data-kpi-fights>—</strong></div>
+              <div><span data-i18n="events.detail.fighters">Fighters</span><strong data-kpi-fighters>—</strong></div>
+              <div><span data-i18n="events.detail.modelHitRate">Model Hit Rate</span><strong data-kpi-model>—</strong></div>
             </div>
 
             <div class="fp-table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Fight</th>
-                    <th>Winner</th>
-                    <th>Signal</th>
-                    <th>Model</th>
-                    <th>Market</th>
-                    <th>Edge</th>
-                    <th title="Realized return on a 1-unit bet on the model's pick, at the captured odds">Bet ROI</th>
+                    <th data-i18n="events.table.date">Date</th>
+                    <th data-i18n="events.table.fight">Fight</th>
+                    <th data-i18n="events.table.winner">Winner</th>
+                    <th data-i18n="events.table.signal">Signal</th>
+                    <th data-i18n="events.table.model">Model</th>
+                    <th data-i18n="events.table.market">Market</th>
+                    <th data-i18n="events.table.edge">Edge</th>
+                    <th title="Realized return on a 1-unit bet on the model's pick, at the captured odds" data-i18n="events.table.betRoi" data-i18n-title="events.table.betRoiTitle">Bet ROI</th>
                   </tr>
                 </thead>
                 <tbody data-fight-table></tbody>
@@ -123,8 +123,8 @@ const pastEvents = totalEvents - upcomingEvents;
       </>
     ) : (
       <section class="fp-empty-state">
-        <strong>Events history is temporarily unavailable.</strong>
-        <span>The public archive reads from the exported dashboard parquet feed. If this is empty, the latest export has not landed yet.</span>
+        <strong data-i18n="events.empty.title">Events history is temporarily unavailable.</strong>
+        <span data-i18n="events.empty.copy">The public archive reads from the exported dashboard parquet feed. If this is empty, the latest export has not landed yet.</span>
       </section>
     )}
   </article>
@@ -155,6 +155,8 @@ const pastEvents = totalEvents - upcomingEvents;
     const kpiFights = document.querySelector('[data-kpi-fights]');
     const kpiFighters = document.querySelector('[data-kpi-fighters]');
     const kpiModel = document.querySelector('[data-kpi-model]');
+
+    const tr = (key, fallback) => window.__fpT ? window.__fpT(key, fallback) : fallback;
 
     let selectedEvent = events.find((event) => event.event_phase === 'Upcoming') || events[0];
 
@@ -209,7 +211,7 @@ const pastEvents = totalEvents - upcomingEvents;
 
     function selectEvent(event) {
       selectedEvent = event;
-      selectedName.textContent = event.event_name || 'Event';
+      selectedName.textContent = event.event_name || tr('events.detail.eventFallback', 'Event');
       selectedMeta.textContent = [event.location, event.event_phase].filter(Boolean).join(' / ');
       selectedPhase.textContent = event.event_phase || '';
       selectedPhase.classList.toggle('is-upcoming', event.event_phase === 'Upcoming');
@@ -220,7 +222,7 @@ const pastEvents = totalEvents - upcomingEvents;
 
       const rows = fights.filter((fight) => fight.event_name === event.event_name);
       if (!rows.length) {
-        fightTable.innerHTML = '<tr><td colspan="8">Fight-level rows are not available for this event yet.</td></tr>';
+        fightTable.innerHTML = `<tr><td colspan="8">${escapeHtml(tr('events.detail.noFights', 'Fight-level rows are not available for this event yet.'))}</td></tr>`;
         return;
       }
       const isUpcoming = event.event_phase === 'Upcoming';
@@ -228,7 +230,7 @@ const pastEvents = totalEvents - upcomingEvents;
         const winner = fight.winner_name_display || '';
         const fLink = (n) => n ? `<a class="fp-ft-link" href="/fighter-stats/?fighter=${encodeURIComponent(n)}">${escapeHtml(n)}</a>` : escapeHtml(n) || '—';
         const winnerCell = isUpcoming || !winner
-          ? `<span class="fp-winner-tbd">${winner ? escapeHtml(winner) : 'TBD'}</span>`
+          ? `<span class="fp-winner-tbd">${winner ? escapeHtml(winner) : escapeHtml(tr('events.detail.tbd', 'TBD'))}</span>`
           : `<span class="fp-winner-badge">✓ ${fLink(winner)}</span>`;
         const sigCls = { STRONG: 'sig-s', MEDIUM: 'sig-m', WEAK: 'sig-w' }[String(fight.signal_strength).toUpperCase()] || '';
         const sigBadge = fight.signal_strength
@@ -238,7 +240,7 @@ const pastEvents = totalEvents - upcomingEvents;
           <td>${escapeHtml(fight.event_date || event.event_date || '')}</td>
           <td>
             <span class="fp-matchup-fighters">${fLink(fight.fighter_name_display || 'TBD')}</span>
-            ${fight.opponent_name_display ? `<span class="fp-matchup-vs">vs ${fLink(fight.opponent_name_display)}</span>` : ''}
+            ${fight.opponent_name_display ? `<span class="fp-matchup-vs">${escapeHtml(tr('events.table.vs', 'vs'))} ${fLink(fight.opponent_name_display)}</span>` : ''}
           </td>
           <td>${winnerCell}</td>
           <td>${sigBadge}</td>
@@ -252,7 +254,7 @@ const pastEvents = totalEvents - upcomingEvents;
 
     function renderList() {
       const rows = filteredEvents();
-      matchCount.textContent = `${rows.length.toLocaleString()} events`;
+      matchCount.textContent = `${rows.length.toLocaleString()} ${tr('events.count.events', 'events')}`;
       if (!rows.some((event) => event.event_name === selectedEvent.event_name)) {
         selectedEvent = rows[0] || events[0];
       }
@@ -271,6 +273,7 @@ const pastEvents = totalEvents - upcomingEvents;
     search?.addEventListener('input', renderList);
     phase?.addEventListener('change', renderList);
     location?.addEventListener('change', renderList);
+    window.addEventListener('fp-lang-change', renderList);
     eventSelect?.addEventListener('change', () => {
       const event = filteredEvents().find((candidate) => candidate.event_name === eventSelect.value);
       if (event) {

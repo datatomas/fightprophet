@@ -4,6 +4,13 @@ interface Props {
   title: string;
   intro: string;
   updated?: string;
+  i18n?: {
+    eyebrow?: string;
+    title?: string;
+    intro?: string;
+    updatedPrefix?: string;
+    updated?: string;
+  };
 }
 
 const {
@@ -11,16 +18,21 @@ const {
   title,
   intro,
   updated = '',
+  i18n = {},
 } = Astro.props as Props;
 ---
 
 <article class="fp-content-page">
   <header class="fp-content-header">
     <a class="fp-content-breadcrumb" href="/">Fight Prophet</a>
-    <p class="fp-content-eyebrow">{eyebrow}</p>
-    <h1>{title}</h1>
-    <p class="fp-content-intro">{intro}</p>
-    {updated && <p class="fp-content-updated">Last updated: {updated}</p>}
+    <p class="fp-content-eyebrow" data-i18n={i18n.eyebrow}>{eyebrow}</p>
+    <h1 data-i18n={i18n.title}>{title}</h1>
+    <p class="fp-content-intro" data-i18n={i18n.intro}>{intro}</p>
+    {updated && (
+      <p class="fp-content-updated">
+        <span data-i18n={i18n.updatedPrefix}>Last updated:</span> <span data-i18n={i18n.updated}>{updated}</span>
+      </p>
+    )}
   </header>
   <div class="fp-content-body">
     <slot />

@@ -1,5 +1,6 @@
 ---
 import type { CountryEntry, CountryMasterIndex } from '../lib/country-master';
+import { fighterImageUrl, getFighterImagesBaseUrl } from '../lib/fighter-images';
 
 interface Props {
   name: string;
@@ -41,6 +42,7 @@ const {
 
 const profileUrl = `/fighter-stats/?fighter=${encodeURIComponent(name)}`;
 const countryIndex = ((Astro.locals.countryMaster as CountryMasterIndex | undefined)?.byAlias ?? {});
+const fighterImagesBaseUrl = getFighterImagesBaseUrl(Astro.locals.runtime?.env);
 
 function normalizeCountryKey(value: string): string {
   return value.trim().toUpperCase();
@@ -134,6 +136,7 @@ const canonicalCountryValue = canonicalCountry(country);
 const flag = flagFor(country);
 const countryCompact = countryShort(country);
 const init = initials(name);
+const imageUrl = fighterImageUrl(fighterId, fighterImagesBaseUrl);
 const wcAbbr = divisionAbbrev(weightClass);
 const divisionLabel = weightClass.trim();
 const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(losses)}` : '';
@@ -183,8 +186,14 @@ const typeLine = [divisionLabel || 'MMA Fighter', canonicalCountryValue]
   </header>
 
   <div class="fp-card-portrait">
-    <span class="fp-card-portrait-silhouette" aria-hidden="true">👤</span>
-    <span class="fp-card-initials" aria-hidden="true">{init}</span>
+    {imageUrl ? (
+      <img class="fp-card-photo" src={imageUrl} alt="" loading="lazy" decoding="async" aria-hidden="true" />
+    ) : (
+      <>
+        <span class="fp-card-portrait-silhouette" aria-hidden="true">👤</span>
+        <span class="fp-card-initials" aria-hidden="true">{init}</span>
+      </>
+    )}
     {isChampion && <span class="fp-card-crown" aria-label="Current champion">👑</span>}
   </div>
 
@@ -350,6 +359,15 @@ const typeLine = [divisionLabel || 'MMA Fighter', canonicalCountryValue]
     opacity: 0.18;
     line-height: 1;
     filter: blur(0.35px);
+  }
+  .fp-card-photo {
+    position: absolute;
+    inset: 0.12rem;
+    width: calc(100% - 0.24rem);
+    height: calc(100% - 0.24rem);
+    object-fit: contain;
+    object-position: center bottom;
+    filter: drop-shadow(0 12px 16px rgba(0, 0, 0, 0.58));
   }
   .is-champ .fp-card-portrait-silhouette {
     opacity: 0.24;

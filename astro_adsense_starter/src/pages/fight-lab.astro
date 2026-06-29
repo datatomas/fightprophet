@@ -20,9 +20,9 @@ const hasData = labData.catboost.rows.length > 0;
     <!-- ── HERO ── -->
     <header class="fp-tool-hero">
       <a class="fp-tool-breadcrumb" href="/">← Fight Prophet</a>
-      <p class="fp-section-label">Fight Lab</p>
-      <h1>Historical Picks &amp; Model Metrics</h1>
-      <p class="fp-hero-copy">
+      <p class="fp-section-label" data-i18n="lab.eyebrow">Fight Lab</p>
+      <h1 data-i18n="lab.title">Historical Picks &amp; Model Metrics</h1>
+      <p class="fp-hero-copy" data-i18n="lab.intro">
         Every past prediction is logged with the actual outcome so you can validate calibration, accuracy, and edge
         across thousands of historical MMA bouts. Compare Ensemble, CatBoost, and LogReg on the same fights.
       </p>
@@ -34,35 +34,35 @@ const hasData = labData.catboost.rows.length > 0;
         <div class="fp-kpi-strip">
           <div class="fp-kpi-item">
             <div class="fp-kpi-icon"><img src="/branding/b91c1c-accuracy-emoji.png" alt="" width="46" height="46" /></div>
-            <div class="fp-kpi-label">Overall Accuracy</div>
+            <div class="fp-kpi-label" data-i18n="lab.kpi.overallAccuracy">Overall Accuracy</div>
             <div class="fp-kpi-value" data-kpi-accuracy>
               {stats.accuracy != null ? `${(stats.accuracy * 100).toFixed(1)}%` : '—'}
             </div>
           </div>
           <div class="fp-kpi-item">
             <div class="fp-kpi-icon"><img src="/branding/b91c1c-predictions-emoji-rail.png" alt="" width="46" height="46" /></div>
-            <div class="fp-kpi-label">Total Predictions</div>
+            <div class="fp-kpi-label" data-i18n="lab.kpi.totalPredictions">Total Predictions</div>
             <div class="fp-kpi-value" data-kpi-total>
               {stats.total_fights?.toLocaleString() ?? '—'}
             </div>
           </div>
           <div class="fp-kpi-item">
             <div class="fp-kpi-icon"><img src="/branding/b91c1c-correct-emoji.png" alt="" width="46" height="46" /></div>
-            <div class="fp-kpi-label">Correct Picks</div>
+            <div class="fp-kpi-label" data-i18n="lab.kpi.correctPicks">Correct Picks</div>
             <div class="fp-kpi-value" data-kpi-correct>
               {stats.correct_picks?.toLocaleString() ?? '—'}
             </div>
           </div>
           <div class="fp-kpi-item">
             <div class="fp-kpi-icon"><img src="/branding/b91c1c-incorrect-emoji.png" alt="" width="46" height="46" /></div>
-            <div class="fp-kpi-label">Wrong Picks</div>
+            <div class="fp-kpi-label" data-i18n="lab.kpi.wrongPicks">Wrong Picks</div>
             <div class="fp-kpi-value" data-kpi-wrong>
               {stats.wrong_picks?.toLocaleString() ?? '—'}
             </div>
           </div>
           <div class="fp-kpi-item">
             <div class="fp-kpi-icon"><img src="/branding/b91c1c-events-emoji-rail.png" alt="" width="46" height="46" /></div>
-            <div class="fp-kpi-label">Events Covered</div>
+            <div class="fp-kpi-label" data-i18n="lab.kpi.eventsCovered">Events Covered</div>
             <div class="fp-kpi-value" data-kpi-events>
               {stats.events_covered?.toLocaleString() ?? '—'}
             </div>
@@ -77,57 +77,57 @@ const hasData = labData.catboost.rows.length > 0;
             <button type="button" class="fp-model-btn" data-model="logreg">LogReg</button>
           </div>
           <label>
-            <span>Signal</span>
+            <span data-i18n="lab.controls.signal">Signal</span>
             <select data-lab-signal>
-              <option value="All">All signals</option>
-              <option value="STRONG">Strong</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="WEAK">Weak</option>
+              <option value="All" data-i18n="lab.controls.allSignals">All signals</option>
+              <option value="STRONG" data-i18n="lab.signal.strong">Strong</option>
+              <option value="MEDIUM" data-i18n="lab.signal.medium">Medium</option>
+              <option value="WEAK" data-i18n="lab.signal.weak">Weak</option>
             </select>
           </label>
           <label>
-            <span>Result</span>
+            <span data-i18n="lab.controls.result">Result</span>
             <select data-lab-result>
-              <option value="All">All results</option>
-              <option value="correct">Correct</option>
-              <option value="wrong">Wrong</option>
+              <option value="All" data-i18n="lab.controls.allResults">All results</option>
+              <option value="correct" data-i18n="lab.result.correct">Correct</option>
+              <option value="wrong" data-i18n="lab.result.wrong">Wrong</option>
             </select>
           </label>
           <label>
-            <span>Search</span>
-            <input type="search" data-lab-search placeholder="Fighter, event, weight class" autocomplete="off" />
+            <span data-i18n="lab.controls.search">Search</span>
+            <input type="search" data-lab-search placeholder="Fighter, event, weight class" data-i18n-placeholder="lab.controls.searchPlaceholder" autocomplete="off" />
           </label>
         </section>
 
         <!-- ── MODEL STATS BAND ── -->
         <div class="fp-stats-band">
-          <div class="fp-stats-cell"><span>Accuracy</span><strong data-stat-accuracy>—</strong></div>
-          <div class="fp-stats-cell"><span>F1</span><strong data-stat-f1>—</strong></div>
-          <div class="fp-stats-cell"><span>AUC</span><strong data-stat-auc>—</strong></div>
-          <div class="fp-stats-cell"><span>Brier</span><strong data-stat-brier>—</strong></div>
-          <div class="fp-stats-cell"><span>Log Loss</span><strong data-stat-logloss>—</strong></div>
-          <div class="fp-stats-cell"><span>Total Picks</span><strong data-stat-total>—</strong></div>
+          <div class="fp-stats-cell"><span data-i18n="lab.stats.accuracy">Accuracy</span><strong data-stat-accuracy>—</strong></div>
+          <div class="fp-stats-cell"><span data-i18n="lab.stats.f1">F1</span><strong data-stat-f1>—</strong></div>
+          <div class="fp-stats-cell"><span data-i18n="lab.stats.auc">AUC</span><strong data-stat-auc>—</strong></div>
+          <div class="fp-stats-cell"><span data-i18n="lab.stats.brier">Brier</span><strong data-stat-brier>—</strong></div>
+          <div class="fp-stats-cell"><span data-i18n="lab.stats.logLoss">Log Loss</span><strong data-stat-logloss>—</strong></div>
+          <div class="fp-stats-cell"><span data-i18n="lab.stats.totalPicks">Total Picks</span><strong data-stat-total>—</strong></div>
         </div>
 
         <!-- ── PICKS TABLE ── -->
         <section class="fp-picks-panel">
           <div class="fp-panel-head">
-            <h2>Historical Picks</h2>
+            <h2 data-i18n="lab.table.title">Historical Picks</h2>
             <span data-lab-match-count></span>
           </div>
           <div class="fp-table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Date / Event</th>
-                  <th>Fighter</th>
-                  <th>Opponent</th>
-                  <th>Bet On</th>
-                  <th>Winner</th>
-                  <th>Result</th>
-                  <th>Model %</th>
-                  <th>Edge</th>
-                  <th>Signal</th>
+                  <th data-i18n="lab.table.dateEvent">Date / Event</th>
+                  <th data-i18n="lab.table.fighter">Fighter</th>
+                  <th data-i18n="lab.table.opponent">Opponent</th>
+                  <th data-i18n="lab.table.betOn">Bet On</th>
+                  <th data-i18n="lab.table.winner">Winner</th>
+                  <th data-i18n="lab.table.result">Result</th>
+                  <th data-i18n="lab.table.modelPercent">Model %</th>
+                  <th data-i18n="lab.table.edge">Edge</th>
+                  <th data-i18n="lab.table.signal">Signal</th>
                 </tr>
               </thead>
               <tbody data-lab-table></tbody>
@@ -138,8 +138,8 @@ const hasData = labData.catboost.rows.length > 0;
       </>
     ) : (
       <section class="fp-empty-state">
-        <strong>Fight Lab data is temporarily unavailable.</strong>
-        <span>The historical picks feed reads from the exported dashboard parquet. Check back once the latest export has landed.</span>
+        <strong data-i18n="lab.empty.title">Fight Lab data is temporarily unavailable.</strong>
+        <span data-i18n="lab.empty.copy">The historical picks feed reads from the exported dashboard parquet. Check back once the latest export has landed.</span>
       </section>
     )}
   </article>
@@ -177,6 +177,8 @@ const hasData = labData.catboost.rows.length > 0;
 
     const MAX_ROWS = 500;
     let currentModel = 'catboost';
+
+    const tr = (key, fallback) => window.__fpT ? window.__fpT(key, fallback) : fallback;
 
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) =>
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -239,13 +241,15 @@ const hasData = labData.catboost.rows.length > 0;
     function render() {
       const rows = filtered();
       const shown = rows.slice(0, MAX_ROWS);
-      if (matchCount) matchCount.textContent = `${rows.length.toLocaleString()} picks`;
+      if (matchCount) matchCount.textContent = `${rows.length.toLocaleString()} ${tr('lab.count.picks', 'picks')}`;
       if (labNote) labNote.textContent = rows.length > MAX_ROWS
-        ? `Showing first ${MAX_ROWS.toLocaleString()} of ${rows.length.toLocaleString()} — use filters to narrow.`
+        ? tr('lab.note.showingFirst', `Showing first ${MAX_ROWS.toLocaleString()} of ${rows.length.toLocaleString()} — use filters to narrow.`)
+            .replace('{max}', MAX_ROWS.toLocaleString())
+            .replace('{total}', rows.length.toLocaleString())
         : '';
 
       if (!shown.length) {
-        tbody.innerHTML = '<tr><td colspan="9" class="fp-empty-row">No picks match the current filters.</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="9" class="fp-empty-row">${esc(tr('lab.empty.noPicks', 'No picks match the current filters.'))}</td></tr>`;
         return;
       }
 
@@ -253,8 +257,8 @@ const hasData = labData.catboost.rows.length > 0;
         const resultBadge = r.model_correct == null
           ? '<span class="fp-badge fp-badge-neutral">—</span>'
           : r.model_correct
-            ? '<span class="fp-badge fp-badge-correct"><img src="/branding/b91c1c-correct-emoji.png" alt="" width="13" height="13" /> Correct</span>'
-            : '<span class="fp-badge fp-badge-wrong"><img src="/branding/b91c1c-incorrect-emoji.png" alt="" width="13" height="13" /> Wrong</span>';
+            ? `<span class="fp-badge fp-badge-correct"><img src="/branding/b91c1c-correct-emoji.png" alt="" width="13" height="13" /> ${esc(tr('lab.result.correct', 'Correct'))}</span>`
+            : `<span class="fp-badge fp-badge-wrong"><img src="/branding/b91c1c-incorrect-emoji.png" alt="" width="13" height="13" /> ${esc(tr('lab.result.wrong', 'Wrong'))}</span>`;
 
         const sigBadge = r.signal_strength
           ? `<span class="fp-sig ${esc(sigCls(r.signal_strength))}">${esc(r.signal_strength)}</span>`
@@ -293,6 +297,7 @@ const hasData = labData.catboost.rows.length > 0;
     signalSel?.addEventListener('change', render);
     resultSel?.addEventListener('change', render);
     searchIn?.addEventListener('input', render);
+    window.addEventListener('fp-lang-change', render);
 
     updateKpisAndStats(labData.catboost);
     render();

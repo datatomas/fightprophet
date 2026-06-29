@@ -1,6 +1,6 @@
 ---
 import AdSenseScript from '../components/AdSenseScript.astro';
-import { getLangFromUrl, useTranslations, localizeUrl, switchLocalePath, stripLocale, isLocalized, availableLocales, localeFlags, localeTitles, defaultLang, locales } from '../lib/i18n';
+import { getLangFromUrl, useTranslations, localizeUrl, switchLocalePath, stripLocale, isLocalized, availableLocales, localeFlags, localeTitles, defaultLang, locales, ui } from '../lib/i18n';
 
 interface Props {
   title?: string;
@@ -268,6 +268,7 @@ const structuredData = [
   </body>
 </html>
 
+<script type="application/json" id="fp-i18n-dictionaries" set:html={JSON.stringify(ui).replace(/</g, '\\u003c')}></script>
 <script is:inline>
   (() => {
     const DESKTOP_BP = 901;
@@ -355,6 +356,7 @@ const structuredData = [
     const cookieLang = normalizeLang(readCookie(FP_LANG_KEY));
     const localLang = normalizeLang(localStorage.getItem(FP_LANG_KEY));
     const initialLang = queryLang || cookieLang || localLang || 'en';
+    let currentLang = initialLang;
 
     const persistLang = (lang) => {
       const safe = normalizeLang(lang) || 'en';
@@ -369,6 +371,35 @@ const structuredData = [
       ru: 'Made in Colombia',
       ka: 'Made in Colombia',
     };
+    const dictionaries = (() => {
+      const node = document.getElementById('fp-i18n-dictionaries');
+      try { return JSON.parse(node?.textContent || '{}'); } catch { return {}; }
+    })();
+    const t = (key, lang) => {
+      const safe = normalizeLang(lang) || 'en';
+      return dictionaries?.[safe]?.[key] || dictionaries?.en?.[key] || '';
+    };
+    window.__fpT = (key, fallback = '', lang = currentLang || initialLang) => t(key, lang) || fallback || key;
+
+    const applyPageTranslations = (lang) => {
+      const safe = normalizeLang(lang) || 'en';
+      document.querySelectorAll('[data-i18n]').forEach((el) => {
+        const text = t(el.getAttribute('data-i18n'), safe);
+        if (text) el.textContent = text;
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+        const text = t(el.getAttribute('data-i18n-placeholder'), safe);
+        if (text) el.setAttribute('placeholder', text);
+      });
+      document.querySelectorAll('[data-i18n-aria-label]').forEach((el) => {
+        const text = t(el.getAttribute('data-i18n-aria-label'), safe);
+        if (text) el.setAttribute('aria-label', text);
+      });
+      document.querySelectorAll('[data-i18n-title]').forEach((el) => {
+        const text = t(el.getAttribute('data-i18n-title'), safe);
+        if (text) el.setAttribute('title', text);
+      });
+    };
 
     const applyLangChrome = (lang) => {
       const safe = normalizeLang(lang) || 'en';
@@ -379,12 +410,12 @@ const structuredData = [
       document.querySelectorAll('[data-i18n-made-in]').forEach((el) => {
         el.textContent = MADE_IN_COPY[safe] || MADE_IN_COPY.en;
       });
+      applyPageTranslations(safe);
     };
 
     persistLang(initialLang);
     applyLangChrome(initialLang);
 
-    let currentLang = initialLang;
     const announceLang = (lang) => {
       currentLang = lang;
       window.dispatchEvent(new CustomEvent('fp-lang-change', { detail: { lang } }));

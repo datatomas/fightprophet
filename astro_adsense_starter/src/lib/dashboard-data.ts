@@ -165,6 +165,8 @@ export interface UpcomingFightRow {
   event_name: string;
   event_date: string;
   location: string;
+  fighter_id: string;
+  opponent_id: string;
   fighter_name_display: string;
   opponent_name_display: string;
   weight_class: string;
@@ -538,6 +540,7 @@ function fillUpcomingSideFromProfile(
   if (!profile) return;
   const prefix = side === 'fighter' ? 'fighter' : 'opponent';
   const countryKey = `${prefix}_country` as 'fighter_country' | 'opponent_country';
+  const idKey = `${prefix}_id` as 'fighter_id' | 'opponent_id';
   const isChampionKey = `${prefix}_is_champion` as 'fighter_is_champion' | 'opponent_is_champion';
   const statusKey = `${prefix}_status` as 'fighter_status' | 'opponent_status';
   const winsKey = `${prefix}_wins` as 'fighter_wins' | 'opponent_wins';
@@ -547,6 +550,7 @@ function fillUpcomingSideFromProfile(
   const winStreakKey = `${prefix}_win_streak` as 'fighter_win_streak' | 'opponent_win_streak';
   const lossStreakKey = `${prefix}_loss_streak` as 'fighter_loss_streak' | 'opponent_loss_streak';
 
+  fight[idKey] ||= profile.fighter_id;
   fight[countryKey] ||= profile.country;
   fight[isChampionKey] ||= profile.is_current_champion;
   fight[statusKey] ||= profile.fighter_status;
@@ -599,6 +603,7 @@ function fillUpcomingSideFromRanking(
   if (!record) return;
   const prefix = side === 'fighter' ? 'fighter' : 'opponent';
   const countryKey = `${prefix}_country` as 'fighter_country' | 'opponent_country';
+  const idKey = `${prefix}_id` as 'fighter_id' | 'opponent_id';
   const flagKey = `${prefix}_flag` as 'fighter_flag' | 'opponent_flag';
   const isChampionKey = `${prefix}_is_champion` as 'fighter_is_champion' | 'opponent_is_champion';
   const statusKey = `${prefix}_status` as 'fighter_status' | 'opponent_status';
@@ -609,6 +614,7 @@ function fillUpcomingSideFromRanking(
   const winStreakKey = `${prefix}_win_streak` as 'fighter_win_streak' | 'opponent_win_streak';
   const lossStreakKey = `${prefix}_loss_streak` as 'fighter_loss_streak' | 'opponent_loss_streak';
 
+  fight[idKey] ||= record.fighter_id || '';
   fight[countryKey] ||= countryName(countryIndex.byAlias, record.country || record.country_iso2);
   fight[flagKey] ||= flagEmojiFor(countryIndex.byAlias, record.country_iso2 || record.country);
   fight[isChampionKey] ||= !!record.is_champion;
@@ -1006,6 +1012,7 @@ export async function getUpcomingPredictionsData(env?: RuntimeEnv): Promise<Upco
 
   const columns = [
     'event_name', 'event_date', 'location',
+    'fighter_id', 'opponent_id',
     'fighter_name_display', 'opponent_name_display',
     'weight_class',
     'fighter_country', 'opponent_country',
@@ -1051,6 +1058,8 @@ export async function getUpcomingPredictionsData(env?: RuntimeEnv): Promise<Upco
         event_name: eventName,
         event_date: coerceDate(row.event_date),
         location: cleanStr(row.location),
+        fighter_id: cleanStr(row.fighter_id),
+        opponent_id: cleanStr(row.opponent_id),
         fighter_name_display: fighterName,
         opponent_name_display: opponentName,
         weight_class: cleanStr(row.weight_class),
@@ -1105,6 +1114,7 @@ export async function getAllModelsPredictionsData(env?: RuntimeEnv): Promise<All
 
   const columns = [
     'event_name', 'event_date', 'location',
+    'fighter_id', 'opponent_id',
     'fighter_name_display', 'opponent_name_display',
     'weight_class',
     'fighter_country', 'opponent_country',
@@ -1152,6 +1162,8 @@ export async function getAllModelsPredictionsData(env?: RuntimeEnv): Promise<All
           event_name: eventName,
           event_date: coerceDate(row.event_date),
           location: cleanStr(row.location),
+          fighter_id: cleanStr(row.fighter_id),
+          opponent_id: cleanStr(row.opponent_id),
           fighter_name_display: fighterName,
           opponent_name_display: cleanStr(row.opponent_name_display),
           weight_class: cleanStr(row.weight_class),

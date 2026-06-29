@@ -12,10 +12,17 @@ import ContentPage from '../components/ContentPage.astro';
     title="How To Read The Fight Prophet Rankings"
     intro="The live ranking board is on the homepage, and this page explains what the rankings measure, what they do not measure, and why the same engine is shown globally and by division."
     updated="May 17, 2026"
+    i18n={{
+      eyebrow: 'rankings.eyebrow',
+      title: 'rankings.title',
+      intro: 'rankings.intro',
+      updatedPrefix: 'rankings.updatedPrefix',
+      updated: 'rankings.updated',
+    }}
   >
     <section>
-      <h2>What The Rankings Measure</h2>
-      <p>
+      <h2 data-i18n="rankings.measure.title">What The Rankings Measure</h2>
+      <p data-i18n="rankings.measure.copy">
         Fight Prophet rankings are computed from fight-level data. The model rewards wins,
         opponent quality, finishes, title stakes, defenses, streaks, and long-term resume
         strength. It penalizes losses and inactivity so the active board does not simply
@@ -25,8 +32,8 @@ import ContentPage from '../components/ContentPage.astro';
 
     <div class="fp-content-grid">
       <section>
-        <h2>Global Board</h2>
-        <p>
+        <h2 data-i18n="rankings.global.title">Global Board</h2>
+        <p data-i18n="rankings.global.copy">
           The all-time board compares fighters across divisions with a common point scale.
           It is useful for legacy debates, but cross-era and cross-weight comparison always
           carries uncertainty.
@@ -34,8 +41,8 @@ import ContentPage from '../components/ContentPage.astro';
       </section>
 
       <section>
-        <h2>Division Boards</h2>
-        <p>
+        <h2 data-i18n="rankings.divisions.title">Division Boards</h2>
+        <p data-i18n="rankings.divisions.copy">
           Division views keep the same scoring logic but compare fighters inside one weight
           class. This makes the top fighter in a class easier to read without forcing every
           division into the same conversation.
@@ -44,20 +51,20 @@ import ContentPage from '../components/ContentPage.astro';
     </div>
 
     <section>
-      <h2>Known Limitations</h2>
+      <h2 data-i18n="rankings.limitations.title">Known Limitations</h2>
       <ul>
-        <li>Older records can be less complete than modern records.</li>
-        <li>Weight-class movement can make a fighter difficult to place cleanly.</li>
-        <li>Short-notice fights, injuries, and judging variance are not perfectly knowable.</li>
-        <li>Manual overrides may be needed for retirements, vacancies, and unusual events.</li>
+        <li data-i18n="rankings.limitations.olderRecords">Older records can be less complete than modern records.</li>
+        <li data-i18n="rankings.limitations.weightMovement">Weight-class movement can make a fighter difficult to place cleanly.</li>
+        <li data-i18n="rankings.limitations.variance">Short-notice fights, injuries, and judging variance are not perfectly knowable.</li>
+        <li data-i18n="rankings.limitations.overrides">Manual overrides may be needed for retirements, vacancies, and unusual events.</li>
       </ul>
     </section>
 
     <section class="fp-content-note">
-      <h2>Open The Board</h2>
+      <h2 data-i18n="rankings.open.title">Open The Board</h2>
       <ul class="fp-content-actions">
-        <li><a href="/#fp-rankings">View live rankings</a></li>
-        <li><a href="/about/">Read how Fight Prophet works</a></li>
+        <li><a href="/#fp-rankings" data-i18n="rankings.open.live">View live rankings</a></li>
+        <li><a href="/about/" data-i18n="rankings.open.about">Read how Fight Prophet works</a></li>
       </ul>
     </section>
   </ContentPage>

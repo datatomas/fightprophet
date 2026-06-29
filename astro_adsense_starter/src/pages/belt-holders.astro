@@ -2,9 +2,11 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { runtimeEnvFromLocals } from '../lib/country-master';
 import { getBeltHoldersData } from '../lib/champions';
+import { fighterImageUrl, getFighterImagesBaseUrl } from '../lib/fighter-images';
 
 const runtimeEnv = runtimeEnvFromLocals(Astro.locals);
 const beltData = await getBeltHoldersData(runtimeEnv);
+const fighterImagesBaseUrl = getFighterImagesBaseUrl(runtimeEnv);
 const { champions, titleHistory, manualVacates } = beltData;
 const pageJson = JSON.stringify({ titleHistory }).replace(/</g, '\\u003c');
 
@@ -63,9 +65,9 @@ const faqSchema = {
   <article class="fp-belts-page">
     <header class="fp-tool-hero">
       <a class="fp-tool-breadcrumb" href="/">← Fight Prophet</a>
-      <p class="fp-section-label">Belt Holders</p>
-      <h1>UFC Belt Holders & Title History</h1>
-      <p class="fp-hero-copy">
+      <p class="fp-section-label" data-i18n="belts.eyebrow">Belt Holders</p>
+      <h1 data-i18n="belts.title">UFC Belt Holders & Title History</h1>
+      <p class="fp-hero-copy" data-i18n="belts.intro">
         The current champions board and title lineage lives directly in Fight Prophet:
         active belts first, then manual title vacates and full title-fight history.
       </p>
@@ -82,17 +84,17 @@ const faqSchema = {
         <section class="fp-kpi-grid" aria-label="Belt holder summary">
           <div class="fp-kpi-card">
             <img src="/branding/b91c1c-weights-emoji.png" alt="" width="46" height="46" />
-            <span>Divisions</span>
+            <span data-i18n="belts.kpi.divisions">Divisions</span>
             <strong>{totalDivisions.toLocaleString()}</strong>
           </div>
           <div class="fp-kpi-card">
             <img src="/branding/b91c1c-activechampions-emoji.png" alt="" width="46" height="46" />
-            <span>Active Champions</span>
+            <span data-i18n="belts.kpi.activeChampions">Active Champions</span>
             <strong>{activeChampions.toLocaleString()}</strong>
           </div>
           <div class="fp-kpi-card">
             <img src="/branding/b91c1c-tittlefight-emoji.png" alt="" width="46" height="46" />
-            <span>Title Fights</span>
+            <span data-i18n="belts.kpi.titleFights">Title Fights</span>
             <strong>{totalTitleFights.toLocaleString()}</strong>
           </div>
         </section>
@@ -100,15 +102,17 @@ const faqSchema = {
         <section class="fp-panel">
           <div class="fp-panel-head">
             <div>
-              <p class="fp-section-label">Current Champions</p>
-              <h2>Current Champions</h2>
+              <p class="fp-section-label" data-i18n="belts.current.eyebrow">Current Champions</p>
+              <h2 data-i18n="belts.current.title">Current Champions</h2>
             </div>
           </div>
           <div class="fp-champion-grid">
             {champions.map((champ) => {
               const flag = flagEmoji(champ.country_iso2);
+              const imageUrl = champ.is_vacant ? '' : fighterImageUrl(champ.fighter_id, fighterImagesBaseUrl);
               return (
                 <a class={`fp-champion-card${champ.is_vacant ? ' is-vacant' : ''}`} href={champ.is_vacant ? '/belt-holders/' : fighterHref(champ.name)}>
+                  {imageUrl && <img class="fp-champ-image" src={imageUrl} alt="" loading="lazy" decoding="async" aria-hidden="true" />}
                   <span class="fp-champ-division">{champ.weight_class || 'Division'}</span>
                   <strong>{champ.name}</strong>
                   <span class="fp-champ-meta">
@@ -116,11 +120,11 @@ const faqSchema = {
                     {champ.country || (champ.is_vacant ? 'Vacant title' : 'Country pending')}
                   </span>
                   <span class="fp-champ-detail">
-                    <span>Won</span>
+                    <span data-i18n="belts.card.won">Won</span>
                     <b>{champ.title_won_date || '—'}</b>
                   </span>
                   <span class="fp-champ-detail">
-                    <span>Defenses</span>
+                    <span data-i18n="belts.card.defenses">Defenses</span>
                     <b>{champ.title_defenses ?? 0}</b>
                   </span>
                 </a>
@@ -132,22 +136,22 @@ const faqSchema = {
         <section class="fp-panel">
           <div class="fp-panel-head">
             <div>
-              <p class="fp-section-label">Champion Table</p>
-              <h2>Current Belt Table</h2>
+              <p class="fp-section-label" data-i18n="belts.table.eyebrow">Champion Table</p>
+              <h2 data-i18n="belts.table.title">Current Belt Table</h2>
             </div>
           </div>
           <div class="fp-table-wrap">
             <table class="fp-data-table">
               <thead>
                 <tr>
-                  <th>Ftr</th>
-                  <th>Division</th>
-                  <th>Champion</th>
-                  <th>Title Won</th>
-                  <th>Title Event</th>
-                  <th>Defenses</th>
-                  <th>Last Title Fight</th>
-                  <th>Vacant</th>
+                  <th data-i18n="belts.table.ftr">Ftr</th>
+                  <th data-i18n="belts.table.division">Division</th>
+                  <th data-i18n="belts.table.champion">Champion</th>
+                  <th data-i18n="belts.table.titleWon">Title Won</th>
+                  <th data-i18n="belts.table.titleEvent">Title Event</th>
+                  <th data-i18n="belts.table.defenses">Defenses</th>
+                  <th data-i18n="belts.table.lastTitleFight">Last Title Fight</th>
+                  <th data-i18n="belts.table.vacant">Vacant</th>
                 </tr>
               </thead>
               <tbody>
@@ -177,14 +181,14 @@ const faqSchema = {
         <section class="fp-panel">
           <div class="fp-panel-head">
             <div>
-              <p class="fp-section-label">Lineage</p>
-              <h2>Title Fight History</h2>
+              <p class="fp-section-label" data-i18n="belts.history.eyebrow">Lineage</p>
+              <h2 data-i18n="belts.history.title">Title Fight History</h2>
               <p class="fp-muted" data-history-count>Showing {Math.min(initialTitleHistoryLimit, titleHistory.length).toLocaleString()} of {titleHistory.length.toLocaleString()} title fights.</p>
             </div>
             <label class="fp-filter-label">
-              <span>Filter by division</span>
+              <span data-i18n="belts.history.filter">Filter by division</span>
               <select data-history-filter>
-                <option value="__all__">All Divisions</option>
+                <option value="__all__" data-i18n="belts.history.allDivisions">All Divisions</option>
                 {[...new Set(titleHistory.map((row) => row.weight_class).filter(Boolean))].sort().map((division) => (
                   <option value={division}>{division}</option>
                 ))}
@@ -195,17 +199,17 @@ const faqSchema = {
             <table class="fp-data-table">
               <thead>
                 <tr>
-                  <th>Winner</th>
-                  <th>Loser</th>
-                  <th>Date</th>
-                  <th>Division</th>
-                  <th>Method</th>
-                  <th>Rd</th>
-                  <th>Time</th>
-                  <th>Title Changed</th>
-                  <th>Vacant</th>
-                  <th>Defense #</th>
-                  <th>Event</th>
+                  <th data-i18n="belts.history.winner">Winner</th>
+                  <th data-i18n="belts.history.loser">Loser</th>
+                  <th data-i18n="belts.history.date">Date</th>
+                  <th data-i18n="belts.history.division">Division</th>
+                  <th data-i18n="belts.history.method">Method</th>
+                  <th data-i18n="belts.history.round">Rd</th>
+                  <th data-i18n="belts.history.time">Time</th>
+                  <th data-i18n="belts.history.titleChanged">Title Changed</th>
+                  <th data-i18n="belts.history.vacant">Vacant</th>
+                  <th data-i18n="belts.history.defenseNumber">Defense #</th>
+                  <th data-i18n="belts.history.event">Event</th>
                 </tr>
               </thead>
               <tbody data-history-body>
@@ -358,7 +362,8 @@ const faqSchema = {
   .fp-panel h2 { margin: 0.16rem 0 0; color: #fef2f2; font-size: 1.24rem; }
 
   .fp-champion-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0.7rem; }
-  .fp-champion-card { display: grid; gap: 0.42rem; min-height: 168px; padding: 0.85rem; border-radius: 0.7rem; text-decoration: none; color: #fef2f2; border: 1px solid rgba(255,240,170,0.28); background: radial-gradient(130% 90% at 20% 0%, rgba(255,224,128,0.18), transparent 56%), linear-gradient(160deg, #4a311a, #1a0c0c 62%, #0f0606); }
+  .fp-champion-card { position: relative; display: grid; gap: 0.42rem; min-height: 168px; padding: 0.85rem; border-radius: 0.7rem; text-decoration: none; color: #fef2f2; border: 1px solid rgba(255,240,170,0.28); background: radial-gradient(130% 90% at 20% 0%, rgba(255,224,128,0.18), transparent 56%), linear-gradient(160deg, #4a311a, #1a0c0c 62%, #0f0606); overflow: hidden; isolation: isolate; }
+  .fp-champ-image { position: absolute; right: -0.55rem; bottom: -0.35rem; z-index: -1; width: min(58%, 8.4rem); height: 82%; object-fit: contain; object-position: right bottom; opacity: 0.42; filter: drop-shadow(0 16px 18px rgba(0,0,0,0.68)); pointer-events: none; }
   .fp-champion-card.is-vacant { color: #e4e4e7; border-color: rgba(161,161,170,0.22); background: linear-gradient(160deg, rgba(39,39,42,0.92), rgba(15,15,18,0.96)); pointer-events: none; }
   .fp-champ-division { color: #fde68a; font-size: 0.68rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
   .fp-champion-card strong { font-size: 1.05rem; line-height: 1.15; }

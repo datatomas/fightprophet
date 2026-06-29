@@ -189,3 +189,10 @@ The Fight Prophet palette — used across predictions, the betting blocks, and B
 | Ink / surface | `#09090b` bg, `#f4f4f5` text, `#a1a1aa` muted grey | base UI |
 
 Meaning, not decoration: **green = good for the bettor, light red = bad, grey = neutral/unavailable**, and the **yellow** highlight marks the model's predicted winner. Hold uses green (<3%) / yellow (3–6%) / red (>6%).
+
+
+# update tranlsation
+
+cd ~/Documents/gitrepos/ml_kuda_sports_lab/astro_adsense_starter
+npm run i18n:translate
+npm run build
