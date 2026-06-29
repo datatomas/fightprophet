@@ -13,6 +13,7 @@
  *
  * Usage:
  *   OPENAI_API_KEY=sk-... node scripts/i18n_autotranslate.mjs
+ *   # also auto-loads /home/ares/.config/ml_kuda_sports_lab/pipeline.env
  *   # optional: I18N_MODEL=gpt-4o-mini  I18N_FORCE=1
  *
  * Workflow: add new strings to en.json → run this → review the JSON diffs → commit.
@@ -20,7 +21,39 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const DIR = new URL('../src/lib/i18n/', import.meta.url);
+const ENV_FILES = [
+  new URL('../.env.local', import.meta.url),
+  new URL('../.env', import.meta.url),
+  '/home/ares/.config/ml_kuda_sports_lab/pipeline.env',
+];
 const LANGS = { es: 'Spanish', pt: 'Brazilian Portuguese', ru: 'Russian', ka: 'Georgian' };
+
+function loadEnvFiles() {
+  for (const file of ENV_FILES) {
+    let text = '';
+    try {
+      text = readFileSync(file, 'utf8');
+    } catch {
+      continue;
+    }
+    for (const rawLine of text.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith('#')) continue;
+      const match = line.match(/^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+      if (!match) continue;
+      const [, key, rawValue] = match;
+      if (process.env[key]) continue;
+      let value = rawValue.trim();
+      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+      process.env[key] = value;
+    }
+  }
+}
+
+loadEnvFiles();
+
 const MODEL = process.env.I18N_MODEL || 'gpt-4o-mini';
 const FORCE = process.env.I18N_FORCE === '1';
 const KEY = process.env.OPENAI_API_KEY;

@@ -37,15 +37,15 @@ const betsEmojiUrl = '/branding/b91c1c-bets-emoji.png';
 const madeInColombiaEmojiUrl = '/branding/b91c1c-madeincolombia-emoji.png';
 const earProEmojiUrl = '/branding/b91c1c-earpro-emoji.png';
 
+const strippedPath = stripLocale(Astro.url.pathname);
 // Compare against the locale-stripped path so /ru/predictions/ matches /predictions/.
-const currentPath = (Astro.url.pathname.replace(/^\/ru(?=\/|$)/, '') || '/');
+const currentPath = strippedPath;
 const isActive = (href: string) => {
   if (href === '/') return currentPath === '/' || currentPath === '/rankings' || currentPath === '/rankings/';
   return currentPath.startsWith(href);
 };
 // Only show the routed language switcher / alternate links where a translated
 // page exists, so we never link to a non-existent localized page.
-const strippedPath = stripLocale(Astro.url.pathname);
 const hasTranslation = isLocalized(strippedPath);
 // Switcher shows English + the locales this page is actually translated into.
 const localeLinks = [defaultLang, ...availableLocales(strippedPath)].map((code) => ({
@@ -87,6 +87,7 @@ const structuredData = [
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="fp-supported-langs" content={locales.join(',')} />
     <meta name="description" content={description} />
     <meta name="robots" content={robots} />
     {googleSiteVerification && <meta name="google-site-verification" content={googleSiteVerification} />}
@@ -314,7 +315,10 @@ const structuredData = [
     else if (typeof desktopQuery.addListener === 'function') desktopQuery.addListener(handleViewport);
 
     // ── Language preference ────────────────────────────────────────────
-    const SUPPORTED_LANGS = ['en', 'es', 'pt'];
+    const SUPPORTED_LANGS = (document.querySelector('meta[name="fp-supported-langs"]')?.getAttribute('content') || 'en')
+      .split(',')
+      .map((lang) => lang.trim().toLowerCase())
+      .filter(Boolean);
     const normalizeLang = (raw) => {
       const v = (raw || '').trim().toLowerCase();
       return SUPPORTED_LANGS.includes(v) ? v : '';
@@ -362,6 +366,8 @@ const structuredData = [
       en: 'Made in Colombia',
       es: 'Hecho en Colombia',
       pt: 'Feito na Colômbia',
+      ru: 'Made in Colombia',
+      ka: 'Made in Colombia',
     };
 
     const applyLangChrome = (lang) => {
