@@ -197,6 +197,12 @@ const predDescription = nextEvent
     // ── Helpers ──────────────────────────────────────────────────────────────
     const esc = (v) =>
       String(v ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    const imageKey = (value) => String(value || '')
+      .replace(/\([^)]*\)/g, ' ')
+      .replace(/[^a-z0-9]+/gi, ' ')
+      .trim()
+      .replace(/\s+/g, ' ')
+      .toLowerCase();
     const tr = (key, fallback) => window.__fpT ? window.__fpT(key, fallback) : fallback;
 
     const fmtPct = (v) => {
@@ -220,6 +226,12 @@ const predDescription = nextEvent
       if (v == null || Number.isNaN(Number(v))) return '—';
       const num = Number(v);
       const shown = Math.round((num <= 1 && num >= -1 ? num * 100 : num) * 10) / 10;
+      return `${shown > 0 ? '+' : ''}${shown}%`;
+    };
+
+    const fmtRoi = (v) => {
+      if (v == null || Number.isNaN(Number(v))) return '—';
+      const shown = Math.round(Number(v) * 1000) / 10;
       return `${shown > 0 ? '+' : ''}${shown}%`;
     };
 
@@ -267,7 +279,7 @@ const predDescription = nextEvent
           ${cell(tr('pred.bi.modelProb', 'Model prob'), esc(fmtProb(fight.bet_side_model_prob)))}
           ${cell(tr('pred.bi.edge', 'Edge'), esc(fmtEdge(fight.edge_vs_fair)), signClass(fight.edge_vs_fair))}
           ${cell(tr('pred.bi.expectedValue', 'Expected value'), esc(fmtMoney(fight.expected_value)), signClass(fight.expected_value))}
-          ${cell(tr('pred.bi.expectedRoi', 'Expected ROI'), esc(fmtEdge(fight.expected_roi)), signClass(fight.expected_roi))}
+          ${cell(tr('pred.bi.expectedRoi', 'Expected ROI'), esc(fmtRoi(fight.expected_roi)), signClass(fight.expected_roi))}
         </div>
         <div class="fp-bi-note">${esc(tr('pred.bi.note', `Math only — not betting advice. Hold & fair values need both sides' odds; "—" means data unavailable.`))}</div>
       </div>`;
@@ -297,7 +309,7 @@ const predDescription = nextEvent
     // ── Fighter card HTML ─────────────────────────────────────────────────────
     function buildCardHtml(id, name, country, flag, wc, isChamp, status, wins, losses, finRate, subRate, wStreak, lStreak, isWinner) {
       const init = initials(name);
-      const imageUrl = fighterImageAssets[String(id || '').trim().toLowerCase()] || '';
+      const imageUrl = fighterImageAssets[String(id || '').trim().toLowerCase()] || fighterImageAssets[imageKey(name)] || '';
       const abbr = wcAbbr(wc);
       const wTxt = fmtInt(wins);
       const lTxt = fmtInt(losses);
@@ -458,6 +470,7 @@ const predDescription = nextEvent
           const opt = document.createElement('option');
           opt.value = name;
           opt.textContent = name;
+          opt.setAttribute('translate', 'no');
           if (name === current) opt.selected = true;
           eventSel.append(opt);
         }
@@ -505,8 +518,8 @@ const predDescription = nextEvent
         const meta = [first.event_date, first.location].filter(Boolean).join(' · ');
         html += `<div class="fp-event-group">
           <header class="fp-event-group-head">
-            <h2>${esc(evName)}</h2>
-            ${meta ? `<p>${esc(meta)}</p>` : ''}
+            <h2 translate="no">${esc(evName)}</h2>
+            ${meta ? `<p><span translate="no">${esc(meta)}</span></p>` : ''}
           </header>
           ${evFights.map(buildMatchupHtml).join('')}
         </div>`;

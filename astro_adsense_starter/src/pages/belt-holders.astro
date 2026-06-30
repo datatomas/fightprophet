@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { runtimeEnvFromLocals } from '../lib/country-master';
 import { getBeltHoldersData } from '../lib/champions';
-import { fighterImageUrl, getFighterImagesBaseUrl } from '../lib/fighter-images';
+import { fighterImageUrlForFighter, getFighterImagesBaseUrl } from '../lib/fighter-images';
 
 const runtimeEnv = runtimeEnvFromLocals(Astro.locals);
 const beltData = await getBeltHoldersData(runtimeEnv);
@@ -109,7 +109,7 @@ const faqSchema = {
           <div class="fp-champion-grid">
             {champions.map((champ) => {
               const flag = flagEmoji(champ.country_iso2);
-              const imageUrl = champ.is_vacant ? '' : fighterImageUrl(champ.fighter_id, fighterImagesBaseUrl);
+              const imageUrl = champ.is_vacant ? '' : fighterImageUrlForFighter(champ.fighter_id, champ.name, fighterImagesBaseUrl);
               return (
                 <a class={`fp-champion-card${champ.is_vacant ? ' is-vacant' : ''}`} href={champ.is_vacant ? '/belt-holders/' : fighterHref(champ.name)}>
                   <span class="fp-champ-topline">

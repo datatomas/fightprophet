@@ -88,7 +88,7 @@ const pastEvents = totalEvents - upcomingEvents;
           <section class="fp-event-detail" aria-live="polite">
             <div class="fp-panel-head">
               <div>
-                <h2 data-selected-event-name>Event</h2>
+                <h2 data-selected-event-name translate="no">Event</h2>
                 <p data-selected-event-meta></p>
               </div>
               <span class="fp-phase-badge" data-selected-event-phase></span>
@@ -194,6 +194,7 @@ const pastEvents = totalEvents - upcomingEvents;
       const opt = document.createElement('option');
       opt.value = loc;
       opt.textContent = loc;
+      opt.setAttribute('translate', 'no');
       location?.append(opt);
     }
 
@@ -262,7 +263,7 @@ const pastEvents = totalEvents - upcomingEvents;
         eventSelect.disabled = rows.length === 0;
         eventSelect.innerHTML = rows.slice(0, 500).map((event) => {
           const meta = [event.event_date, event.location, event.event_phase].filter(Boolean).join(' / ');
-          return `<option value="${escapeHtml(event.event_name)}">${escapeHtml(event.event_name)}${meta ? ` — ${escapeHtml(meta)}` : ''}</option>`;
+          return `<option value="${escapeHtml(event.event_name)}" translate="no">${escapeHtml(event.event_name)}${meta ? ` — ${escapeHtml(meta)}` : ''}</option>`;
         }).join('');
         eventSelect.value = selectedEvent?.event_name || '';
       }

@@ -14,6 +14,17 @@ export const fighterImageFiles: Record<string, string> = {
   'e1248941344b3288': 'e1248941344b3288-alexander-volkanovski.svg',
 };
 
+const fighterImageNameAliases: Record<string, string> = {
+  'sean strickland': '0d8011111be000b2',
+  'joshua van': '17e97649403ba428',
+  'islam makhachev': '275aca31f61ba28c',
+  'tom aspinall': '399afbabc02376b5',
+  'carlos ulberg': '9014c02eff8b3d62',
+  'justin gaethje': '9e8f6c728eb01124',
+  'petr yan': 'd661ce4da776fc20',
+  'alexander volkanovski': 'e1248941344b3288',
+};
+
 function envValue(env: RuntimeEnv | undefined, key: string, fallback = ''): string {
   const value = env?.[key];
   if (typeof value === 'string') return value.trim();
@@ -49,8 +60,28 @@ export function fighterImageUrl(fighterId: string | undefined, baseUrl: string):
   return `${baseUrl.replace(/\/+$/, '')}/${DEFAULT_PREFIX}/${encodeURIComponent(filename)}`;
 }
 
+export function normalizeFighterImageName(name: string | undefined): string {
+  return String(name || '')
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/[^a-z0-9]+/gi, ' ')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+export function fighterImageUrlForFighter(fighterId: string | undefined, name: string | undefined, baseUrl: string): string {
+  const byId = fighterImageUrl(fighterId, baseUrl);
+  if (byId) return byId;
+  const fallbackId = fighterImageNameAliases[normalizeFighterImageName(name)];
+  return fighterImageUrl(fallbackId, baseUrl);
+}
+
 export function fighterImageAssetMap(baseUrl: string): Record<string, string> {
-  return Object.fromEntries(
+  const entries = Object.fromEntries(
     Object.keys(fighterImageFiles).map((id) => [id, fighterImageUrl(id, baseUrl)]),
   );
+  for (const [name, id] of Object.entries(fighterImageNameAliases)) {
+    entries[name] = fighterImageUrl(id, baseUrl);
+  }
+  return entries;
 }

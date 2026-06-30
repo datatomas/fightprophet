@@ -262,6 +262,12 @@ const historyRows = fighterData.debug.historyCount;
       '"': '&quot;',
       "'": '&#39;',
     }[ch]));
+    const imageKey = (value) => String(value || '')
+      .replace(/\([^)]*\)/g, ' ')
+      .replace(/[^a-z0-9]+/gi, ' ')
+      .trim()
+      .replace(/\s+/g, ' ')
+      .toLowerCase();
     const tr = (key, fallback) => window.__fpT ? window.__fpT(key, fallback) : fallback;
     const fmtInt = (value) => value == null || Number.isNaN(Number(value)) ? '—' : Number(value).toLocaleString();
     const fmtPct = (value, decimals = 0) => {
@@ -314,7 +320,7 @@ const historyRows = fighterData.debug.historyCount;
     function buildVisualCardHtml(profile) {
       const isChamp = !!profile.is_current_champion;
       const init = initialsOf(profile.name);
-      const imageUrl = fighterImageAssets[String(profile.fighter_id || '').trim().toLowerCase()] || '';
+      const imageUrl = fighterImageAssets[String(profile.fighter_id || '').trim().toLowerCase()] || fighterImageAssets[imageKey(profile.name)] || '';
       const wc = profile.current_belt_weight_classes || '';
       const abbr = wcAbbrOf(wc);
       const wins = fmtInt(profile.wins);
