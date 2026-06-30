@@ -2,6 +2,7 @@ import type { RuntimeEnv } from './country-master';
 
 const DEFAULT_CONTAINER = 'ufc';
 const DEFAULT_PREFIX = 'assets/fighter-images';
+const DEFAULT_ACCOUNT = 'stfightprophetprd01';
 
 export const fighterImageFiles: Record<string, string> = {
   '0d8011111be000b2': '0d8011111be000b2-sean-strickland.svg',
@@ -42,8 +43,7 @@ export function getFighterImagesBaseUrl(env?: RuntimeEnv): string {
   const explicit = envValue(env, 'PUBLIC_FIGHTER_IMAGES_BASE_URL') || envValue(env, 'FIGHTER_IMAGES_BASE_URL');
   if (explicit) return explicit.replace(/\/+$/, '');
 
-  const account = envValue(env, 'PUBLIC_AZURE_STORAGE_ACCOUNT') || envValue(env, 'AZURE_STORAGE_ACCOUNT');
-  if (!account) return '';
+  const account = envValue(env, 'PUBLIC_AZURE_STORAGE_ACCOUNT') || envValue(env, 'AZURE_STORAGE_ACCOUNT') || DEFAULT_ACCOUNT;
 
   const container =
     envValue(env, 'PUBLIC_FIGHTER_IMAGES_CONTAINER')

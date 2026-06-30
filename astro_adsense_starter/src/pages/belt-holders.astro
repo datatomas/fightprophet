@@ -26,6 +26,17 @@ function fighterHref(name?: string): string {
   return `/fighter-stats/?fighter=${encodeURIComponent(String(name || ''))}`;
 }
 
+function initials(name?: string): string {
+  return String(name || '')
+    .replace(/\([^)]*\)/g, ' ')
+    .split(/\s+/)
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'FP';
+}
+
 // Freshness anchor: the most recent title fight in the data (real, not a faked
 // build date). Drives the visible "Champions current as of …" line + SEO intent
 // for "current ufc belt holders".
@@ -110,6 +121,7 @@ const faqSchema = {
             {champions.map((champ) => {
               const flag = flagEmoji(champ.country_iso2);
               const imageUrl = champ.is_vacant ? '' : fighterImageUrlForFighter(champ.fighter_id, champ.name, fighterImagesBaseUrl);
+              const portraitFallback = champ.is_vacant ? 'C' : initials(champ.name);
               return (
                 <a class={`fp-champion-card${champ.is_vacant ? ' is-vacant' : ''}`} href={champ.is_vacant ? '/belt-holders/' : fighterHref(champ.name)}>
                   <span class="fp-champ-topline">
@@ -117,7 +129,7 @@ const faqSchema = {
                       {imageUrl ? (
                         <img class="fp-champ-image" src={imageUrl} alt="" loading="lazy" decoding="async" />
                       ) : (
-                        <span>{flag || 'C'}</span>
+                        <span>{portraitFallback}</span>
                       )}
                     </span>
                     <span class="fp-champ-division">{champ.weight_class || 'Division'}</span>
