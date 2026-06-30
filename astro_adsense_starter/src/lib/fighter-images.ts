@@ -39,9 +39,18 @@ function envValue(env: RuntimeEnv | undefined, key: string, fallback = ''): stri
   return fallback;
 }
 
+function appendSasToken(url: string, env?: RuntimeEnv): string {
+  const token = (
+    envValue(env, 'PUBLIC_FIGHTER_IMAGES_SAS_TOKEN')
+    || envValue(env, 'FIGHTER_IMAGES_SAS_TOKEN')
+  ).replace(/^\?+/, '').trim();
+  if (!token || url.includes('?')) return url;
+  return `${url}?${token}`;
+}
+
 export function getFighterImagesBaseUrl(env?: RuntimeEnv): string {
   const explicit = envValue(env, 'PUBLIC_FIGHTER_IMAGES_BASE_URL') || envValue(env, 'FIGHTER_IMAGES_BASE_URL');
-  if (explicit) return explicit.replace(/\/+$/, '');
+  if (explicit) return appendSasToken(explicit.replace(/\/+$/, ''), env);
 
   const account = envValue(env, 'PUBLIC_AZURE_STORAGE_ACCOUNT') || envValue(env, 'AZURE_STORAGE_ACCOUNT') || DEFAULT_ACCOUNT;
 
@@ -50,14 +59,16 @@ export function getFighterImagesBaseUrl(env?: RuntimeEnv): string {
     || envValue(env, 'FIGHTER_IMAGES_CONTAINER')
     || DEFAULT_CONTAINER;
 
-  return `https://${account}.blob.core.windows.net/${container}`;
+  return appendSasToken(`https://${account}.blob.core.windows.net/${container}`, env);
 }
 
 export function fighterImageUrl(fighterId: string | undefined, baseUrl: string): string {
   const id = String(fighterId || '').trim().toLowerCase();
   const filename = fighterImageFiles[id];
   if (!filename || !baseUrl) return '';
-  return `${baseUrl.replace(/\/+$/, '')}/${DEFAULT_PREFIX}/${encodeURIComponent(filename)}`;
+  const [root, query = ''] = baseUrl.split('?', 2);
+  const path = `${root.replace(/\/+$/, '')}/${DEFAULT_PREFIX}/${encodeURIComponent(filename)}`;
+  return query ? `${path}?${query}` : path;
 }
 
 export function normalizeFighterImageName(name: string | undefined): string {
