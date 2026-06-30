@@ -1,6 +1,6 @@
 ---
 import type { CountryEntry, CountryMasterIndex } from '../lib/country-master';
-import { fighterImageUrl, getFighterImagesBaseUrl } from '../lib/fighter-images';
+import { fighterImageUrlForFighter, getFighterImagesBaseUrl } from '../lib/fighter-images';
 
 interface Props {
   name: string;
@@ -136,7 +136,7 @@ const canonicalCountryValue = canonicalCountry(country);
 const flag = flagFor(country);
 const countryCompact = countryShort(country);
 const init = initials(name);
-const imageUrl = fighterImageUrl(fighterId, fighterImagesBaseUrl);
+const imageUrl = fighterImageUrlForFighter(fighterId, name, fighterImagesBaseUrl);
 const wcAbbr = divisionAbbrev(weightClass);
 const divisionLabel = weightClass.trim();
 const recordLabel = wins != null && losses != null ? `${fmtInt(wins)}-${fmtInt(losses)}` : '';
