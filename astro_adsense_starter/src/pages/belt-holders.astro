@@ -112,8 +112,16 @@ const faqSchema = {
               const imageUrl = champ.is_vacant ? '' : fighterImageUrl(champ.fighter_id, fighterImagesBaseUrl);
               return (
                 <a class={`fp-champion-card${champ.is_vacant ? ' is-vacant' : ''}`} href={champ.is_vacant ? '/belt-holders/' : fighterHref(champ.name)}>
-                  {imageUrl && <img class="fp-champ-image" src={imageUrl} alt="" loading="lazy" decoding="async" aria-hidden="true" />}
-                  <span class="fp-champ-division">{champ.weight_class || 'Division'}</span>
+                  <span class="fp-champ-topline">
+                    <span class={`fp-champ-portrait${imageUrl ? ' has-image' : ''}`} aria-hidden="true">
+                      {imageUrl ? (
+                        <img class="fp-champ-image" src={imageUrl} alt="" loading="lazy" decoding="async" />
+                      ) : (
+                        <span>{flag || 'C'}</span>
+                      )}
+                    </span>
+                    <span class="fp-champ-division">{champ.weight_class || 'Division'}</span>
+                  </span>
                   <strong>{champ.name}</strong>
                   <span class="fp-champ-meta">
                     {flag && <span aria-hidden="true">{flag}</span>}
@@ -361,11 +369,15 @@ const faqSchema = {
   .fp-panel-head { display: flex; align-items: end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
   .fp-panel h2 { margin: 0.16rem 0 0; color: #fef2f2; font-size: 1.24rem; }
 
-  .fp-champion-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0.7rem; }
-  .fp-champion-card { position: relative; display: grid; gap: 0.42rem; min-height: 168px; padding: 0.85rem; border-radius: 0.7rem; text-decoration: none; color: #fef2f2; border: 1px solid rgba(255,240,170,0.28); background: radial-gradient(130% 90% at 20% 0%, rgba(255,224,128,0.18), transparent 56%), linear-gradient(160deg, #4a311a, #1a0c0c 62%, #0f0606); overflow: hidden; isolation: isolate; }
-  .fp-champ-image { position: absolute; right: -0.55rem; bottom: -0.35rem; z-index: -1; width: min(58%, 8.4rem); height: 82%; object-fit: contain; object-position: right bottom; opacity: 0.42; filter: drop-shadow(0 16px 18px rgba(0,0,0,0.68)); pointer-events: none; }
+  .fp-champion-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.7rem; }
+  .fp-champion-card { position: relative; display: grid; grid-template-rows: auto auto 1fr auto auto; gap: 0.42rem; min-height: 188px; padding: 0.85rem; border-radius: 0.7rem; text-decoration: none; color: #fef2f2; border: 1px solid rgba(255,240,170,0.28); background: radial-gradient(130% 90% at 20% 0%, rgba(255,224,128,0.18), transparent 56%), linear-gradient(160deg, #4a311a, #1a0c0c 62%, #0f0606); overflow: hidden; isolation: isolate; }
+  .fp-champ-topline { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); align-items: start; gap: 0.68rem; min-width: 0; }
+  .fp-champ-portrait { position: relative; display: flex; align-items: center; justify-content: center; width: 4.5rem; aspect-ratio: 4 / 5; border-radius: 0.36rem; overflow: hidden; border: 1.5px solid rgba(255,240,170,0.62); background: radial-gradient(circle at 50% 28%, rgba(255,240,170,0.22), transparent 58%), linear-gradient(180deg, #3a2610 0%, #160909 100%); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.5), 0 8px 18px rgba(0,0,0,0.34); }
+  .fp-champ-portrait::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 18px rgba(255,220,140,0.12); pointer-events: none; }
+  .fp-champ-portrait > span { color: #fde68a; font-size: 1.25rem; font-weight: 900; line-height: 1; }
+  .fp-champ-image { position: absolute; inset: 0.08rem; width: calc(100% - 0.16rem); height: calc(100% - 0.16rem); object-fit: contain; object-position: center bottom; filter: drop-shadow(0 10px 12px rgba(0,0,0,0.62)); pointer-events: none; }
   .fp-champion-card.is-vacant { color: #e4e4e7; border-color: rgba(161,161,170,0.22); background: linear-gradient(160deg, rgba(39,39,42,0.92), rgba(15,15,18,0.96)); pointer-events: none; }
-  .fp-champ-division { color: #fde68a; font-size: 0.68rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+  .fp-champ-division { color: #fde68a; font-size: 0.68rem; font-weight: 900; letter-spacing: 0.08em; line-height: 1.25; text-transform: uppercase; overflow-wrap: anywhere; }
   .fp-champion-card strong { font-size: 1.05rem; line-height: 1.15; }
   .fp-champ-meta { color: #d4d4d8; font-size: 0.82rem; }
   .fp-champ-detail { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; color: #a1a1aa; font-size: 0.78rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.38rem; }

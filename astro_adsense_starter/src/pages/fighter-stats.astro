@@ -2,10 +2,13 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { runtimeEnvFromLocals } from '../lib/country-master';
 import { getFighterCardsData } from '../lib/dashboard-data';
+import { fighterImageAssetMap, getFighterImagesBaseUrl } from '../lib/fighter-images';
 
 const runtimeEnv = runtimeEnvFromLocals(Astro.locals);
 const fighterData = await getFighterCardsData(runtimeEnv);
+const fighterImageAssets = fighterImageAssetMap(getFighterImagesBaseUrl(runtimeEnv));
 const pageJson = JSON.stringify(fighterData).replace(/</g, '\\u003c');
+const fighterImageJson = JSON.stringify(fighterImageAssets).replace(/</g, '\\u003c');
 
 const totalProfiles = fighterData.profiles.length;
 const activeProfiles = fighterData.profiles.filter((profile) => profile.fighter_status === 'active').length;
@@ -205,13 +208,16 @@ const historyRows = fighterData.debug.historyCount;
   </article>
 
   <script type="application/json" id="fp-fighter-data" set:html={pageJson}></script>
+  <script type="application/json" id="fp-fighter-image-assets" set:html={fighterImageJson}></script>
 </BaseLayout>
 
 <script is:inline>
   (() => {
     const dataNode = document.getElementById('fp-fighter-data');
     if (!dataNode) return;
+    const imageNode = document.getElementById('fp-fighter-image-assets');
     const payload = JSON.parse(dataNode.textContent || '{"profiles":[],"history":{}}');
+    const fighterImageAssets = imageNode ? JSON.parse(imageNode.textContent || '{}') : {};
     const profiles = Array.isArray(payload.profiles) ? payload.profiles : [];
     const history = payload.history && typeof payload.history === 'object' ? payload.history : {};
     if (!profiles.length) return;
@@ -308,6 +314,7 @@ const historyRows = fighterData.debug.historyCount;
     function buildVisualCardHtml(profile) {
       const isChamp = !!profile.is_current_champion;
       const init = initialsOf(profile.name);
+      const imageUrl = fighterImageAssets[String(profile.fighter_id || '').trim().toLowerCase()] || '';
       const wc = profile.current_belt_weight_classes || '';
       const abbr = wcAbbrOf(wc);
       const wins = fmtInt(profile.wins);
@@ -322,6 +329,10 @@ const historyRows = fighterData.debug.historyCount;
       const wStreak = fmtInt(profile.longest_win_streak);
       const lStreak = fmtInt(profile.longest_loss_streak);
       const ptsLabel = fmtInt(profile.bonuses_won_count);
+      const portraitHtml = imageUrl
+        ? `<img class="fp-card-photo" src="${escapeHtml(imageUrl)}" alt="" loading="lazy" decoding="async" aria-hidden="true" />`
+        : `<span class="fp-card-portrait-silhouette" aria-hidden="true">👤</span>
+          <span class="fp-card-initials" aria-hidden="true">${escapeHtml(init)}</span>`;
 
       return `<a class="fp-card ${isChamp ? 'is-champ' : 'is-default'} is-compact" href="${escapeHtml(profileUrl(profile))}">
         <div class="fp-card-frame" aria-hidden="true"></div>
@@ -334,8 +345,7 @@ const historyRows = fighterData.debug.historyCount;
         </div>
         <header class="fp-card-banner"><span class="fp-card-name">${escapeHtml(profile.name)}</span></header>
         <div class="fp-card-portrait">
-          <span class="fp-card-portrait-silhouette" aria-hidden="true">👤</span>
-          <span class="fp-card-initials" aria-hidden="true">${escapeHtml(init)}</span>
+          ${portraitHtml}
           ${isChamp ? `<span class="fp-card-crown" aria-label="${escapeHtml(tr('fighters.controls.currentChampions', 'Current champion'))}">👑</span>` : ''}
         </div>
         <div class="fp-card-type-bar">[ ${escapeHtml(typeLine)} ]</div>
@@ -693,6 +703,15 @@ const historyRows = fighterData.debug.historyCount;
       linear-gradient(180deg, #4a3214 0%, #1a1108 100%);
   }
   .fp-card-portrait-silhouette { font-size: 2.6rem; opacity: 0.18; line-height: 1; filter: blur(0.35px); }
+  .fp-card-photo {
+    position: absolute;
+    inset: 0.12rem;
+    width: calc(100% - 0.24rem);
+    height: calc(100% - 0.24rem);
+    object-fit: contain;
+    object-position: center bottom;
+    filter: drop-shadow(0 12px 16px rgba(0, 0, 0, 0.58));
+  }
   .fp-card.is-champ .fp-card-portrait-silhouette { opacity: 0.24; }
   .fp-card-initials {
     position: absolute;
